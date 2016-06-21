@@ -12,6 +12,12 @@ export interface ITaskItem {
     r?: number; // number of retries
 }
 
+export interface ITaskSummary {
+    j: number;
+    t: number;
+    host: string;
+}
+
 export interface INode {
     host: string;
     numCPUs: number;
@@ -21,7 +27,6 @@ export interface INodeItem extends INode {
     enabled: boolean;
     cpusUsed: number;
     ready: boolean;
-    leavePending: boolean;
 }
 
 interface ICPUItem {
@@ -47,10 +52,17 @@ export interface IHostTaskDispatcher {
 
 export interface IDispatcherJSON {
     nodes: INodeItem[];
+    queueClosed: boolean;
+    dispatchEnabled: boolean;
     numTasksInQueue: number;
     dispatching: boolean;
     numOutstandingAcks: number;
 } 
+
+interface IInterval {
+    lbound: number;
+    ubound: number;
+}
 
 // will emit the following events
 // 1. changed
@@ -64,7 +76,7 @@ class Nodes extends events.EventEmitter {
     }
     // returen true if node is available for task dispatching
     private nodeActive(node: INodeItem): boolean {
-        return (node.enabled && node.ready && !node.leavePending);
+        return (node.enabled && node.ready);
     }
     incrementCPUUsageCount(host: string) {
         let node = this.__nodes[host];
@@ -78,41 +90,15 @@ class Nodes extends events.EventEmitter {
         if (node && node.cpusUsed > 0) {
             node.cpusUsed--;
             this.emit('changed');
-            if (node.cpusUsed === 0 && node.leavePending) {
-                delete this.__nodes[host];
-                this.emit('changed');
-                this.emit('node_removed', host);
-            } else if (this.nodeActive(node))
+            if (this.nodeActive(node))
                 this.emit('more_cpus_available');
-        }
-    }
-    markNodeLeavePending(host: string) {
-        let node = this.__nodes[host];
-        if (node) {
-            if (node.cpusUsed === 0) {
-                delete this.__nodes[host];
-                this.emit('changed');
-                this.emit('node_removed', host);
-            } else {
-                node.enabled = false;
-                node.leavePending = true;
-                this.emit('changed');
-            }
         }
     }
     enableNode(host: string) : void {
         let node = this.__nodes[host];
         if (node) {
-            let changed: boolean = false;
             if (!node.enabled) {
                 node.enabled = true;
-                changed = true;
-            }
-            if (node.leavePending) {
-                node.leavePending = false;
-                changed = true;
-            }
-            if (changed) {
                 this.emit('changed');
                 if (this.nodeActive(node)) {
                     this.emit('more_cpus_available');
@@ -137,7 +123,6 @@ class Nodes extends events.EventEmitter {
                 ,enabled: true
                 ,cpusUsed: 0
                 ,ready: false
-                ,leavePending: false
             }
             this.__nodes[newNode.host] = node;
             this.emit('changed');
@@ -154,7 +139,7 @@ class Nodes extends events.EventEmitter {
             }
         }        
     }
-    // remove the node forcefully without checking the cpu usage
+    // remove the node
     removeNode(host: string) : void {
         let node = this.__nodes[host];
         if (node) {
@@ -190,30 +175,98 @@ class Nodes extends events.EventEmitter {
 // 2. enqueued
 class Queue extends events.EventEmitter {
     private __numtasks: number = 0;
-    private __queue: {[priority:number]: ITaskItem[]} = {}; // queue by priority number
+    private __queue: {[priority:string]: {[jobId: string]: ITaskItem[]} } = {}; // queue by priority number and jobId
     constructor() {
         super();
     }
     enqueueSingle(priority:number, task: ITaskItem) : void {
-        if (!this.__queue[priority]) this.__queue[priority] = [];
-        this.__queue[priority].push(task);
+        let p = priority.toString();
+        if (!this.__queue[p]) this.__queue[p] = {};
+        let j = task.j.toString();
+        if (!this.__queue[p][j]) this.__queue[p][j] = [];
+        this.__queue[p][j].push(task);
         this.__numtasks++;
         this.emit('changed');
         this.emit('enqueued');
         
     }
     enqueue(priority:number, tasks: ITaskItem[]) : void {
-        if (!this.__queue[priority]) this.__queue[priority] = [];
-        for (let i in tasks)
-            this.__queue[priority].push(tasks[i]);
+        let p = priority.toString();
+        if (!this.__queue[p]) this.__queue[p] = {};
+        for (let i in tasks) {
+            let task = tasks[i];
+            let j = task.j.toString();
+            if (!this.__queue[p][j]) this.__queue[p][j] = [];
+            this.__queue[p][j].push(task);
+        }
         this.__numtasks += tasks.length;
         this.emit('changed');
         this.emit('enqueued');
     }
+
+    // generate a number in the interval [min, max)
+    private getRandomInt(min: number, max: number) {
+        return Math.floor(Math.random() * (max - min)) + min;
+    }
+    private chooseByPriority(): number {
+        let total:number = 0;
+        let lbound: number = 0;
+        let intervals: {[p: string] : IInterval} = {};
+        for (let p in this.__queue) {
+            let priority = parseInt(p);
+            total += priority;
+            let interval:IInterval = {lbound: lbound, ubound: lbound + priority};
+            intervals[p] = interval;
+            lbound += priority;
+        }
+        if (total === 0)    // queue is empty
+            return null;
+        else {
+            let n = this.getRandomInt(0, total);    // choose a number in [0, total)
+            for (let p in intervals) {
+                let interval = intervals[p];
+                if (n >= interval.lbound && n < interval.ubound) {
+                    return parseInt(p);
+                }
+            }
+            return null;
+        }
+    }
+    private randomlyPickJob(q: {[jobId: string]: ITaskItem[]}) : number {
+        let jobIds:number[];
+        for (let j in q) {
+            let jobId = parseInt(j);
+            jobIds.push(jobId);
+        }
+        let idx = this.getRandomInt(0, jobIds.length);
+        return jobIds[idx];
+    }
     dequeue(maxToDequeue: number) : ITaskItemDispatch[] {
         let items: ITaskItemDispatch[] = [];
-        // TODO: this.__numtasks -=
-        return (items.length > 0 ? items : null);
+        while (this.__numtasks > 0 && items.length < maxToDequeue) {
+            let priority = this.chooseByPriority();
+            let p = priority.toString();
+            let jobId = this.randomlyPickJob(this.__queue[p]);
+            let j = jobId.toString();
+            let ti = this.__queue[p][j].shift();
+            if (this.__queue[p][j].length === 0)
+                delete this.__queue[p][j];
+            if (JSON.stringify(this.__queue[p]) === '{}')
+                delete this.__queue[p];
+            let task: ITaskItemDispatch = {
+                j: ti.j
+                ,t: ti.t
+                ,r: ti.r
+                ,priority: priority
+            };
+            items.push(task);
+            this.__numtasks--;
+        }
+        if (items.length > 0) {
+            this.emit('changed');
+            return items;
+        } else
+            return null;
     }
     toJSON(): IQueueJSON {
         return {numTasks: this.__numtasks};
@@ -221,6 +274,8 @@ class Queue extends events.EventEmitter {
 }
 
 export class Dispatcher extends events.EventEmitter {
+    private __queueClosed: boolean = false;
+    private __dispatchEnabled: boolean = true;
     private __numOutstandingAcks: number = 0;
     private __nodes: Nodes;
     private __queue: Queue;
@@ -239,6 +294,24 @@ export class Dispatcher extends events.EventEmitter {
         this.__nodes.on('more_cpus_available', () => {
             this.dispatchTasksIfNecessary();
         });
+    }
+
+    get queueClosed() : boolean {return this.__queueClosed;}
+    set queueClosed(value: boolean) {
+        if (this.__queueClosed != value) {
+            this.__queueClosed = value;
+            this.emit('changed');
+        }
+    }
+
+    get dispatchEnabled() : boolean {return this.__dispatchEnabled;}
+    set dispatchEnabled(value: boolean) {
+        if (this.__dispatchEnabled != value) {
+            this.__dispatchEnabled = value;
+            this.emit('changed');
+            if (this.__dispatchEnabled)
+                this.dispatchTasksIfNecessary();
+        }
     }
 
     get dispatching(): boolean {return this.__numOutstandingAcks > 0;}
@@ -260,8 +333,47 @@ export class Dispatcher extends events.EventEmitter {
     }
 
     private randomlySelectCPUs(cpus: ICPUItem[], numToPick: number) : ICPUItem[] {
-        // TODO:
-        return null;
+		// pre-condition:
+		// 1. availableCPUs.length > 0
+		// 2. numToPick > 0
+		// 3. availableCPUs.length >= numToPick
+		
+		// re-organize cpus by node name
+		/////////////////////////////////////////////////////////////////////
+		let cpusByHost:{[host:string]:ICPUItem[]} = {};
+
+		for (let i in cpus)	 { // for each available cpu
+			let cpu = cpus[i];
+			let host = cpu.host;
+			if (!cpusByHost[host]) cpusByHost[host] = [];
+			cpusByHost[host].push(cpu);
+		}
+		/////////////////////////////////////////////////////////////////////
+		
+		// get all the unique host names
+		/////////////////////////////////////////////////////////////////////
+		var hosts: string[] = [];
+		for (var host in cpusByHost)
+			hosts.push(host);
+		/////////////////////////////////////////////////////////////////////
+		
+		// randomly shuffle the hosts
+		hosts.sort(function() {return 0.5 - Math.random()});
+		
+		let cpusPicked: ICPUItem[] = [];
+		let iter = 0;	// iterator over the node names array
+		let i = numToPick;
+		while (i > 0) {
+			let host = hosts[iter];
+			if (cpusByHost[host].length > 0) {
+				let cpu = cpusByHost[host].shift();
+				cpusPicked.push(cpu);
+				i--;
+			}
+			iter++;
+			if (iter == hosts.length) iter = 0;
+		}
+		return cpusPicked;
     }
     private dispathTaskToNode(host: string, task: ITaskItem, done: (err: any) => void) {
         this.__taskDispatcher(host, task, done);
@@ -269,7 +381,7 @@ export class Dispatcher extends events.EventEmitter {
     private dispatchTasksIfNecessary() : void {
         let availableCPUs: ICPUItem[] = null;
         let tasks: ITaskItemDispatch[] = null;
-        if (!this.dispatching && (availableCPUs = this.__nodes.getAvailableCPUs()) && (tasks = this.__queue.dequeue(availableCPUs.length))) {
+        if (this.dispatchEnabled && !this.dispatching && (availableCPUs = this.__nodes.getAvailableCPUs()) && (tasks = this.__queue.dequeue(availableCPUs.length))) {
             //assert(availableCPUs.length>0 && tasks.length > 0 && availableCPUs.length >= tasks.length);
             this.setOutstandingAcks(tasks.length);
             let cpusSelected = this.randomlySelectCPUs(availableCPUs, tasks.length);            //assert(cpusSelected.length == tasks.length);
@@ -309,27 +421,34 @@ export class Dispatcher extends events.EventEmitter {
         done(null, {jobId:1, numTasks: 5});
     }
     submitJob(user: IUser, jobXML: string, done:(err:any, jobId: number) => void): void {
-        this.registerNewJob(user, jobXML, (err:any, job: IRegisteredJob) => {
-            if (!err) {
-                let tasks: ITaskItem[] = [];
-                for (let i:number = 0; i < job.numTasks; i++)
-                    tasks.push({j: job.jobId, t: i});
-                this.__queue.enqueue(user.priority, tasks);
-                // TODO: added to tracked jobs
-                done(null, job.jobId);
-            } else {
-                done(err, null);
-            }
-        });
+        if (this.queueClosed) {
+            done('queue is currently closed', null);
+        } else {
+            this.registerNewJob(user, jobXML, (err:any, job: IRegisteredJob) => {
+                if (!err) {
+                    let tasks: ITaskItem[] = [];
+                    for (let i:number = 0; i < job.numTasks; i++)
+                        tasks.push({j: job.jobId, t: i});
+                    this.__queue.enqueue(user.priority, tasks);
+                    // TODO: added to tracked jobs
+                    done(null, job.jobId);
+                } else {
+                    done(err, null);
+                }
+            });
+        }
+    }
+    onNodeCompleteTask(t: ITaskSummary): void {
+        this.__nodes.decrementCPUUsageCount(t.host);
+        // TODO:
     }
     killJob(jobId: number): void {
-    }
-    ackTaskReceived(task: ITaskItem): void {
-
     }
     toJSON(): IDispatcherJSON {
         return {
             nodes: this.__nodes.toJSON()
+            ,queueClosed: this.queueClosed
+            ,dispatchEnabled: this.dispatchEnabled
             ,numTasksInQueue: this.__queue.toJSON().numTasks
             ,dispatching: this.dispatching
             ,numOutstandingAcks: this.__numOutstandingAcks
