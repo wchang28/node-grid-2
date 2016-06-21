@@ -7,6 +7,11 @@ class Nodes extends events.EventEmitter {
     }
 }
 
+export interface IUser {
+    userId: string;
+    priority: number;
+}
+
 export interface ITask {
     cmd: string;
     cookie?: string
@@ -32,7 +37,7 @@ class Queue extends events.EventEmitter {
     constructor() {
         super();
     }
-    enqueue(tasks: ITaskId[]) : void {
+    enqueue(priority:number, tasks: ITaskId[]) : void {
         this.emit('enqueued');
         this.emit('changed');
     }
@@ -54,13 +59,19 @@ export class Dispatcher extends events.EventEmitter {
             this.emit('changed');
         });
     }
-    submitJob(user:any, job: IJob): void {
-        let tasks: ITaskId[] = [];
-        for (let i in job.tasks)
-            tasks.push({jobId: 1, taskNo: parseInt(i)});
-        this.__queue.enqueue(tasks);
+    private registerNewJob(user: IUser, job: IJob, done:(err:any, jobId: number) => void): void {
+        // TODO:
+        done(null, 1);
     }
-    killJob(user:any, jobId: number): void {
+    submitJob(user: IUser, job: IJob): void {
+        this.registerNewJob(user, job, (err:any, jobId: number) => {
+            let tasks: ITaskId[] = [];
+            for (let i in job.tasks)
+                tasks.push({jobId: jobId, taskNo: parseInt(i)});
+            this.__queue.enqueue(user.priority, tasks);
+        });
+    }
+    killJob(user:IUser, jobId: number): void {
         
     }
     ackTaskReceived(task: ITaskId): void {
