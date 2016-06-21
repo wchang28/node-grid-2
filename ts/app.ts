@@ -31,7 +31,7 @@ adminApp.use(bp);
 nodeApp.use(bp);
 
 let g: IGlobal = {
-    dispatcher: new Dispatcher()
+    dispatcher: new Dispatcher(null)
 };
 
 clientApp.set("global", g);

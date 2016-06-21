@@ -43,6 +43,10 @@ interface IQueueJSON {
     numTasks: number;
 }
 
+export interface IHostTaskDispatcher {
+    (host: string, task: ITaskItem, done: (err: any) => void) : void;
+}
+
 export interface IDispatcherJSON {
     numTasksInQueue: number;
     dispatching: boolean;
@@ -85,7 +89,7 @@ export class Dispatcher extends events.EventEmitter {
     private __numOutstandingAcks: number = 0;
     private __nodes: Nodes;
     private __queue: Queue;
-    constructor() {
+    constructor(private __taskDispatcher: IHostTaskDispatcher) {
         super();
         this.__queue = new Queue();
         this.__queue.on('enqueued', () => {
@@ -118,8 +122,8 @@ export class Dispatcher extends events.EventEmitter {
         // TODO:
         return null;
     }
-    private dispathTaskToNode(host: string, task: ITaskItemDispatch, done: (err: any) => void) {
-        // TODO:
+    private dispathTaskToNode(host: string, task: ITaskItem, done: (err: any) => void) {
+        this.__taskDispatcher(host, task, done);
     }
     private dispatchTasksIfNecessary() : void {
         let availableCPUs: ICPUItem[] = null;
@@ -164,14 +168,18 @@ export class Dispatcher extends events.EventEmitter {
     }
     submitJob(user: IUser, jobXML: string): void {
         this.registerNewJob(user, jobXML, (err:any, job: IRegisteredJob) => {
-            let tasks: ITaskItem[] = [];
-            for (let i = 0; i < job.numTasks; i++)
-                tasks.push({j: job.jobId, t: i});
-            this.__queue.enqueue(user.priority, tasks);
+            if (!err) {
+                let tasks: ITaskItem[] = [];
+                for (let i = 0; i < job.numTasks; i++)
+                    tasks.push({j: job.jobId, t: i});
+                this.__queue.enqueue(user.priority, tasks);
+            } else {
+                // TODO:
+                ;
+            }
         });
     }
-    killJob(user:IUser, jobId: number): void {
-        
+    killJob(jobId: number): void {
     }
     ackTaskReceived(task: ITaskItem): void {
 
