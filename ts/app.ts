@@ -18,7 +18,7 @@ let $J = ajaxon($);
 
 let clientApp = express();  // client facing app
 let adminApp = express();   // admin web app
-let nodeApp = express();    // node facing app
+let nodeApp = express();   // node facing app
 
 import nc = require('no-cache-express');
 clientApp.use(nc);
