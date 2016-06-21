@@ -272,8 +272,7 @@ export class Dispatcher extends events.EventEmitter {
         if (!this.dispatching && (availableCPUs = this.__nodes.getAvailableCPUs()) && (tasks = this.__queue.dequeue(availableCPUs.length))) {
             //assert(availableCPUs.length>0 && tasks.length > 0 && availableCPUs.length >= tasks.length);
             this.setOutstandingAcks(tasks.length);
-            let cpusSelected = this.randomlySelectCPUs(availableCPUs, tasks.length);
-            //assert(cpusSelected.length == tasks.length);
+            let cpusSelected = this.randomlySelectCPUs(availableCPUs, tasks.length);            //assert(cpusSelected.length == tasks.length);
             let getDispatchDoneHandler = (i: number) : (err: any) => void => {
                 return (err: any): void => {
                     this.decrementOutstandingAcks();
