@@ -281,11 +281,10 @@ export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
     private __numOutstandingAcks: number = 0;
-    private __nodes: Nodes;
-    private __queue: Queue;
+    private __nodes: Nodes = new Nodes();
+    private __queue: Queue = new Queue();
     constructor(private __taskDispatcher: IHostTaskDispatcher) {
         super();
-        this.__queue = new Queue();
         this.__queue.on('enqueued', () => {
             this.dispatchTasksIfNecessary();
         });
