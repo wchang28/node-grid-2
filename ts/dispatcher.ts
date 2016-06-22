@@ -33,6 +33,11 @@ interface ICPUItem {
     conn_id: string;
 }
 
+export interface INodeReady {
+    conn_id: string;
+    numCPUs: number;
+}
+
 interface IRegisteredJob {
     jobId: number;
     numTasks: number;
@@ -277,6 +282,8 @@ class Queue extends events.EventEmitter {
     }
 }
 
+// will emit the following events
+// 1. changed
 export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
@@ -441,6 +448,9 @@ export class Dispatcher extends events.EventEmitter {
             });
         }
     }
+    addNewNode(newNode: INode) : void {this.__nodes.addNewNode(newNode);}
+    removeNode(conn_id: string) : void {this.__nodes.removeNode(conn_id);}
+    markNodeReady(nodeReady: INodeReady) : void {this.__nodes.markNodeReady(nodeReady.conn_id, nodeReady.numCPUs);}
     onNodeCompleteTask(t: ITaskSummary): void {
         this.__nodes.decrementCPUUsageCount(t.host);
         // TODO:

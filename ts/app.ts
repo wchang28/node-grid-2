@@ -5,7 +5,9 @@ import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import {IGlobal} from "./global";
-import {Dispatcher} from './dispatcher';
+import {Dispatcher, ITaskItem, IHostTaskDispatcher} from './dispatcher';
+
+import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 
 /*
 var $ = require('jquery-no-dom');
@@ -30,8 +32,21 @@ clientApp.use(bp);
 adminApp.use(bp);
 nodeApp.use(bp);
 
+let hd: IHostTaskDispatcher = (conn_id: string, task: ITaskItem, done: (err: any) => void) : void => {
+    let msg = {
+        event: 'launch_task'
+        ,content: task
+    };
+    nodeAppConnectionsManager.injectMessage('/topic/node/' + conn_id, {}, msg,  done);
+};
+
+let dispatcher = new Dispatcher(hd);
+dispatcher.on('changed', ()=> {
+    let json = dispatcher.toJSON();
+});
+
 let g: IGlobal = {
-    dispatcher: new Dispatcher(null)
+    dispatcher
 };
 
 clientApp.set("global", g);
@@ -39,6 +54,10 @@ adminApp.set("global", g);
 nodeApp.set("global", g);
 
 clientApp.use('/client-app', require(path.join(__dirname, 'client-app')));
-nodeApp.use('/node-app', require(path.join(__dirname, 'node-app')));
+nodeApp.use('/node-app', nodeAppRouter);
+
+// /node-app/events/event_stream
+// /client-app/events/event_stream
+// /admin-app/events/event_stream
 
 adminApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
