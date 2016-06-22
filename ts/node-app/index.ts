@@ -35,6 +35,7 @@ topicRouter.eventEmitter.on('client_cmd', (params: CommandEventParams) => {
     let dispatcher = getDispatcher(params.req);
     if (params.cmd === 'send') {
         //let msg = params.data;
+        // node ready and task completion
         ;
     }
 });
