@@ -6,16 +6,18 @@ export interface IUser {
     priority: number;
 }
 
-export interface ITaskItem {
+export interface ITask {
     j: number;
     t: number;
+}
+
+interface ITaskItem extends ITask {
     r?: number; // number of retries
 }
 
-export interface ITaskSummary {
-    j: number;
-    t: number;
-    host: string;
+export interface ITaskCompletion extends ITask {
+    conn_id: string;
+    // TODO:
 }
 
 export interface INode {
@@ -52,7 +54,7 @@ interface IQueueJSON {
 }
 
 export interface IHostTaskDispatcher {
-    (conn_id: string, task: ITaskItem, done: (err: any) => void) : void;
+    (conn_id: string, task: ITask, done: (err: any) => void) : void;
 }
 
 export interface IDispatcherJSON {
@@ -451,8 +453,8 @@ export class Dispatcher extends events.EventEmitter {
     addNewNode(newNode: INode) : void {this.__nodes.addNewNode(newNode);}
     removeNode(conn_id: string) : void {this.__nodes.removeNode(conn_id);}
     markNodeReady(nodeReady: INodeReady) : void {this.__nodes.markNodeReady(nodeReady.conn_id, nodeReady.numCPUs);}
-    onNodeCompleteTask(t: ITaskSummary): void {
-        this.__nodes.decrementCPUUsageCount(t.host);
+    onNodeCompleteTask(tc: ITaskCompletion): void {
+        this.__nodes.decrementCPUUsageCount(tc.conn_id);
         // TODO:
     }
     killJob(jobId: number): void {

@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import {IGlobal} from "./global";
-import {Dispatcher, ITaskItem, IHostTaskDispatcher} from './dispatcher';
+import {Dispatcher, ITask, IHostTaskDispatcher} from './dispatcher';
 
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 
@@ -32,7 +32,7 @@ clientApp.use(bp);
 adminApp.use(bp);
 nodeApp.use(bp);
 
-let hd: IHostTaskDispatcher = (conn_id: string, task: ITaskItem, done: (err: any) => void) : void => {
+let hd: IHostTaskDispatcher = (conn_id: string, task: ITask, done: (err: any) => void) : void => {
     let msg = {
         event: 'launch_task'
         ,content: task
