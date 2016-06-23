@@ -43,9 +43,9 @@ function killProcessesTree(pids:number[]) {
     }
 }
 
-msgBorker.on('connect', (conn_id:string) : void => {
-    console.log('connected: conn_id=' + conn_id);
-    let sub_id = msgBorker.subscribe('/topic/node/' + conn_id
+msgBorker.on('connect', (nodeId:string) : void => {
+    console.log('connected: nodeId=' + nodeId);
+    let sub_id = msgBorker.subscribe('/topic/node/' + nodeId
     ,(msg: IMessage): void => {
          console.log('msg-rcvd: ' + JSON.stringify(msg));
          let gMsg: GridMessage = msg.body;
