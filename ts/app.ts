@@ -16,10 +16,6 @@ interface IXMLExtendedBodyParser {
     xml: (options:any) => express.RequestHandler;
 }
 
-function getXMLExtendedBodyParser(bodyParser: any) : IXMLExtendedBodyParser {
-    let x:IXMLExtendedBodyParser = bodyParser;
-    return x;
-}
 /*
 var $ = require('jquery-no-dom');
 import ajaxon = require('ajaxon');
@@ -43,8 +39,7 @@ clientApp.use(bpj);
 adminApp.use(bpj);
 nodeApp.use(bpj);
 
-let bodyParserX = getXMLExtendedBodyParser(bodyParser);
-let bpx = bodyParserX.xml({"limit":"999mb"});           // xml body middleware
+let bpx = (<IXMLExtendedBodyParser>(<any>(bodyParser))).xml({"limit":"999mb"}); // xml body middleware
 clientApp.use(bpx);
 
 let hd: IHostTaskDispatcher = (nodeId: string, task: ITask, done: (err: any) => void) : void => {
