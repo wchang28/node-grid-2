@@ -9,6 +9,7 @@ import {GridMessage, ITask, IUser} from "./messaging";
 import {Dispatcher, IHostTaskDispatcher} from './dispatcher';
 
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
+import {Router as clientAppRouter} from './client-app';
 
 /*
 var $ = require('jquery-no-dom');
@@ -71,7 +72,7 @@ function getAppAuthorized(appRequireAdmin: boolean) {
     };
 }
 
-clientApp.use('/client-app', getAppAuthorized(false), require(path.join(__dirname, 'client-app')));
+clientApp.use('/client-app', getAppAuthorized(false), clientAppRouter);
 nodeApp.use('/node-app', nodeAppRouter);
 
 // /node-app/events/event_stream
