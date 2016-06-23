@@ -77,7 +77,7 @@ class Nodes extends events.EventEmitter {
     }
     // returen true if node is available for task dispatching
     private nodeActive(node: INodeItem): boolean {
-        return (node.enabled && node.numCPUs != null);
+        return (node.enabled && typeof node.numCPUs === 'number' && node.numCPUs > 0);
     }
     incrementCPUUsageCount(conn_id: string) {
         let node = this.__nodes[conn_id];
