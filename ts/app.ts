@@ -10,12 +10,6 @@ import {Dispatcher, IHostTaskDispatcher} from './dispatcher';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientAppRouter} from './client-app';
 
-/*
-var $ = require('jquery-no-dom');
-import ajaxon = require('ajaxon');
-let $J = ajaxon($);
-*/
-
 //let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 //let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
@@ -66,7 +60,6 @@ let g: IGlobal = {
 clientApp.set("global", g);
 adminApp.set("global", g);
 nodeApp.set("global", g);
-
 
 function getAppAuthorized(appRequireAdmin: boolean) {
     return (req: express.Request, res: express.Response, next: express.NextFunction): void => {
