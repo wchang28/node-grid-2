@@ -4,17 +4,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
-require('body-parser-xml')(bodyParser);
 import {IGlobal} from "./global";
 import {GridMessage, ITask, IUser} from "./messaging";
 import {Dispatcher, IHostTaskDispatcher} from './dispatcher';
-
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientAppRouter} from './client-app';
-
-interface IXMLExtendedBodyParser {
-    xml: (options:any) => express.RequestHandler;
-}
 
 /*
 var $ = require('jquery-no-dom');
@@ -39,7 +33,16 @@ clientApp.use(bpj);
 adminApp.use(bpj);
 nodeApp.use(bpj);
 
-let bpx = (<IXMLExtendedBodyParser>(<any>(bodyParser))).xml({"limit":"999mb"}); // xml body middleware
+let bpx = bodyParser.text({
+    "limit":"999mb"
+    ,"type": (req: express.Request) : boolean => {
+        let contentType = req.headers['content-type'];
+        if (contentType.match(/text\/xml/gi) || contentType.match(/application\/xml/gi) || contentType.match(/application\/rss+xml/gi))
+            return true;
+        else
+            return false;
+    }
+}); // xml body middleware
 clientApp.use(bpx);
 
 let hd: IHostTaskDispatcher = (nodeId: string, task: ITask, done: (err: any) => void) : void => {
@@ -127,5 +130,16 @@ nodeAppServer.listen(nodeAppPort, nodeAppHost, () => {
 	let host = nodeAppServer.address().address;
 	let port = nodeAppServer.address().port;
 	// console.log('app server listening at %s://%s:%s', (config.https ? 'https' : 'http'), host, port);
-    console.log('app server listening at %s://%s:%s', 'http', host, port);
+    console.log('node app server listening at %s://%s:%s', 'http', host, port);
+});
+
+let clientAppServer = http.createServer(clientApp);
+let clientAppPort = 26355;
+let clientAppHost = "127.0.0.1";
+
+clientAppServer.listen(clientAppPort, clientAppHost, () => {
+	let host = clientAppServer.address().address;
+	let port = clientAppServer.address().port;
+	// console.log('app server listening at %s://%s:%s', (config.https ? 'https' : 'http'), host, port);
+    console.log('client app server listening at %s://%s:%s', 'http', host, port);
 });
