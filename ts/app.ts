@@ -42,7 +42,8 @@ let hd: IHostTaskDispatcher = (conn_id: string, task: ITask, done: (err: any) =>
 
 let dispatcher = new Dispatcher(hd);
 dispatcher.on('changed', ()=> {
-    let json = dispatcher.toJSON();
+    let o = dispatcher.toJSON();
+    console.log(JSON.stringify(o));
 });
 
 let g: IGlobal = {
@@ -61,3 +62,43 @@ nodeApp.use('/node-app', nodeAppRouter);
 // /admin-app/events/event_stream
 
 adminApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
+
+/*
+let server = null;
+let wsConfig = null;
+
+if (config.https) {
+	wsConfig = config.https;
+	let sslConfig = wsConfig['ssl'];
+	let private_key_file = sslConfig["private_key_file"];
+	let certificate_file = sslConfig["certificate_file"];
+	let ca_files = sslConfig["ca_files"];
+	let privateKey  = fs.readFileSync(private_key_file, 'utf8');
+	let certificate = fs.readFileSync(certificate_file, 'utf8');
+	let credentials = {key: privateKey, cert: certificate};
+	if (ca_files && ca_files.length > 0) {
+		let ca = [];
+		for (var i in ca_files)
+			ca.push(fs.readFileSync(ca_files[i], 'utf8'));
+		credentials["ca"] = ca;
+	}
+	server = https.createServer(credentials, app);
+} else {
+	wsConfig = config.http;
+	server = http.createServer(app);
+}
+
+let port = (wsConfig['port'] ? wsConfig['port'] : 81);
+let host = (wsConfig['host'] ? wsConfig['host'] : "127.0.0.1");	
+*/
+
+let nodeServer = http.createServer(nodeApp);
+let port = 26354;
+let host = "127.0.0.1";
+
+nodeServer.listen(port, host, () => {
+	let host = nodeServer.address().address;
+	let port = nodeServer.address().port;
+	// console.log('app server listening at %s://%s:%s', (config.https ? 'https' : 'http'), host, port);
+    console.log('app server listening at %s://%s:%s', 'http', host, port);
+});
