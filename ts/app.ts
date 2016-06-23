@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import {IGlobal} from "./global";
-import {Dispatcher, ITask, IHostTaskDispatcher} from './dispatcher';
+import {Dispatcher, ITask, IHostTaskDispatcher, IUser} from './dispatcher';
 
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 
@@ -54,7 +54,23 @@ clientApp.set("global", g);
 adminApp.set("global", g);
 nodeApp.set("global", g);
 
-clientApp.use('/client-app', require(path.join(__dirname, 'client-app')));
+function getAppAuthorized(appRequireAdmin: boolean) {
+    return (req: express.Request, res: express.Response, next: express.NextFunction): void => {
+        // TODO:
+        /////////////////////////////////////////////////////////////////
+        // 1. verify user using token in the header
+        // 2. get user profile with prioity and admin flag
+        let user:IUser = {
+            userId: 'wchang'
+            ,priority: 5
+        }
+        req["user"] = user;
+        next();
+        /////////////////////////////////////////////////////////////////
+    };
+}
+
+clientApp.use('/client-app', getAppAuthorized(false), require(path.join(__dirname, 'client-app')));
 nodeApp.use('/node-app', nodeAppRouter);
 
 // /node-app/events/event_stream

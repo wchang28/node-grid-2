@@ -432,11 +432,11 @@ export class Dispatcher extends events.EventEmitter {
         } else {
             this.registerNewJob(user, jobXML, (err:any, job: IRegisteredJob) => {
                 if (!err) {
+                    // TODO: added to tracked jobs
                     let tasks: ITaskItem[] = [];
                     for (let i:number = 0; i < job.numTasks; i++)
                         tasks.push({j: job.jobId, t: i});
                     this.__queue.enqueue(user.priority, tasks);
-                    // TODO: added to tracked jobs
                     done(null, job.jobId);
                 } else {
                     done(err, null);
