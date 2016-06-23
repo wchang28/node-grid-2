@@ -29,8 +29,9 @@ interface IQueueJSON {
     numTasks: number;
 }
 
-export interface IHostTaskDispatcher {
-    (nodeId: string, task: ITask, done: (err: any) => void) : void;
+export interface INodeMessaging {
+    dispatchTaskToNode: (nodeId: string, task: ITask, done: (err: any) => void) => void;
+    killProcessesTree: (nodeId: string, pids:number[], done: (err: any) => void) => void;
 }
 
 export interface IDispatcherJSON {
@@ -269,7 +270,7 @@ export class Dispatcher extends events.EventEmitter {
     private __numOutstandingAcks: number = 0;
     private __nodes: Nodes = new Nodes();
     private __queue: Queue = new Queue();
-    constructor(private __taskDispatcher: IHostTaskDispatcher) {
+    constructor(private __nodeMessaging: INodeMessaging) {
         super();
         this.__queue.on('enqueued', () => {
             this.dispatchTasksIfNecessary();
@@ -365,7 +366,7 @@ export class Dispatcher extends events.EventEmitter {
 		return cpusPicked;
     }
     private dispathTaskToNode(nodeId: string, task: ITaskItem, done: (err: any) => void) {
-        this.__taskDispatcher(nodeId, task, done);
+        this.__nodeMessaging.dispatchTaskToNode(nodeId, task, done);
     }
     private dispatchTasksIfNecessary() : void {
         let availableCPUs: ICPUItem[] = null;

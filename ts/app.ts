@@ -6,7 +6,8 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import {IGlobal} from "./global";
 import {GridMessage, ITask, IUser} from "./messaging";
-import {Dispatcher, IHostTaskDispatcher} from './dispatcher';
+import {Dispatcher, INodeMessaging} from './dispatcher';
+import {NodeMessaging} from './nodeMessaging';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientAppRouter} from './client-app';
 
@@ -39,15 +40,8 @@ let bpx = bodyParser.text({
 }); // xml body middleware
 clientApp.use(bpx);
 
-let hd: IHostTaskDispatcher = (nodeId: string, task: ITask, done: (err: any) => void) : void => {
-    let msg: GridMessage = {
-        type: 'launch-task'
-        ,content: task
-    };
-    nodeAppConnectionsManager.injectMessage('/topic/node/' + nodeId, {}, msg,  done);
-};
-
-let dispatcher = new Dispatcher(hd);
+let nodeMessaging: INodeMessaging = new NodeMessaging(nodeAppConnectionsManager);
+let dispatcher = new Dispatcher(nodeMessaging);
 dispatcher.on('changed', ()=> {
     let o = dispatcher.toJSON();
     console.log(JSON.stringify(o));
