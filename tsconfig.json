@@ -11,6 +11,7 @@
   "files": [
     "./typings/index.d.ts",
     "./ts/app.ts",
+    "./ts/launcherApp.ts",
     "./ts/dispatcher.ts",
     "./ts/global.ts",
     "./ts/client-app/index.ts",
