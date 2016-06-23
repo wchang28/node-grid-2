@@ -34,7 +34,7 @@ nodeApp.use(bp);
 
 let hd: IHostTaskDispatcher = (conn_id: string, task: ITask, done: (err: any) => void) : void => {
     let msg = {
-        event: 'launch_task'
+        type: 'launch-task'
         ,content: task
     };
     nodeAppConnectionsManager.injectMessage('/topic/node/' + conn_id, {}, msg,  done);

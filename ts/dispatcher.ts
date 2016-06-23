@@ -15,11 +15,6 @@ interface ITaskItem extends ITask {
     r?: number; // number of retries
 }
 
-export interface ITaskCompletion extends ITask {
-    conn_id: string;
-    // TODO:
-}
-
 export interface INode {
     conn_id: string;
     host: string;
@@ -36,7 +31,6 @@ interface ICPUItem {
 }
 
 export interface INodeReady {
-    conn_id: string;
     numCPUs: number;
 }
 
@@ -452,9 +446,10 @@ export class Dispatcher extends events.EventEmitter {
     }
     addNewNode(newNode: INode) : void {this.__nodes.addNewNode(newNode);}
     removeNode(conn_id: string) : void {this.__nodes.removeNode(conn_id);}
-    markNodeReady(nodeReady: INodeReady) : void {this.__nodes.markNodeReady(nodeReady.conn_id, nodeReady.numCPUs);}
-    onNodeCompleteTask(tc: ITaskCompletion): void {
-        this.__nodes.decrementCPUUsageCount(tc.conn_id);
+    markNodeReady(conn_id: string, nodeReady: INodeReady) : void {this.__nodes.markNodeReady(conn_id, nodeReady.numCPUs);}
+    onNodeCompleteTask(conn_id: string, task: ITask): void {
+        this.__nodes.decrementCPUUsageCount(conn_id);
+        let jobId = task.j;
         // TODO:
     }
     killJob(jobId: number): void {

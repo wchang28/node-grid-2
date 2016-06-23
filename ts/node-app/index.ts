@@ -3,7 +3,7 @@ import * as core from 'express-serve-static-core';
 import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'sse-topic-router';
 import {getConnectionFactory} from 'sse-topic-conn';
 import {IGlobal} from '../global';
-import {Dispatcher, INode} from '../dispatcher'; 
+import {Dispatcher, INode, INodeReady, ITask} from '../dispatcher'; 
 
 let router = express.Router();
 
@@ -33,10 +33,20 @@ topicRouter.eventEmitter.on('client_disconnect', (params: ConnectedEventParams) 
 
 topicRouter.eventEmitter.on('client_cmd', (params: CommandEventParams) => {
     let dispatcher = getDispatcher(params.req);
+    let conn_id = params.conn_id;
     if (params.cmd === 'send') {
-        //let msg = params.data;
-        // node ready and task completion
-        ;
+        let data = params.data;
+        //console.log('data=' + JSON.stringify(data));
+        if (data.destination === '/topic/dispatcher') {
+            let msg = data.body;
+            if (msg.type === 'node-ready') {
+                let nodeReady: INodeReady = msg.content;
+                dispatcher.markNodeReady(conn_id, nodeReady);
+            } else if (msg.type === 'task-completed') {
+                let task: ITask = msg.content;
+                dispatcher.onNodeCompleteTask(conn_id, task);
+            }
+        }
     }
 });
 
