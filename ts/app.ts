@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
+require('body-parser-xml')(bodyParser);
 import {IGlobal} from "./global";
 import {GridMessage, ITask, IUser} from "./messaging";
 import {Dispatcher, IHostTaskDispatcher} from './dispatcher';
@@ -11,6 +12,14 @@ import {Dispatcher, IHostTaskDispatcher} from './dispatcher';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientAppRouter} from './client-app';
 
+interface IXMLExtendedBodyParser {
+    xml: (options:any) => express.RequestHandler;
+}
+
+function getXMLExtendedBodyParser(bodyParser: any) : IXMLExtendedBodyParser {
+    let x:IXMLExtendedBodyParser = bodyParser;
+    return x;
+}
 /*
 var $ = require('jquery-no-dom');
 import ajaxon = require('ajaxon');
@@ -29,10 +38,14 @@ clientApp.use(nc);
 adminApp.use(nc);
 nodeApp.use(nc);
 
-let bp = bodyParser.json({"limit":"999mb"});
-clientApp.use(bp);
-adminApp.use(bp);
-nodeApp.use(bp);
+let bpj = bodyParser.json({"limit":"999mb"});   // json body middleware
+clientApp.use(bpj);
+adminApp.use(bpj);
+nodeApp.use(bpj);
+
+let bodyParserX = getXMLExtendedBodyParser(bodyParser);
+let bpx = bodyParserX.xml({"limit":"999mb"});           // xml body middleware
+clientApp.use(bpx);
 
 let hd: IHostTaskDispatcher = (nodeId: string, task: ITask, done: (err: any) => void) : void => {
     let msg: GridMessage = {
