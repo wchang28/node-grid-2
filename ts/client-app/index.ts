@@ -20,7 +20,7 @@ function getDispatcher(req:express.Request) : Dispatcher {
 router.post('/submit_job', (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
-    console.log(req.body);
+    //console.log(req.body);
     res.json({});
     /*
     dispatcher.submitJob(user, req.body, (err: any, jobId:number) => {
