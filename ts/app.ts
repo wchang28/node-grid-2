@@ -64,6 +64,7 @@ clientApp.set("global", g);
 adminApp.set("global", g);
 nodeApp.set("global", g);
 
+
 function getAppAuthorized(appRequireAdmin: boolean) {
     return (req: express.Request, res: express.Response, next: express.NextFunction): void => {
         // TODO:
@@ -118,13 +119,13 @@ let port = (wsConfig['port'] ? wsConfig['port'] : 81);
 let host = (wsConfig['host'] ? wsConfig['host'] : "127.0.0.1");	
 */
 
-let nodeServer = http.createServer(nodeApp);
-let port = 26354;
-let host = "127.0.0.1";
+let nodeAppServer = http.createServer(nodeApp);
+let nodeAppPort = 26354;
+let nodeAppHost = "127.0.0.1";
 
-nodeServer.listen(port, host, () => {
-	let host = nodeServer.address().address;
-	let port = nodeServer.address().port;
+nodeAppServer.listen(nodeAppPort, nodeAppHost, () => {
+	let host = nodeAppServer.address().address;
+	let port = nodeAppServer.address().port;
 	// console.log('app server listening at %s://%s:%s', (config.https ? 'https' : 'http'), host, port);
     console.log('app server listening at %s://%s:%s', 'http', host, port);
 });
