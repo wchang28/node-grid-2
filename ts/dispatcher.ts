@@ -1,23 +1,9 @@
 
 import * as events from 'events';
-
-export interface IUser {
-    userId: string;
-    priority: number;
-}
-
-export interface ITask {
-    j: number;
-    t: number;
-}
+import {INode, INodeReady, ITask, IUser} from './messaging';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
-}
-
-export interface INode {
-    conn_id: string;
-    host: string;
 }
 
 export interface INodeItem extends INode {
@@ -27,11 +13,7 @@ export interface INodeItem extends INode {
 }
 
 interface ICPUItem {
-    conn_id: string;
-}
-
-export interface INodeReady {
-    numCPUs: number;
+    nodeId: string;
 }
 
 interface IRegisteredJob {
@@ -48,7 +30,7 @@ interface IQueueJSON {
 }
 
 export interface IHostTaskDispatcher {
-    (conn_id: string, task: ITask, done: (err: any) => void) : void;
+    (nodeId: string, task: ITask, done: (err: any) => void) : void;
 }
 
 export interface IDispatcherJSON {
@@ -71,7 +53,7 @@ interface IInterval {
 // 3. node_added
 // 4. node_removed
 class Nodes extends events.EventEmitter {
-    private __nodes: {[conn_id:string]: INodeItem} = {};
+    private __nodes: {[id:string]: INodeItem} = {};
     constructor() {
         super();
     }
@@ -79,15 +61,15 @@ class Nodes extends events.EventEmitter {
     private nodeActive(node: INodeItem): boolean {
         return (node.enabled && typeof node.numCPUs === 'number' && node.numCPUs > 0);
     }
-    incrementCPUUsageCount(conn_id: string) {
-        let node = this.__nodes[conn_id];
+    incrementCPUUsageCount(id: string) {
+        let node = this.__nodes[id];
         if (node) {
             node.cpusUsed++;
             this.emit('changed');
         }
     }
-    decrementCPUUsageCount(conn_id: string) {
-        let node = this.__nodes[conn_id];
+    decrementCPUUsageCount(id: string) {
+        let node = this.__nodes[id];
         if (node && node.cpusUsed > 0) {
             node.cpusUsed--;
             this.emit('changed');
@@ -95,8 +77,8 @@ class Nodes extends events.EventEmitter {
                 this.emit('more_cpus_available');
         }
     }
-    enableNode(conn_id: string) : void {
-        let node = this.__nodes[conn_id];
+    enableNode(id: string) : void {
+        let node = this.__nodes[id];
         if (node) {
             if (!node.enabled) {
                 node.enabled = true;
@@ -107,8 +89,8 @@ class Nodes extends events.EventEmitter {
             }
         }
     }
-    disableNode(conn_id: string) : void {
-        let node = this.__nodes[conn_id];
+    disableNode(id: string) : void {
+        let node = this.__nodes[id];
         if (node) {
             if (node.enabled) {
                 node.enabled = false;
@@ -117,23 +99,24 @@ class Nodes extends events.EventEmitter {
         }
     }
     addNewNode(newNode: INode) : void {
-        if (!this.__nodes[newNode.conn_id]) {
+        if (!this.__nodes[newNode.id]) {
             let node: INodeItem = {
-                host: newNode.host
-                ,conn_id: newNode.conn_id
+                name: newNode.name
+                ,id: newNode.id
                 ,numCPUs: null
                 ,enabled: true
                 ,cpusUsed: 0
             }
-            this.__nodes[newNode.conn_id] = node;
+            this.__nodes[newNode.id] = node;
             this.emit('changed');
             this.emit('node_added', newNode);
         }
     }
-    markNodeReady(conn_id: string, numCPUs: number) : void {
-        let node = this.__nodes[conn_id];
+    markNodeReady(id: string, nodeReady: INodeReady) : void {
+        let node = this.__nodes[id];
         if (node) {
-            node.numCPUs = numCPUs;
+            node.numCPUs = nodeReady.numCPUs;
+            if (nodeReady.name) node.name = nodeReady.name;
             this.emit('changed');
             if (this.nodeActive(node)) {
                 this.emit('more_cpus_available');
@@ -141,14 +124,14 @@ class Nodes extends events.EventEmitter {
         }        
     }
     // remove the node
-    removeNode(conn_id: string) : void {
-        let node = this.__nodes[conn_id];
+    removeNode(id: string) : void {
+        let node = this.__nodes[id];
         if (node) {
-            delete this.__nodes[conn_id];
+            delete this.__nodes[id];
             this.emit('changed');
             let removedNode: INode = {
-                host: node.host
-                ,conn_id: node.conn_id
+                id: node.id
+                ,name: node.name
             };
             this.emit('node_removed', removedNode);
         }
@@ -160,7 +143,7 @@ class Nodes extends events.EventEmitter {
             if (this.nodeActive(node) && node.numCPUs > node.cpusUsed) {
                 let availableCPUs = node.numCPUs - node.cpusUsed;
                 for (let i:number = 0; i < availableCPUs; i++) {
-                    let cpu: ICPUItem = {conn_id: node.conn_id};
+                    let cpu: ICPUItem = {nodeId: node.id};
                     ret.push(cpu);
                 }
             }
@@ -344,45 +327,45 @@ export class Dispatcher extends events.EventEmitter {
 		// 2. numToPick > 0
 		// 3. availableCPUs.length >= numToPick
 		
-		// re-organize cpus by node name
+		// re-organize cpus by node
 		/////////////////////////////////////////////////////////////////////
-		let cpusByHost:{[conn_id:string]:ICPUItem[]} = {};
+		let cpusByHost:{[nodeId:string]:ICPUItem[]} = {};
 
 		for (let i in cpus)	 { // for each available cpu
 			let cpu = cpus[i];
-			let conn_id = cpu.conn_id;
-			if (!cpusByHost[conn_id]) cpusByHost[conn_id] = [];
-			cpusByHost[conn_id].push(cpu);
+			let nodeId = cpu.nodeId;
+			if (!cpusByHost[nodeId]) cpusByHost[nodeId] = [];
+			cpusByHost[nodeId].push(cpu);
 		}
 		/////////////////////////////////////////////////////////////////////
 		
-		// get all the unique host names
+		// get all the unique node ids
 		/////////////////////////////////////////////////////////////////////
-		var hosts: string[] = [];
-		for (var host in cpusByHost)
-			hosts.push(host);
+		var nodes: string[] = [];
+		for (var nodeId in cpusByHost)
+			nodes.push(nodeId);
 		/////////////////////////////////////////////////////////////////////
 		
-		// randomly shuffle the hosts
-		hosts.sort(function() {return 0.5 - Math.random()});
+		// randomly shuffle the nodes
+		nodes.sort(function() {return 0.5 - Math.random()});
 		
 		let cpusPicked: ICPUItem[] = [];
 		let iter = 0;	// iterator over the node names array
 		let i = numToPick;
 		while (i > 0) {
-			let host = hosts[iter];
-			if (cpusByHost[host].length > 0) {
-				let cpu = cpusByHost[host].shift();
+			let nodeId = nodes[iter];
+			if (cpusByHost[nodeId].length > 0) {
+				let cpu = cpusByHost[nodeId].shift();
 				cpusPicked.push(cpu);
 				i--;
 			}
 			iter++;
-			if (iter == hosts.length) iter = 0;
+			if (iter == nodes.length) iter = 0;
 		}
 		return cpusPicked;
     }
-    private dispathTaskToNode(conn_id: string, task: ITaskItem, done: (err: any) => void) {
-        this.__taskDispatcher(conn_id, task, done);
+    private dispathTaskToNode(nodeId: string, task: ITaskItem, done: (err: any) => void) {
+        this.__taskDispatcher(nodeId, task, done);
     }
     private dispatchTasksIfNecessary() : void {
         let availableCPUs: ICPUItem[] = null;
@@ -394,7 +377,7 @@ export class Dispatcher extends events.EventEmitter {
             let getDispatchDoneHandler = (i: number) : (err: any) => void => {
                 return (err: any): void => {
                     this.decrementOutstandingAcks();
-                    let conn_id = cpusSelected[i].conn_id;
+                    let nodeId = cpusSelected[i].nodeId;
                     let task = tasks[i];
                     if (err) {
                         // TODO: emit dispatch error event
@@ -407,7 +390,7 @@ export class Dispatcher extends events.EventEmitter {
                             this.__queue.enqueueSingle(task.priority, t);
                         }
                     } else {    // task successful dispatched
-                        this.__nodes.incrementCPUUsageCount(conn_id);
+                        this.__nodes.incrementCPUUsageCount(nodeId);
                     }
                 }
             }
@@ -418,7 +401,7 @@ export class Dispatcher extends events.EventEmitter {
                     task.r = 1;
                 else
                     task.r++;
-                this.dispathTaskToNode(cpu.conn_id, task, getDispatchDoneHandler(parseInt(i)));
+                this.dispathTaskToNode(cpu.nodeId, task, getDispatchDoneHandler(parseInt(i)));
             }
         }
     }
@@ -445,10 +428,10 @@ export class Dispatcher extends events.EventEmitter {
         }
     }
     addNewNode(newNode: INode) : void {this.__nodes.addNewNode(newNode);}
-    removeNode(conn_id: string) : void {this.__nodes.removeNode(conn_id);}
-    markNodeReady(conn_id: string, nodeReady: INodeReady) : void {this.__nodes.markNodeReady(conn_id, nodeReady.numCPUs);}
-    onNodeCompleteTask(conn_id: string, task: ITask): void {
-        this.__nodes.decrementCPUUsageCount(conn_id);
+    removeNode(nodeId: string) : void {this.__nodes.removeNode(nodeId);}
+    markNodeReady(nodeId: string, nodeReady: INodeReady) : void {this.__nodes.markNodeReady(nodeId, nodeReady);}
+    onNodeCompleteTask(nodeId: string, task: ITask): void {
+        this.__nodes.decrementCPUUsageCount(nodeId);
         let jobId = task.j;
         // TODO:
     }

@@ -3,7 +3,8 @@ import * as core from 'express-serve-static-core';
 import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'sse-topic-router';
 import {getConnectionFactory} from 'sse-topic-conn';
 import {IGlobal} from '../global';
-import {Dispatcher, INode, INodeReady, ITask} from '../dispatcher'; 
+import {Dispatcher} from '../dispatcher'; 
+import {GridMessage, INode, INodeReady, ITask} from '../messaging';
 
 let router = express.Router();
 
@@ -21,7 +22,7 @@ let getDispatcher = (req:any) : Dispatcher => {
 topicRouter.eventEmitter.on('client_connect', (params: ConnectedEventParams) : void => {
     console.log('node ' + params.conn_id + ' @ ' + params.remoteAddress + ' connected to the SSE topic endpoint');
     let dispatcher = getDispatcher(params.req);
-    let node:INode = {conn_id: params.conn_id, host: params.remoteAddress};
+    let node:INode = {id: params.conn_id, name: params.remoteAddress};
     dispatcher.addNewNode(node);
 });
 
@@ -33,18 +34,18 @@ topicRouter.eventEmitter.on('client_disconnect', (params: ConnectedEventParams) 
 
 topicRouter.eventEmitter.on('client_cmd', (params: CommandEventParams) => {
     let dispatcher = getDispatcher(params.req);
-    let conn_id = params.conn_id;
+    let nodeId = params.conn_id;
     if (params.cmd === 'send') {
         let data = params.data;
         //console.log('data=' + JSON.stringify(data));
         if (data.destination === '/topic/dispatcher') {
-            let msg = data.body;
+            let msg:GridMessage = data.body;
             if (msg.type === 'node-ready') {
                 let nodeReady: INodeReady = msg.content;
-                dispatcher.markNodeReady(conn_id, nodeReady);
-            } else if (msg.type === 'task-completed') {
+                dispatcher.markNodeReady(nodeId, nodeReady);
+            } else if (msg.type === 'task-complete') {
                 let task: ITask = msg.content;
-                dispatcher.onNodeCompleteTask(conn_id, task);
+                dispatcher.onNodeCompleteTask(nodeId, task);
             }
         }
     }

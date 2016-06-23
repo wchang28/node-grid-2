@@ -5,7 +5,8 @@ import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import {IGlobal} from "./global";
-import {Dispatcher, ITask, IHostTaskDispatcher, IUser} from './dispatcher';
+import {GridMessage, ITask, IUser} from "./messaging";
+import {Dispatcher, IHostTaskDispatcher} from './dispatcher';
 
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 
@@ -32,12 +33,12 @@ clientApp.use(bp);
 adminApp.use(bp);
 nodeApp.use(bp);
 
-let hd: IHostTaskDispatcher = (conn_id: string, task: ITask, done: (err: any) => void) : void => {
-    let msg = {
+let hd: IHostTaskDispatcher = (nodeId: string, task: ITask, done: (err: any) => void) : void => {
+    let msg: GridMessage = {
         type: 'launch-task'
         ,content: task
     };
-    nodeAppConnectionsManager.injectMessage('/topic/node/' + conn_id, {}, msg,  done);
+    nodeAppConnectionsManager.injectMessage('/topic/node/' + nodeId, {}, msg,  done);
 };
 
 let dispatcher = new Dispatcher(hd);
