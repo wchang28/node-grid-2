@@ -29,4 +29,16 @@ export interface IJobProgress {
     numTasks: number;
     numTasksFinished: number;
     success: boolean;
-} 
+}
+
+export interface ITaskExecParams {
+    cmd: string;
+    stdinFile: string;
+}
+
+export interface ITaskExecResult {
+    pid: number;
+    retCode: number;
+    stdout: string;
+    stderr: string;
+}

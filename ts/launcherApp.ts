@@ -1,12 +1,22 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
-import {GridMessage, INodeReady, ITask} from './messaging';
+import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult} from './messaging';
+import {JobDB} from './jobDB';
+import {TaskRunner} from './taskRunner';
 let EventSource = require('eventsource');
 let $ = require('jquery-no-dom');
 
-let url:string = 'http://127.0.0.1:26354/node-app/events/event_stream';
-let eventSourceInitDict = null;
+let configFile = (process.argv.length < 3 ? path.join(__dirname, '../launcher_testing_config.json') : process.argv[2]);
+let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+
+let dispatcherConfig = config["dispatcher"];
+let url:string = dispatcherConfig["eventSourceUrl"];
+let eventSourceInitDict = dispatcherConfig["eventSourceInitDict"];
 let numCPUs:number = 5;
 let nodeName:string = 'Wen Chang';
+
+let jobDB = new JobDB(config.sqlConfig)
 
 let msgBorker = new MsgBroker(() => new MessageClient(EventSource, $, url, eventSourceInitDict) , 10000);
 
@@ -32,8 +42,23 @@ function sendDispatcherTaskComplete(task: ITask, done: (err: any) => void) {
     msgBorker.send('/topic/dispatcher', {}, msg, done);
 }
 
+
 function runTask(task: ITask, done: (err: any) => void) {
-    done(null); // TODO:
+    jobDB.getTaskExecParams(task, nodeName, (err:any, taskExecParams: ITaskExecParams) => {
+        if (err)
+            done(err);
+        else {
+            let taskRunner = new TaskRunner(taskExecParams);
+            taskRunner.on('started', (pid: number) => {
+                jobDB.markTaskStart(task, pid, (err: any) =>{
+
+                });
+            }).on('finished', (taskExecResult: ITaskExecResult) => {
+                jobDB.markTaskEnd(task, taskExecResult, done);
+            });
+            taskRunner.run();
+        }
+    });
 }
 
 function killProcessesTree(pids:number[]) {
