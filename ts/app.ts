@@ -59,10 +59,10 @@ nodeApp.set("global", g);
 adminApp.set("global", g);
 
 function authorizedClient(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    console.log('reaching authorizedClient middleware, url=' + req.baseUrl);
-    console.log('=========================================================');
-    console.log(JSON.stringify(req.headers));
-    console.log('=========================================================');
+    //console.log('reaching authorizedClient middleware, url=' + req.baseUrl);
+    //console.log('=========================================================');
+    //console.log(JSON.stringify(req.headers));
+    //console.log('=========================================================');
 
     // TODO:
     /////////////////////////////////////////////////////////////////

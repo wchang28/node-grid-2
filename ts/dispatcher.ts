@@ -221,7 +221,7 @@ class Queue extends events.EventEmitter {
         }
     }
     private randomlyPickJob(q: {[jobId: string]: ITaskItem[]}) : number {
-        let jobIds:number[];
+        let jobIds:number[] = [];
         for (let j in q) {
             let jobId = parseInt(j);
             jobIds.push(jobId);
