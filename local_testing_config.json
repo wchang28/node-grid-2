@@ -1,3 +1,15 @@
 {
-    
+	"http":
+	{
+		"host": "127.0.0.1"
+		,"port": 23784
+	}
+	,"sqlConfig":
+	{
+		"user": "FKH_Splitting"
+		,"password": "F1r5tk3y2015"
+		,"server": "54.172.213.182"
+		,"database": "master"
+		,"requestTimeout": 120000
+	}
 }

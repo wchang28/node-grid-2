@@ -1,6 +1,6 @@
 
 import * as events from 'events';
-import {INode, INodeReady, ITask, IUser} from './messaging';
+import {INode, INodeReady, ITask, IUser, IRegisteredJob} from './messaging';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -16,11 +16,6 @@ interface ICPUItem {
     nodeId: string;
 }
 
-interface IRegisteredJob {
-    jobId: number;
-    numTasks: number;
-} 
-
 interface ITaskItemDispatch extends ITaskItem {
     priority: number;  // priority
 }
@@ -32,6 +27,10 @@ interface IQueueJSON {
 export interface INodeMessaging {
     dispatchTaskToNode: (nodeId: string, task: ITask, done: (err: any) => void) => void;
     killProcessesTree: (nodeId: string, pids:number[], done: (err: any) => void) => void;
+}
+
+export interface IJobDB {
+    registerNewJob: (user: IUser, jobXML: string, done:(err:any, job: IRegisteredJob) => void) => void;
 }
 
 export interface IDispatcherJSON {
@@ -270,7 +269,7 @@ export class Dispatcher extends events.EventEmitter {
     private __numOutstandingAcks: number = 0;
     private __nodes: Nodes = new Nodes();
     private __queue: Queue = new Queue();
-    constructor(private __nodeMessaging: INodeMessaging) {
+    constructor(private __nodeMessaging: INodeMessaging, private __jobDB: IJobDB) {
         super();
         this.__queue.on('enqueued', () => {
             this.dispatchTasksIfNecessary();
@@ -406,15 +405,11 @@ export class Dispatcher extends events.EventEmitter {
             }
         }
     }
-    private registerNewJob(user: IUser, jobXML: string, done:(err:any, job: IRegisteredJob) => void): void {
-        // TODO:
-        done(null, {jobId:1, numTasks: 5});
-    }
     submitJob(user: IUser, jobXML: string, done:(err:any, jobId: number) => void): void {
         if (this.queueClosed) {
             done('queue is currently closed', null);
         } else {
-            this.registerNewJob(user, jobXML, (err:any, job: IRegisteredJob) => {
+            this.__jobDB.registerNewJob(user, jobXML, (err:any, job: IRegisteredJob) => {
                 if (!err) {
                     // TODO: added to tracked jobs
                     let tasks: ITaskItem[] = [];

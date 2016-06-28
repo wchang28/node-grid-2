@@ -8,12 +8,13 @@ import {IGlobal} from "./global";
 import {GridMessage, ITask, IUser} from "./messaging";
 import {Dispatcher, INodeMessaging} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
+import {JobDB} from './jobDB';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientAppRouter} from './client';
 import {Router as adminRouter} from './admin';
 
-//let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
-//let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
+let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let clientApp = express();  // client facing app
 let nodeApp = express();   // node facing app
@@ -43,7 +44,7 @@ let bpx = bodyParser.text({
 clientApp.use(bpx);
 
 let nodeMessaging: INodeMessaging = new NodeMessaging(nodeAppConnectionsManager);
-let dispatcher = new Dispatcher(nodeMessaging);
+let dispatcher = new Dispatcher(nodeMessaging, new JobDB(config.sqlConfig));
 dispatcher.on('changed', ()=> {
     let o = dispatcher.toJSON();
     console.log(JSON.stringify(o));

@@ -22,3 +22,8 @@ export interface ITask {
     j: number;
     t: number;
 }
+
+export interface IRegisteredJob {
+    jobId: number;
+    numTasks: number;
+} 
