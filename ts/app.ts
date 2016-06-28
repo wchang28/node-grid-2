@@ -93,7 +93,7 @@ adminApp.get('/', (req: express.Request, res: express.Response) => {
     if (state !== '{}') {
         redirectUrl += '#state=' + encodeURIComponent(state);	// pass state to browser application via URL fragment (#)
     }
-    res.redirect(301, redirectUrl);
+    res.redirect(redirectUrl);
 });
 
 clientApp.use('/client', authorizedClient, clientAppRouter);
