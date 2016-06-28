@@ -5,7 +5,7 @@ let $ = require('jquery-no-dom');
 
 let url:string = 'http://127.0.0.1:26354/node-app/events/event_stream';
 let eventSourceInitDict = null;
-let numCPUs:number = 20;
+let numCPUs:number = 5;
 let nodeName:string = 'Wen Chang';
 
 let msgBorker = new MsgBroker(() => new MessageClient(EventSource, $, url, eventSourceInitDict) , 10000);
