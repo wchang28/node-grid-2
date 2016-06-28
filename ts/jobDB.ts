@@ -40,6 +40,7 @@ export class JobDB {
         let params = {
             'jobId': task.j
             ,'taskIndex': task.t
+            ,'pid': result.pid
             ,'retCode': result.retCode
             ,'stdout': result.stdout
             ,'stderr': result.stderr
