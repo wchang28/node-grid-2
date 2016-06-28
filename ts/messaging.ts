@@ -23,7 +23,10 @@ export interface ITask {
     t: number;
 }
 
-export interface IRegisteredJob {
+export interface IJobProgress {
     jobId: number;
+    status: string;
     numTasks: number;
+    numTasksFinished: number;
+    success: boolean;
 } 

@@ -1,4 +1,4 @@
-import {IUser, IRegisteredJob} from './messaging';
+import {IUser, IJobProgress} from './messaging';
 import {SimpleMSSQL} from 'simple-mssql';
 
 export class JobDB {
@@ -6,7 +6,7 @@ export class JobDB {
     constructor(sqlConfig:any) {
         this.ssql = new SimpleMSSQL(sqlConfig); 
     }
-    registerNewJob(user: IUser, jobXML: string, done:(err:any, job: IRegisteredJob) => void) : void {
+    registerNewJob(user: IUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
         this.ssql.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
             if (err) {
                 done(err, null);

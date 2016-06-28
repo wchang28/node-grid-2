@@ -1,6 +1,6 @@
 
 import * as events from 'events';
-import {INode, INodeReady, ITask, IUser, IRegisteredJob} from './messaging';
+import {INode, INodeReady, ITask, IUser, IJobProgress} from './messaging';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -30,7 +30,7 @@ export interface INodeMessaging {
 }
 
 export interface IJobDB {
-    registerNewJob: (user: IUser, jobXML: string, done:(err:any, job: IRegisteredJob) => void) => void;
+    registerNewJob: (user: IUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
 }
 
 export interface IDispatcherJSON {
@@ -409,14 +409,14 @@ export class Dispatcher extends events.EventEmitter {
         if (this.queueClosed) {
             done('queue is currently closed', null);
         } else {
-            this.__jobDB.registerNewJob(user, jobXML, (err:any, job: IRegisteredJob) => {
+            this.__jobDB.registerNewJob(user, jobXML, (err:any, jobProgress: IJobProgress) => {
                 if (!err) {
                     // TODO: added to tracked jobs
                     let tasks: ITaskItem[] = [];
-                    for (let i:number = 0; i < job.numTasks; i++)
-                        tasks.push({j: job.jobId, t: i});
+                    for (let i:number = 0; i < jobProgress.numTasks; i++)
+                        tasks.push({j: jobProgress.jobId, t: i});
                     this.__queue.enqueue(user.priority, tasks);
-                    done(null, job.jobId);
+                    done(null, jobProgress.jobId);
                 } else {
                     done(err, null);
                 }
