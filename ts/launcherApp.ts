@@ -50,7 +50,7 @@ function runTask(task: ITask, done: (err: any) => void) {
         else {
             let taskRunner = new TaskRunner(taskExecParams);
             taskRunner.on('started', (pid: number) => {
-                jobDB.markTaskStart(task, pid, (err: any) =>{
+                jobDB.markTaskStart(task, pid, (err: any) => {
                 });
             }).on('finished', (taskExecResult: ITaskExecResult) => {
                 jobDB.markTaskEnd(task, taskExecResult, done);
