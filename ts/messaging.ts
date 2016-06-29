@@ -33,7 +33,7 @@ export interface IJobProgress {
 
 export interface ITaskExecParams {
     cmd: string;
-    stdinFile: string;
+    stdin: string;
 }
 
 export interface ITaskExecResult {
