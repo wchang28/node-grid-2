@@ -24,6 +24,7 @@
     "no-cache-express": "git+https://github.com/wchang28/no-cache-express.git",
     "simple-mssql": "git+https://github.com/wchang28/simple-mssql.git",
     "sse-topic-conn": "git+https://github.com/wchang28/sse-topic-conn.git",
-    "sse-topic-router": "git+https://github.com/wchang28/sse-topic-router.git"
+    "sse-topic-router": "git+https://github.com/wchang28/sse-topic-router.git",
+    "tree-kill": "^1.1.0"
   }
 }

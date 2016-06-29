@@ -6,6 +6,7 @@ import {JobDB} from './jobDB';
 import {TaskRunner} from './taskRunner';
 let EventSource = require('eventsource');
 let $ = require('jquery-no-dom');
+import treeKill = require('tree-kill')
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../launcher_testing_config.json') : process.argv[2]);
 let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
@@ -63,7 +64,7 @@ function runTask(task: ITask, done: (err: any) => void) {
 function killProcessesTree(pids:number[]) {
     for (let i in pids) {
         let pid = pids[i];
-        // TODO:
+        treeKill(pid, 'SIGKILL');
     }
 }
 

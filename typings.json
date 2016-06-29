@@ -1,7 +1,8 @@
 {
   "name": "node-grid-2",
   "dependencies": {
-    "mime": "registry:npm/mime#1.3.0+20160423043021"
+    "mime": "registry:npm/mime#1.3.0+20160423043021",
+    "tree-kill": "registry:npm/tree-kill#1.1.0+20160610190428"
   },
   "globalDependencies": {
     "body-parser": "registry:dt/body-parser#0.0.0+20160619023215",
