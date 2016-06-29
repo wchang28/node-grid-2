@@ -12,14 +12,32 @@ import treeKill = require('tree-kill');
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../launcher_testing_config.json') : process.argv[2]);
 let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
+function getDefaultNodeName() : string {
+    let interfaces = os.networkInterfaces();
+    let ipv4Addresses:string[] = [];
+    for (let k in interfaces) {
+        for (let k2 in interfaces[k]) {
+            var address = interfaces[k][k2];
+            if (address.family === 'IPv4' && !address.internal) {
+                ipv4Addresses.push(address.address);
+            }
+        }
+    }
+    if (ipv4Addresses.length > 0) {
+        return ipv4Addresses[0];
+    } else {	// no IPv4 address
+        return '{?}';
+    }
+}
+
 let dispatcherConfig = config["dispatcher"];
 let url:string = dispatcherConfig["eventSourceUrl"];
 let eventSourceInitDict = dispatcherConfig["eventSourceInitDict"];
 let cpus = os.cpus();
 let numCPUs:number = (config['numCPUs'] ? config['numCPUs'] : cpus.length - (config['reservedCPUs'] ? config['reservedCPUs'] : 2));
 numCPUs = Math.max(numCPUs, 1);
-console.log('cpus=' + cpus.length + ', numCPUs=' + numCPUs);
-let nodeName:string = 'Wen Chang';
+let nodeName:string = (config["nodeName"] ? config["nodeName"] : getDefaultNodeName());
+console.log('nodeName=' + nodeName + ', cpus=' + cpus.length + ', numCPUs=' + numCPUs);
 
 let jobDB = new JobDB(config.sqlConfig)
 
