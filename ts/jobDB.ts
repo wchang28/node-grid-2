@@ -21,8 +21,24 @@ export class JobDB {
             }
         });
     }
-    getTaskExecParams(task:ITask, nodeName: string, done:(err:any, taskExecParams: ITaskExecParams) => void) : void {
-        this.ssql.execute('[dbo].[stp_NodeJSGridJobTask]', {'jobId': task.j, 'taskIndex': task.t, 'node': nodeName}, (err: any, recordsets: any) : void => {
+    getJobProgress(jobId:number, done:(err:any, jobProgress: IJobProgress) => void) : void {
+        this.ssql.query('select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
+            if (err)
+                done(err, null);
+            else {
+                let ret = recordsets[0][0];
+                done(null, ret);
+            }
+        });
+    }
+    getTaskExecParams(task:ITask, nodeId: string, nodeName: string, done:(err:any, taskExecParams: ITaskExecParams) => void) : void {
+         let params = {
+            'jobId': task.j
+            ,'taskIndex': task.t
+            ,'nodeId': nodeId
+            ,'nodeName': nodeName
+        };       
+        this.ssql.execute('[dbo].[stp_NodeJSGridJobTask]', {'jobId': task.j, 'taskIndex': task.t, 'nodeName': nodeName}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {

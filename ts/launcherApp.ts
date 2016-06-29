@@ -44,8 +44,8 @@ function sendDispatcherTaskComplete(task: ITask, done: (err: any) => void) {
 }
 
 
-function runTask(task: ITask, done: (err: any) => void) {
-    jobDB.getTaskExecParams(task, nodeName, (err:any, taskExecParams: ITaskExecParams) => {
+function nodeRunTask(nodeId:string, task: ITask, done: (err: any) => void) {
+    jobDB.getTaskExecParams(task, nodeId, nodeName, (err:any, taskExecParams: ITaskExecParams) => {
         if (err)
             done(err);
         else {
@@ -76,7 +76,7 @@ msgBorker.on('connect', (nodeId:string) : void => {
          let gMsg: GridMessage = msg.body;
          if (gMsg.type === 'launch-task') {
              let task: ITask = gMsg.content;
-             runTask(task, (err:any) => {
+             nodeRunTask(nodeId, task, (err:any) => {
                  sendDispatcherTaskComplete(task, (err: any): void => {
 
                  });

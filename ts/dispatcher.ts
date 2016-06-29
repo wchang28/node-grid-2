@@ -31,6 +31,7 @@ export interface INodeMessaging {
 
 export interface IJobDB {
     registerNewJob: (user: IUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
+    getJobProgress: (jobId: number, done:(err:any, jobProgress: IJobProgress) => void) => void;
 }
 
 export interface IDispatcherJSON {
@@ -429,7 +430,13 @@ export class Dispatcher extends events.EventEmitter {
     onNodeCompleteTask(nodeId: string, task: ITask): void {
         this.__nodes.decrementCPUUsageCount(nodeId);
         let jobId = task.j;
-        // TODO:
+        this.__jobDB.getJobProgress(jobId, (err:any, jobProgress: IJobProgress) => {
+            if (err) {
+                console.log('!!! Error getting job progress for job ' + jobId.toString() + ': ' + JSON.stringify(err));
+            } else {
+                // TODO:
+            }
+        });
     }
     killJob(jobId: number): void {
     }
