@@ -38,7 +38,7 @@ export class JobDB {
             ,'nodeId': nodeId
             ,'nodeName': nodeName
         };       
-        this.ssql.execute('[dbo].[stp_NodeJSGridJobTask]', {'jobId': task.j, 'taskIndex': task.t, 'nodeName': nodeName}, (err: any, recordsets: any) : void => {
+        this.ssql.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {
