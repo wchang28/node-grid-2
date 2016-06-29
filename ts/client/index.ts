@@ -21,7 +21,28 @@ router.post('/submit_job', (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
     dispatcher.submitJob(user, req.body, (err: any, jobId:number) => {
-        res.json(err ? {err} : {jobId});
+        if (err)
+            res.status(400).json({err});
+        else
+            res.json({jobId});
+    });
+});
+
+function cankillJob(req: express.Request, res: express.Response, next: express.NextFunction) {
+    let dispatcher = getDispatcher(req);
+    let user = getUser(req);
+    // TODO:
+    // return 401
+    next();
+}
+
+router.get('/kill_job', cankillJob, (req: express.Request, res: express.Response) => {
+    let dispatcher = getDispatcher(req);
+    dispatcher.killJob(req.query.jobId, (err: any) => {
+        if (err)
+            res.status(400).json({err});
+        else
+            res.json({});
     });
 });
 

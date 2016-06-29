@@ -31,6 +31,15 @@ export interface IJobProgress {
     success: boolean;
 }
 
+export interface INodeRunningProcess {
+    nodeId: string;
+    pid: number;
+}
+
+export interface IRunningProcessByNode {
+    [nodeId: string]: number[]
+}
+
 export interface ITaskExecParams {
     cmd: string;
     stdin: string;

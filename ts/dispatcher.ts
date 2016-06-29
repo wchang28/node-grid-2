@@ -1,6 +1,6 @@
 
 import * as events from 'events';
-import {INode, INodeReady, ITask, IUser, IJobProgress} from './messaging';
+import {INode, INodeReady, ITask, IUser, IJobProgress, IRunningProcessByNode} from './messaging';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -32,6 +32,7 @@ export interface INodeMessaging {
 export interface IJobDB {
     registerNewJob: (user: IUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobProgress: (jobId: number, done:(err:any, jobProgress: IJobProgress) => void) => void;
+    killJob: (jobId:number, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode) => void) => void;
 }
 
 export interface IDispatcherJSON {
@@ -46,6 +47,14 @@ export interface IDispatcherJSON {
 interface IInterval {
     lbound: number;
     ubound: number;
+}
+
+interface IKillJobCall {
+    ():void
+}
+
+interface IKillJobCallFactory {
+    (jobId:number, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall
 }
 
 // will emit the following events
@@ -257,6 +266,32 @@ class Queue extends events.EventEmitter {
         } else
             return null;
     }
+    clear() {
+        let ps: string[] = [];
+        for (let p in this.__queue)   // for each priority
+            ps.push(p);
+        for (let i in ps) {   // for each priority
+            let p = ps[i];
+            delete this.__queue[p];
+        }
+        this.__numtasks = 0;
+        if (ps.length > 0) this.emit('changed');
+    }
+    clearJobTasks(jobId: number) {
+        let j:string = jobId.toString();
+        let numRemoved:number = 0;
+        for (let p in this.__queue) {   // for each priority
+            if (this.__queue[p][j]) {   // found the job
+                numRemoved = this.__queue[p][j].length;
+                delete this.__queue[p][j];
+                if (JSON.stringify(this.__queue[p]) === '{}')
+                    delete this.__queue[p];
+                break;
+            }
+        }
+        this.__numtasks -= numRemoved;
+        if (numRemoved > 0) this.emit('changed');
+    }
     toJSON(): IQueueJSON {
         return {numTasks: this.__numtasks};
     }
@@ -440,7 +475,31 @@ export class Dispatcher extends events.EventEmitter {
             }
         });
     }
-    killJob(jobId: number): void {
+    killJob(jobId: number, done: (err: any) => void): void {
+        this.__queue.clearJobTasks(jobId);
+        let getKillJobCall : IKillJobCallFactory = (jobId:number, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
+            return () : void => {
+                this.__jobDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode) => {
+                    if (err)
+                        done(err);
+                    else {
+                        if (JSON.stringify(runningProcess) === '{}')    // no more process running
+                            done(null);
+                        else {  // there are tasks still running
+                            for (let nodeId in runningProcess) {    // for each node
+                                let pids = runningProcess[nodeId];
+                                this.__nodeMessaging.killProcessesTree(nodeId, pids, (err: any): void => {});
+                            }
+                            if (tryIndex < maxTries-1)
+                                setTimeout(getKillJobCall(jobId, false, waitMS, maxTries, tryIndex+1, done), waitMS);
+                            else
+                                done(null);
+                        }
+                    }
+                });
+            }
+        }
+        getKillJobCall(jobId, true, 3000, 3, 0, done)();
     }
     toJSON(): IDispatcherJSON {
         return {
