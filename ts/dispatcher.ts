@@ -476,9 +476,11 @@ export class Dispatcher extends events.EventEmitter {
         });
     }
     killJob(jobId: number, done: (err: any) => void): void {
+        console.log('killing job ' + jobId.toString() + '...');
         this.__queue.clearJobTasks(jobId);
         let getKillJobCall : IKillJobCallFactory = (jobId:number, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
             return () : void => {
+                console.log('job ' + jobId.toString() + ' kill poll #' + (tryIndex+1).toString() + '...');
                 this.__jobDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode) => {
                     if (err)
                         done(err);
@@ -493,13 +495,16 @@ export class Dispatcher extends events.EventEmitter {
                             if (tryIndex < maxTries-1)
                                 setTimeout(getKillJobCall(jobId, false, waitMS, maxTries, tryIndex+1, done), waitMS);
                             else
-                                done(null);
+                                done('kill tries max-out');
                         }
                     }
                 });
             }
         }
-        getKillJobCall(jobId, true, 3000, 3, 0, done)();
+        getKillJobCall(jobId, true, 3000, 5, 0, (err: any) => {
+            console.log('job ' + jobId.toString() + ' kill process finished.' + (err ? ' error=' + JSON.stringify(err) : ' job was killed successfully :-)'));
+            done(err);
+        })();
     }
     toJSON(): IDispatcherJSON {
         return {
