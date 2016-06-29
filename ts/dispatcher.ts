@@ -495,7 +495,7 @@ export class Dispatcher extends events.EventEmitter {
                             if (tryIndex < maxTries-1)
                                 setTimeout(getKillJobCall(jobId, false, waitMS, maxTries, tryIndex+1, done), waitMS);
                             else
-                                done('kill tries max-out');
+                                done('kill poll max-out');
                         }
                     }
                 });
