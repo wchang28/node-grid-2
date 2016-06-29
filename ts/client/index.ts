@@ -28,7 +28,7 @@ router.post('/submit_job', (req: express.Request, res: express.Response) => {
     });
 });
 
-function cankillJob(req: express.Request, res: express.Response, next: express.NextFunction) {
+function canKillJob(req: express.Request, res: express.Response, next: express.NextFunction) {
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
     // TODO:
@@ -36,7 +36,7 @@ function cankillJob(req: express.Request, res: express.Response, next: express.N
     next();
 }
 
-router.get('/kill_job', cankillJob, (req: express.Request, res: express.Response) => {
+router.get('/kill_job', canKillJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     dispatcher.killJob(req.query.jobId, (err: any) => {
         if (err)
