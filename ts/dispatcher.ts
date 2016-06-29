@@ -375,12 +375,13 @@ export class Dispatcher extends events.EventEmitter {
             //assert(availableCPUs.length>0 && tasks.length > 0 && availableCPUs.length >= tasks.length);
             this.setOutstandingAcks(tasks.length);
             let cpusSelected = this.randomlySelectCPUs(availableCPUs, tasks.length);            //assert(cpusSelected.length == tasks.length);
+            //console.log('availableCPUs.length=' + availableCPUs.length + ', tasks.length=' +  tasks.length + ', cpusSelected.length=' + cpusSelected.length);
             let getDispatchDoneHandler = (i: number) : (err: any) => void => {
                 return (err: any): void => {
-                    this.decrementOutstandingAcks();
                     let nodeId = cpusSelected[i].nodeId;
                     let task = tasks[i];
                     if (err) {
+                        this.decrementOutstandingAcks();
                         // TODO: emit dispatch error event
                         if (task.r < 3) {
                             let t: ITaskItem = {
@@ -392,6 +393,7 @@ export class Dispatcher extends events.EventEmitter {
                         }
                     } else {    // task successful dispatched
                         this.__nodes.incrementCPUUsageCount(nodeId);
+                        this.decrementOutstandingAcks();
                     }
                 }
             }

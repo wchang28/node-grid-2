@@ -1,3 +1,4 @@
+import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
@@ -6,7 +7,7 @@ import {JobDB} from './jobDB';
 import {TaskRunner} from './taskRunner';
 let EventSource = require('eventsource');
 let $ = require('jquery-no-dom');
-import treeKill = require('tree-kill')
+import treeKill = require('tree-kill');
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../launcher_testing_config.json') : process.argv[2]);
 let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
@@ -14,7 +15,10 @@ let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 let dispatcherConfig = config["dispatcher"];
 let url:string = dispatcherConfig["eventSourceUrl"];
 let eventSourceInitDict = dispatcherConfig["eventSourceInitDict"];
-let numCPUs:number = 5;
+let cpus = os.cpus();
+let numCPUs:number = (config['numCPUs'] ? config['numCPUs'] : cpus.length - (config['reservedCPUs'] ? config['reservedCPUs'] : 2));
+numCPUs = Math.max(numCPUs, 1);
+console.log('cpus=' + cpus.length + ', numCPUs=' + numCPUs);
 let nodeName:string = 'Wen Chang';
 
 let jobDB = new JobDB(config.sqlConfig)
