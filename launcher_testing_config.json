@@ -1,5 +1,6 @@
 {
-	"dispatcher":
+	"reservedCPUs": 1
+	,"dispatcher":
 	{
 		"eventSourceUrl": "http://127.0.0.1:26354/node-app/events/event_stream"
 		,"eventSourceInitDict": null
