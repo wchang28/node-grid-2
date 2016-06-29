@@ -57,7 +57,6 @@ function sendDispatcherNodeReady(done: (err: any) => void) {
 }
 
 function sendDispatcherTaskComplete(task: ITask, done: (err: any) => void) {
-    console.log('sending a task-complete message...');
     let msg: GridMessage = {
         type: 'task-complete'
         ,content: task
@@ -100,7 +99,10 @@ msgBorker.on('connect', (nodeId:string) : void => {
              let task: ITask = gMsg.content;
              nodeRunTask(nodeId, task, (err:any) => {
                  sendDispatcherTaskComplete(task, (err: any): void => {
-
+                    if (err)
+                        console.log('!!! Error sending task-complete message :-(');
+                    else
+                        console.log('task-complete message sent successfully :-)');
                  });
              });
          } else if (gMsg.type === 'kill-processes-tree') {
