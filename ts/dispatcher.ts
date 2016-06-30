@@ -475,6 +475,9 @@ export class Dispatcher extends events.EventEmitter {
             }
         });
     }
+    getJobProgress(jobId: number, done:(err:any, jobProgress: IJobProgress) => void): void {
+        this.__jobDB.getJobProgress(jobId, done);
+    }
     killJob(jobId: number, done: (err: any) => void): void {
         console.log('killing job ' + jobId.toString() + '...');
         this.__queue.clearJobTasks(jobId);
