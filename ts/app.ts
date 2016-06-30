@@ -48,11 +48,22 @@ let dispatcher = new Dispatcher(nodeMessaging, new GridDB(config.sqlConfig));
 dispatcher.on('changed', () => {
     let o = dispatcher.toJSON();
     //console.log(JSON.stringify(o));
+    let topic = '/topic/dispatcher/';
+    // TODO: forward message to admin's connectionManager
 }).on('jobs_tracking_changed', () => {
     let o = dispatcher.trackingJobs;
     //console.log(JSON.stringify(o));
+    let topic = '/topic/dispatcher/';
+    // TODO: forward message to admin's connectionManager
 }).on('job_status_changed', (trackItem: IJobTrackItem) => {
     console.log(JSON.stringify(trackItem));
+    if (trackItem.ncks && trackItem.ncks.length > 0) {
+        for (let i in trackItem.ncks) {
+            let notificationCookie = trackItem.ncks[i];
+            let topic = '/topic/job/status_changed/' + notificationCookie;
+            // TODO: forward message to client's connectionManager
+        }
+    }
 });
 
 let g: IGlobal = {
