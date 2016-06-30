@@ -102,11 +102,11 @@ adminApp.get('/', (req: express.Request, res: express.Response) => {
     res.redirect(redirectUrl);
 });
 
-clientApp.use('/client', authorizedClient, clientAppRouter);
+clientApp.use('/api', authorizedClient, clientAppRouter);
 nodeApp.use('/node-app', nodeAppRouter);
 
 // /node-app/events/event_stream
-// /client/events/event_stream
+// /api/events/event_stream
 // /admin/events/event_stream
 
 adminApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
