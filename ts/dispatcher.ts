@@ -49,6 +49,11 @@ interface IInterval {
     ubound: number;
 }
 
+interface IJobTrackItem {
+    jp: IJobProgress;
+    ncks: string[];
+}
+
 interface IKillJobCall {
     ():void
 }
@@ -297,6 +302,35 @@ class Queue extends events.EventEmitter {
     }
 }
 
+class JobsTracker extends events.EventEmitter {
+    private __trackItems: {[jobId: string]: IJobTrackItem} = {};
+    private __numJobs: number = 0;
+    constructor() {
+        super();
+    }
+    addJob(jobProgress: IJobProgress, notificationCookie:string = null) : void {
+        if (!this.__trackItems[jobProgress.jobId]) {
+            let trackItem:IJobTrackItem = {
+                jp: jobProgress
+                ,ncks: (notificationCookie ? [notificationCookie] : null)
+            };
+            this.__trackItems[jobProgress.jobId] = trackItem;
+            this.__numJobs = 0;
+            this.emit('change');
+        }
+    }
+    addNotificationToJob(jobId:number, notificationCookie:string) : void {
+        if (this.__trackItems[jobId]) {
+            if (!this.__trackItems[jobId].ncks) this.__trackItems[jobId].ncks = [];
+            this.__trackItems[jobId].ncks.push(notificationCookie);
+            this.emit('change');
+        }
+    }
+    feedJobProgress(jobProgress: IJobProgress) : void {
+        // TODO:
+    }
+}
+
 // will emit the following events
 // 1. changed
 export class Dispatcher extends events.EventEmitter {
@@ -305,6 +339,7 @@ export class Dispatcher extends events.EventEmitter {
     private __numOutstandingAcks: number = 0;
     private __nodes: Nodes = new Nodes();
     private __queue: Queue = new Queue();
+    private __jobsTacker: JobsTracker = new JobsTracker();
     constructor(private __nodeMessaging: INodeMessaging, private __gridDB: IGridDB) {
         super();
         this.__queue.on('enqueued', () => {
@@ -443,13 +478,13 @@ export class Dispatcher extends events.EventEmitter {
             }
         }
     }
-    submitJob(user: IUser, jobXML: string, done:(err:any, jobId: number) => void): void {
+    submitJob(user: IUser, jobXML: string, done:(err:any, jobId: number) => void, notificationCookie:string = null): void {
         if (this.queueClosed) {
             done('queue is currently closed', null);
         } else {
             this.__gridDB.registerNewJob(user, jobXML, (err:any, jobProgress: IJobProgress) => {
                 if (!err) {
-                    // TODO: added to tracked jobs
+                    this.__jobsTacker.addJob(jobProgress, notificationCookie);
                     let tasks: ITaskItem[] = [];
                     for (let i:number = 0; i < jobProgress.numTasks; i++)
                         tasks.push({j: jobProgress.jobId, t: i});
@@ -470,9 +505,8 @@ export class Dispatcher extends events.EventEmitter {
         this.__gridDB.getJobProgress(jobId, (err:any, jobProgress: IJobProgress) => {
             if (err) {
                 console.log('!!! Error getting job progress for job ' + jobId.toString() + ': ' + JSON.stringify(err));
-            } else {
-                // TODO:
-            }
+            } else
+                this.__jobsTacker.feedJobProgress(jobProgress);
         });
     }
     getJobProgress(jobId: number, done:(err:any, jobProgress: IJobProgress) => void): void {
