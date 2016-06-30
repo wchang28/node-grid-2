@@ -29,7 +29,7 @@ export interface INodeMessaging {
     killProcessesTree: (nodeId: string, pids:number[], done: (err: any) => void) => void;
 }
 
-export interface IJobDB {
+export interface IGridDB {
     registerNewJob: (user: IUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobProgress: (jobId: number, done:(err:any, jobProgress: IJobProgress) => void) => void;
     killJob: (jobId:number, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode) => void) => void;
@@ -305,7 +305,7 @@ export class Dispatcher extends events.EventEmitter {
     private __numOutstandingAcks: number = 0;
     private __nodes: Nodes = new Nodes();
     private __queue: Queue = new Queue();
-    constructor(private __nodeMessaging: INodeMessaging, private __jobDB: IJobDB) {
+    constructor(private __nodeMessaging: INodeMessaging, private __gridDB: IGridDB) {
         super();
         this.__queue.on('enqueued', () => {
             this.dispatchTasksIfNecessary();
@@ -447,7 +447,7 @@ export class Dispatcher extends events.EventEmitter {
         if (this.queueClosed) {
             done('queue is currently closed', null);
         } else {
-            this.__jobDB.registerNewJob(user, jobXML, (err:any, jobProgress: IJobProgress) => {
+            this.__gridDB.registerNewJob(user, jobXML, (err:any, jobProgress: IJobProgress) => {
                 if (!err) {
                     // TODO: added to tracked jobs
                     let tasks: ITaskItem[] = [];
@@ -467,7 +467,7 @@ export class Dispatcher extends events.EventEmitter {
     onNodeCompleteTask(nodeId: string, task: ITask): void {
         this.__nodes.decrementCPUUsageCount(nodeId);
         let jobId = task.j;
-        this.__jobDB.getJobProgress(jobId, (err:any, jobProgress: IJobProgress) => {
+        this.__gridDB.getJobProgress(jobId, (err:any, jobProgress: IJobProgress) => {
             if (err) {
                 console.log('!!! Error getting job progress for job ' + jobId.toString() + ': ' + JSON.stringify(err));
             } else {
@@ -476,7 +476,7 @@ export class Dispatcher extends events.EventEmitter {
         });
     }
     getJobProgress(jobId: number, done:(err:any, jobProgress: IJobProgress) => void): void {
-        this.__jobDB.getJobProgress(jobId, done);
+        this.__gridDB.getJobProgress(jobId, done);
     }
     killJob(jobId: number, done: (err: any) => void): void {
         console.log('killing job ' + jobId.toString() + '...');
@@ -484,7 +484,7 @@ export class Dispatcher extends events.EventEmitter {
         let getKillJobCall : IKillJobCallFactory = (jobId:number, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
             return () : void => {
                 console.log('job ' + jobId.toString() + ' kill poll #' + (tryIndex+1).toString() + '...');
-                this.__jobDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode) => {
+                this.__gridDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode) => {
                     if (err)
                         done(err);
                     else {

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
 import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult} from './messaging';
-import {JobDB} from './jobDB';
+import {GridDB} from './gridDB';
 import {TaskRunner} from './taskRunner';
 let EventSource = require('eventsource');
 let $ = require('jquery-no-dom');
@@ -39,7 +39,7 @@ numCPUs = Math.max(numCPUs, 1);
 let nodeName:string = (config["nodeName"] ? config["nodeName"] : getDefaultNodeName());
 console.log('nodeName=' + nodeName + ', cpus=' + cpus.length + ', numCPUs=' + numCPUs);
 
-let jobDB = new JobDB(config.sqlConfig)
+let gridDB = new GridDB(config.sqlConfig)
 
 let msgBorker = new MsgBroker(() => new MessageClient(EventSource, $, url, eventSourceInitDict) , 10000);
 
@@ -66,16 +66,16 @@ function sendDispatcherTaskComplete(task: ITask, done: (err: any) => void) {
 
 
 function nodeRunTask(nodeId:string, task: ITask, done: (err: any) => void) {
-    jobDB.getTaskExecParams(task, nodeId, nodeName, (err:any, taskExecParams: ITaskExecParams) => {
+    gridDB.getTaskExecParams(task, nodeId, nodeName, (err:any, taskExecParams: ITaskExecParams) => {
         if (err)
             done(err);
         else {
             let taskRunner = new TaskRunner(taskExecParams);
             taskRunner.on('started', (pid: number) => {
-                jobDB.markTaskStart(task, pid, (err: any) => {
+                gridDB.markTaskStart(task, pid, (err: any) => {
                 });
             }).on('finished', (taskExecResult: ITaskExecResult) => {
-                jobDB.markTaskEnd(task, taskExecResult, done);
+                gridDB.markTaskEnd(task, taskExecResult, done);
             });
             taskRunner.run();
         }

@@ -1,7 +1,7 @@
 import {IUser, IJobProgress, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
 import {SimpleMSSQL} from 'simple-mssql';
 
-export class JobDB {
+export class GridDB {
     private ssql: SimpleMSSQL;
     constructor(sqlConfig:any) {
         this.ssql = new SimpleMSSQL(sqlConfig); 
