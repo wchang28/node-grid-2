@@ -1,4 +1,4 @@
-import {IUser, IJobProgress, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
+import {IUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
 import {SimpleMSSQL} from 'simple-mssql';
 
 export class GridDB {
@@ -23,6 +23,19 @@ export class GridDB {
     }
     getJobProgress(jobId:number, done:(err:any, jobProgress: IJobProgress) => void) : void {
         this.ssql.query('select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
+            if (err)
+                done(err, null);
+            else {
+                let dt = recordsets[0];
+                if (dt.length === 0)
+                    done('bad job', null);
+                else
+                    done(null, dt[0]);
+            }
+        });
+    }
+    getJobInfo(jobId:number, done:(err:any, jobInfo: IJobInfo) => void) : void {
+        this.ssql.query('select * from [dbo].[fnc_NodeJSGridGetJobInfo](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {

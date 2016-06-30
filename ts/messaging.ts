@@ -6,6 +6,7 @@ export interface GridMessage {
 export interface IUser {
     userId: string;
     priority: number;
+    isAdmin: boolean;
 }
 
 export interface INode {
@@ -27,8 +28,12 @@ export interface IJobProgress {
     jobId: number;
     status: string;
     numTasks: number;
-    numTasksFinished: number;
+    numTasksFinished: number; 
     success: boolean;
+}
+
+export interface IJobInfo extends IJobProgress {
+    userId:string;
 }
 
 export interface IJobTrackItem {

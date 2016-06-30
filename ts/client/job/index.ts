@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher} from '../../dispatcher';
-import {IUser, IJobProgress} from '../../messaging';
+import {IUser, IJobInfo} from '../../messaging';
 
 let router = express.Router();
 
@@ -25,24 +25,25 @@ router.post('/submit', (req: express.Request, res: express.Response) => {
             res.status(400).json({err});
         else
             res.json({jobId});
-    });
+    }, (req.query['notificationCookie'] ? req.query['notificationCookie'] : null));
 });
 
 function canKillJob(req: express.Request, res: express.Response, next: express.NextFunction) {
-    let jobId:number = req['jobId'];
+    let jobInfo:IJobInfo = req['jobInfo'];
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
-    // TODO:
-    // return 401
-    next();
+    if (user.isAdmin || user.userId === jobInfo.userId)
+        next();
+    else
+        res.status(401).json({err: 'not authorized'});
 }
 
 let jobOperationRouter = express.Router();
 
 jobOperationRouter.get('/kill', canKillJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
-    let jobId:number = req['jobId'];
-    dispatcher.killJob(jobId, (err: any) => {
+    let jobInfo:IJobInfo = req['jobInfo'];
+    dispatcher.killJob(jobInfo.jobId, (err: any) => {
         if (err)
             res.status(400).json({err});
         else
@@ -50,27 +51,29 @@ jobOperationRouter.get('/kill', canKillJob, (req: express.Request, res: express.
     });
 });
 
-jobOperationRouter.get('/status', (req: express.Request, res: express.Response) => {
-    let dispatcher = getDispatcher(req);
-    let jobId:number = req['jobId'];
-    dispatcher.getJobProgress(jobId, (err: any, jobProgress: IJobProgress) => {
-        if (err)
-            res.status(400).json({err});
-        else
-            res.json(jobProgress);
-    });
+jobOperationRouter.get('/info', (req: express.Request, res: express.Response) => {
+    let jobInfo:IJobInfo = req['jobInfo'];
+    res.json(jobInfo);
 });
 
-function getJobId(req: express.Request, res: express.Response, next: express.NextFunction) {
+function getJobInfo(req: express.Request, res: express.Response, next: express.NextFunction) {
     let j:string = req.params['jobId'];
     if (!j)
-        res.status(400).json({err: 'bad jobId'});
+        res.status(400).json({err: 'bad job id'});
     else {
-        req['jobId'] = parseInt(j);
-        next();
+        let jobId = parseInt(j);
+        let dispatcher = getDispatcher(req);
+        dispatcher.getJobInfo(jobId, (err:any, jobInfo: IJobInfo) => {
+            if (err)
+                res.status(400).json({err});
+            else {
+                req['jobInfo'] = jobInfo;
+                next();
+            }
+        });
     }
 }
 
-router.use('/:jobId', getJobId, jobOperationRouter);
+router.use('/:jobId', getJobInfo, jobOperationRouter);
 
 export {router as Router};

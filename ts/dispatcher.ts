@@ -1,6 +1,6 @@
 
 import * as events from 'events';
-import {INode, INodeReady, ITask, IUser, IJobProgress, IJobTrackItem, IRunningProcessByNode} from './messaging';
+import {INode, INodeReady, ITask, IUser, IJobProgress, IJobInfo, IJobTrackItem, IRunningProcessByNode} from './messaging';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -32,6 +32,7 @@ export interface INodeMessaging {
 export interface IGridDB {
     registerNewJob: (user: IUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobProgress: (jobId: number, done:(err:any, jobProgress: IJobProgress) => void) => void;
+    getJobInfo: (jobId: number, done:(err:any, jobInfo: IJobInfo) => void) => void;
     killJob: (jobId:number, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
 }
 
@@ -556,6 +557,9 @@ export class Dispatcher extends events.EventEmitter {
     }
     getJobProgress(jobId: number, done:(err:any, jobProgress: IJobProgress) => void): void {
         this.__gridDB.getJobProgress(jobId, done);
+    }
+    getJobInfo(jobId: number, done:(err:any, jobInfo: IJobInfo) => void): void {
+        this.__gridDB.getJobInfo(jobId, done);
     }
     killJob(jobId: number, done: (err: any) => void): void {
         let getKillJobCall : IKillJobCallFactory = (jobId:number, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
