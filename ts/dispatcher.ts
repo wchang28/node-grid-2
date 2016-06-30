@@ -315,8 +315,9 @@ class JobsTracker extends events.EventEmitter {
                 ,ncks: (notificationCookie ? [notificationCookie] : null)
             };
             this.__trackItems[jobProgress.jobId] = trackItem;
-            this.__numJobs = 0;
+            this.__numJobs++;
             this.emit('change');
+            this.emit('job_status_changed', trackItem);
         }
     }
     addNotificationToJob(jobId:number, notificationCookie:string) : void {
@@ -326,8 +327,31 @@ class JobsTracker extends events.EventEmitter {
             this.emit('change');
         }
     }
-    feedJobProgress(jobProgress: IJobProgress) : void {
+    private static jobTransition(oldJP: IJobProgress, newJP: IJobProgress) : IJobProgress {
         // TODO:
+        return null;
+    }
+    feedJobProgress(jobProgress: IJobProgress) : void {
+        let trackItem = this.__trackItems[jobProgress.jobId];
+        if (trackItem) {
+            let oldJP = trackItem.jp;
+            let newJP = JobsTracker.jobTransition(trackItem.jp, jobProgress);
+            if (newJP !== oldJP) {  // status changed
+                if (newJP.status === 'FINISHED' || newJP.status === 'ABORTED') {
+                    delete this.__trackItems[newJP.jobId];
+                    this.__numJobs--;
+                } else
+                    trackItem.jp = newJP;
+                this.emit('change');
+                this.emit('job_status_changed', trackItem);
+            }
+        }
+    }
+    toJSON(): IJobProgress[] {
+        let ret: IJobProgress[] = [];
+        for (let jobId in this.__trackItems)
+            ret.push(this.__trackItems[jobId].jp);
+        return ret;
     }
 }
 
