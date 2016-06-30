@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import {IGlobal} from "./global";
-import {GridMessage, ITask, IUser} from "./messaging";
+import {GridMessage, ITask, IUser, IJobTrackItem} from "./messaging";
 import {Dispatcher, INodeMessaging} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
 import {GridDB} from './gridDB';
@@ -45,9 +45,14 @@ clientApp.use(bpx);
 
 let nodeMessaging: INodeMessaging = new NodeMessaging(nodeAppConnectionsManager);
 let dispatcher = new Dispatcher(nodeMessaging, new GridDB(config.sqlConfig));
-dispatcher.on('changed', ()=> {
+dispatcher.on('changed', () => {
     let o = dispatcher.toJSON();
-    console.log(JSON.stringify(o));
+    //console.log(JSON.stringify(o));
+}).on('jobs_tracking_changed', () => {
+    let o = dispatcher.trackingJobs;
+    //console.log(JSON.stringify(o));
+}).on('job_status_changed', (trackItem: IJobTrackItem) => {
+    console.log(JSON.stringify(trackItem));
 });
 
 let g: IGlobal = {

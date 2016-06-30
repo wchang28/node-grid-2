@@ -31,14 +31,14 @@ export class GridDB {
             }
         });
     }
-    killJob(jobId:number, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode) => void) : void {
+    killJob(jobId:number, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) : void {
         let params = {
             'jobId': jobId
             ,'markJobAborted': markJobAborted
         };
         this.ssql.execute('[dbo].[stp_NodeJSKillJob]', params, (err: any, recordsets: any) : void => {
             if (err)
-                done(err, null);
+                done(err, null, null);
             else {
                 let ret = recordsets[0];
                 let runningProcess: IRunningProcessByNode = {};
@@ -48,7 +48,9 @@ export class GridDB {
                     if (!runningProcess[nodeId]) runningProcess[nodeId] = [];
                     runningProcess[nodeId].push(rp.pid);
                 }
-                done(null, runningProcess);
+                ret = recordsets[1];
+                let jobProgress:IJobProgress = ret[0];
+                done(null, runningProcess, jobProgress);
             }
         });
     }

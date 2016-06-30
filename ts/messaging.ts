@@ -32,6 +32,11 @@ export interface IJobProgress {
     success: boolean;
 }
 
+export interface IJobTrackItem {
+    jp: IJobProgress;
+    ncks: string[];
+}
+
 export interface INodeRunningProcess {
     nodeId: string;
     pid: number;

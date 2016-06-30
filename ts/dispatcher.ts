@@ -1,6 +1,6 @@
 
 import * as events from 'events';
-import {INode, INodeReady, ITask, IUser, IJobProgress, IRunningProcessByNode} from './messaging';
+import {INode, INodeReady, ITask, IUser, IJobProgress, IJobTrackItem, IRunningProcessByNode} from './messaging';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -32,7 +32,7 @@ export interface INodeMessaging {
 export interface IGridDB {
     registerNewJob: (user: IUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobProgress: (jobId: number, done:(err:any, jobProgress: IJobProgress) => void) => void;
-    killJob: (jobId:number, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode) => void) => void;
+    killJob: (jobId:number, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
 }
 
 export interface IDispatcherJSON {
@@ -47,11 +47,6 @@ export interface IDispatcherJSON {
 interface IInterval {
     lbound: number;
     ubound: number;
-}
-
-interface IJobTrackItem {
-    jp: IJobProgress;
-    ncks: string[];
 }
 
 interface IKillJobCall {
@@ -305,6 +300,12 @@ class Queue extends events.EventEmitter {
 class JobsTracker extends events.EventEmitter {
     private __trackItems: {[jobId: string]: IJobTrackItem} = {};
     private __numJobs: number = 0;
+    private __statusSeqNumbers: {[status:string]: number} = {
+        'SUBMITTED': 0
+        ,'STARTED': 1
+        ,'FINISHED': 2
+        ,'ABORTED': 2
+    };
     constructor() {
         super();
     }
@@ -327,21 +328,33 @@ class JobsTracker extends events.EventEmitter {
             this.emit('change');
         }
     }
-    private static jobTransition(oldJP: IJobProgress, newJP: IJobProgress) : IJobProgress {
-        // TODO:
-        return null;
+    private jobTransition(oldJP: IJobProgress, newJP: IJobProgress) : IJobProgress {
+        let oldStatus = oldJP.status;
+        let oldStatusSeq = this.__statusSeqNumbers[oldStatus];
+        let newStatus = newJP.status;
+        let newStatusSeq = this.__statusSeqNumbers[newStatus];
+        if (newStatusSeq < oldStatusSeq)    // going backward in status
+            return oldJP;
+        else if (newStatusSeq > oldStatusSeq) { // moving forward in status
+            return newJP;
+        } else {    // newStatusSeq == oldStatusSeq
+            if (newStatus === 'STARTED') {  // newStatus === oldStatus === STARTED
+                return (newJP.numTasksFinished > oldJP.numTasksFinished ? newJP : oldJP);
+            } else
+                return oldJP;
+        }
     }
     feedJobProgress(jobProgress: IJobProgress) : void {
         let trackItem = this.__trackItems[jobProgress.jobId];
         if (trackItem) {
             let oldJP = trackItem.jp;
-            let newJP = JobsTracker.jobTransition(trackItem.jp, jobProgress);
+            let newJP = this.jobTransition(trackItem.jp, jobProgress);
             if (newJP !== oldJP) {  // status changed
+                trackItem.jp = newJP;
                 if (newJP.status === 'FINISHED' || newJP.status === 'ABORTED') {
                     delete this.__trackItems[newJP.jobId];
                     this.__numJobs--;
-                } else
-                    trackItem.jp = newJP;
+                }
                 this.emit('change');
                 this.emit('job_status_changed', trackItem);
             }
@@ -357,6 +370,8 @@ class JobsTracker extends events.EventEmitter {
 
 // will emit the following events
 // 1. changed
+// 2. jobs_tracking_changed
+// 3. job_status_changed
 export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
@@ -366,17 +381,23 @@ export class Dispatcher extends events.EventEmitter {
     private __jobsTacker: JobsTracker = new JobsTracker();
     constructor(private __nodeMessaging: INodeMessaging, private __gridDB: IGridDB) {
         super();
+
         this.__queue.on('enqueued', () => {
             this.dispatchTasksIfNecessary();
-        });
-        this.__queue.on('changed', () => {
+        }).on('changed', () => {
             this.emit('changed');
         });
+
         this.__nodes.on('changed', () => {
             this.emit('changed');
-        });
-        this.__nodes.on('more_cpus_available', () => {
+        }).on('more_cpus_available', () => {
             this.dispatchTasksIfNecessary();
+        });
+
+        this.__jobsTacker.on('change', () => {
+            this.emit('jobs_tracking_changed');
+        }).on('job_status_changed', (jobTrackItem: IJobTrackItem) => {
+            this.emit('job_status_changed', jobTrackItem);
         });
     }
 
@@ -542,10 +563,11 @@ export class Dispatcher extends events.EventEmitter {
         let getKillJobCall : IKillJobCallFactory = (jobId:number, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
             return () : void => {
                 console.log('job ' + jobId.toString() + ' kill poll #' + (tryIndex+1).toString() + '...');
-                this.__gridDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode) => {
+                this.__gridDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => {
                     if (err)
                         done(err);
                     else {
+                        this.__jobsTacker.feedJobProgress(jobProgress);
                         if (JSON.stringify(runningProcess) === '{}')    // no more process running
                             done(null);
                         else {  // there are tasks still running
@@ -577,4 +599,5 @@ export class Dispatcher extends events.EventEmitter {
             ,numOutstandingAcks: this.__numOutstandingAcks
         };
     }
+    get trackingJobs(): IJobProgress[] {return this.__jobsTacker.toJSON();}
 }
