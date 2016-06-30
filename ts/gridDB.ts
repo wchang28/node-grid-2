@@ -26,8 +26,11 @@ export class GridDB {
             if (err)
                 done(err, null);
             else {
-                let ret = recordsets[0][0];
-                done(null, ret);
+                let dt = recordsets[0];
+                if (dt.length === 0)
+                    done('bad job', null);
+                else
+                    done(null, dt[0]);
             }
         });
     }
@@ -40,17 +43,19 @@ export class GridDB {
             if (err)
                 done(err, null, null);
             else {
-                let ret = recordsets[0];
+                let dt = recordsets[0];
                 let runningProcess: IRunningProcessByNode = {};
-                for (let i in ret) {    // for each row
-                    let rp:INodeRunningProcess = ret[i];
+                for (let i in dt) {    // for each row
+                    let rp:INodeRunningProcess = dt[i];
                     let nodeId = rp.nodeId;
                     if (!runningProcess[nodeId]) runningProcess[nodeId] = [];
                     runningProcess[nodeId].push(rp.pid);
                 }
-                ret = recordsets[1];
-                let jobProgress:IJobProgress = ret[0];
-                done(null, runningProcess, jobProgress);
+                dt = recordsets[1];
+                if (dt.length === 0)
+                    done('bad job', {}, null);
+                else
+                    done(null, runningProcess, dt[0]);
             }
         });
     }

@@ -25,7 +25,6 @@ export interface ITask {
 
 export interface IJobProgress {
     jobId: number;
-    userId: string;
     status: string;
     numTasks: number;
     numTasksFinished: number;

@@ -558,8 +558,6 @@ export class Dispatcher extends events.EventEmitter {
         this.__gridDB.getJobProgress(jobId, done);
     }
     killJob(jobId: number, done: (err: any) => void): void {
-        console.log('killing job ' + jobId.toString() + '...');
-        this.__queue.clearJobTasks(jobId);
         let getKillJobCall : IKillJobCallFactory = (jobId:number, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
             return () : void => {
                 console.log('job ' + jobId.toString() + ' kill poll #' + (tryIndex+1).toString() + '...');
@@ -584,10 +582,23 @@ export class Dispatcher extends events.EventEmitter {
                 });
             }
         }
-        getKillJobCall(jobId, true, 3000, 5, 0, (err: any) => {
-            console.log('job ' + jobId.toString() + ' kill process finished.' + (err ? ' error=' + JSON.stringify(err) : ' job was killed successfully :-)'));
-            done(err);
-        })();
+        // check the job status first
+        this.getJobProgress(jobId, (err: any, jobProgress: IJobProgress) => {
+            if (err)
+                done(err);
+            else {
+                if (jobProgress.status === 'FINISHED' || jobProgress.status === 'ABORTED')
+                    done('job already finished');
+                else {
+                    console.log('killing job ' + jobId.toString() + '...');
+                    this.__queue.clearJobTasks(jobId);
+                    getKillJobCall(jobId, true, 3000, 5, 0, (err: any) => {
+                        console.log('job ' + jobId.toString() + ' kill process finished.' + (err ? ' error=' + JSON.stringify(err) : ' job was killed successfully :-)'));
+                        done(err);
+                    })();
+                }
+            }
+        });
     }
     toJSON(): IDispatcherJSON {
         return {

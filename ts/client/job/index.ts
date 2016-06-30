@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher} from '../../dispatcher';
-import {IUser} from '../../messaging';
+import {IUser, IJobProgress} from '../../messaging';
 
 let router = express.Router();
 
@@ -29,6 +29,7 @@ router.post('/submit', (req: express.Request, res: express.Response) => {
 });
 
 function canKillJob(req: express.Request, res: express.Response, next: express.NextFunction) {
+    let jobId:number = req['jobId'];
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
     // TODO:
@@ -36,9 +37,9 @@ function canKillJob(req: express.Request, res: express.Response, next: express.N
     next();
 }
 
-let jobOpRouter = express.Router();
+let jobOperationRouter = express.Router();
 
-jobOpRouter.get('/kill', canKillJob, (req: express.Request, res: express.Response) => {
+jobOperationRouter.get('/kill', canKillJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let jobId:number = req['jobId'];
     dispatcher.killJob(jobId, (err: any) => {
@@ -46,6 +47,17 @@ jobOpRouter.get('/kill', canKillJob, (req: express.Request, res: express.Respons
             res.status(400).json({err});
         else
             res.json({});
+    });
+});
+
+jobOperationRouter.get('/status', (req: express.Request, res: express.Response) => {
+    let dispatcher = getDispatcher(req);
+    let jobId:number = req['jobId'];
+    dispatcher.getJobProgress(jobId, (err: any, jobProgress: IJobProgress) => {
+        if (err)
+            res.status(400).json({err});
+        else
+            res.json(jobProgress);
     });
 });
 
@@ -59,6 +71,6 @@ function getJobId(req: express.Request, res: express.Response, next: express.Nex
     }
 }
 
-router.use('/:jobId', getJobId, jobOpRouter);
+router.use('/:jobId', getJobId, jobOperationRouter);
 
 export {router as Router};
