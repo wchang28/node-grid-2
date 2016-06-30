@@ -3,10 +3,14 @@ export interface GridMessage {
     content: any
 }
 
+export interface IUserProfile {
+    canKillOtherUsersJob: boolean
+}
+
 export interface IUser {
     userId: string;
     priority: number;
-    isAdmin: boolean;
+    profile: IUserProfile;
 }
 
 export interface INode {
@@ -33,7 +37,15 @@ export interface IJobProgress {
 }
 
 export interface IJobInfo extends IJobProgress {
-    userId:string;
+    description: string;
+    cookie: string;
+    userId: string;
+    priority: number;
+    submitTime: Date;
+    startTime: Date;
+    finishTime: Date;
+    durationSeconds: number;
+    completePct: number;
 }
 
 export interface IJobTrackItem {

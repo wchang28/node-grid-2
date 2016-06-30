@@ -30,9 +30,8 @@ router.post('/submit', (req: express.Request, res: express.Response) => {
 
 function canKillJob(req: express.Request, res: express.Response, next: express.NextFunction) {
     let jobInfo:IJobInfo = req['jobInfo'];
-    let dispatcher = getDispatcher(req);
     let user = getUser(req);
-    if (user.isAdmin || user.userId === jobInfo.userId)
+    if (user.profile.canKillOtherUsersJob || user.userId === jobInfo.userId)
         next();
     else
         res.status(401).json({err: 'not authorized'});

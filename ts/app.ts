@@ -76,7 +76,9 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
     let user:IUser = {
         userId: 'wchang'
         ,priority: 5
-        ,isAdmin: true
+        ,profile: {
+            canKillOtherUsersJob: true
+        }
     }
     req["user"] = user;
     next();
