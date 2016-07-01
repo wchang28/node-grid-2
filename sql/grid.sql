@@ -1,16 +1,6 @@
 USE [TestDB]
 GO
 
-/****** Object:  Table [dbo].[GridJobs]    Script Date: 7/1/2016 8:46:56 AM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-SET ANSI_PADDING ON
-GO
-
 CREATE TABLE [dbo].[GridJobs](
 	[jobId] [bigint] IDENTITY(1,1) NOT NULL,
 	[description] [varchar](250) NULL,
@@ -25,23 +15,6 @@ CREATE TABLE [dbo].[GridJobs](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 
-GO
-
-SET ANSI_PADDING OFF
-GO
-
-
-USE [TestDB]
-GO
-
-/****** Object:  Table [dbo].[GridJobTasks]    Script Date: 7/1/2016 8:47:27 AM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-SET ANSI_PADDING ON
 GO
 
 CREATE TABLE [dbo].[GridJobTasks](
@@ -69,20 +42,6 @@ CREATE TABLE [dbo].[GridJobTasks](
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 
 GO
-
-SET ANSI_PADDING OFF
-GO
-
-USE [TestDB]
-GO
-
-/****** Object:  View [dbo].[GridJobsView]    Script Date: 7/1/2016 8:48:10 AM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 
 CREATE view [dbo].[GridJobsView]
 as
@@ -129,19 +88,7 @@ stat2.[jobId]
 ,[completePct]=cast(stat2.[numTasksFinished] as float)/cast(stat2.[numTasks] as float) * 100.0
 from stat2;
 
-
 GO
-
-USE [TestDB]
-GO
-
-/****** Object:  StoredProcedure [dbo].[stp_NodeJSGridJobTask]    Script Date: 7/1/2016 8:48:34 AM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 
 CREATE PROCEDURE [dbo].[stp_NodeJSGridJobTask]
 	@jobId bigint
@@ -225,18 +172,8 @@ BEGIN
 	end -- mark task finished
 
 END
-GO
 
-USE [TestDB]
 GO
-
-/****** Object:  StoredProcedure [dbo].[stp_NodeJSGridSubmitJob]    Script Date: 7/1/2016 8:48:53 AM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 
 CREATE PROCEDURE [dbo].[stp_NodeJSGridSubmitJob]
 	@userId varchar(100)
@@ -305,21 +242,7 @@ BEGIN
 
 END
 
-
-
-
 GO
-
-USE [TestDB]
-GO
-
-/****** Object:  StoredProcedure [dbo].[stp_NodeJSKillJob]    Script Date: 7/1/2016 8:49:13 AM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 
 CREATE PROCEDURE [dbo].[stp_NodeJSKillJob]
 	@jobId bigint
@@ -352,17 +275,6 @@ END
 
 GO
 
-USE [TestDB]
-GO
-
-/****** Object:  UserDefinedFunction [dbo].[fnc_NodeJSGridGetJobInfo]    Script Date: 7/1/2016 8:49:31 AM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-
 CREATE FUNCTION [dbo].[fnc_NodeJSGridGetJobInfo]
 (	
 	@jobId bigint
@@ -378,17 +290,6 @@ RETURN
 )
 
 GO
-
-USE [TestDB]
-GO
-
-/****** Object:  UserDefinedFunction [dbo].[fnc_NodeJSGridGetJobProgress]    Script Date: 7/1/2016 8:49:49 AM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 
 CREATE FUNCTION [dbo].[fnc_NodeJSGridGetJobProgress]
 (	
@@ -409,4 +310,3 @@ RETURN
 )
 
 GO
-
