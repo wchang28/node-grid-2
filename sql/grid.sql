@@ -1,6 +1,3 @@
-USE [TestDB]
-GO
-
 CREATE TABLE [dbo].[GridJobs](
 	[jobId] [bigint] IDENTITY(1,1) NOT NULL,
 	[description] [varchar](250) NULL,
