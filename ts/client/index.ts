@@ -10,6 +10,14 @@ router.use('/job', jobRouter);
 let topicRouter = getTopicRouter('/event_stream', getConnectionFactory(10000));
 let connectionsManager = topicRouter.connectionsManager;
 
+topicRouter.eventEmitter.on('client_connect', (params: ConnectedEventParams) : void => {
+    console.log('client ' + params.conn_id + ' @ ' + params.remoteAddress + ' connected to the SSE topic endpoint');
+});
+
+topicRouter.eventEmitter.on('client_disconnect', (params: ConnectedEventParams) : void => {
+    console.log('client ' + params.conn_id + ' @ ' + params.remoteAddress +  ' disconnected from the SSE topic endpoint');
+});
+
 router.use('/events', topicRouter); // topic subscription endpoint is available at /events/event_stream from this route
 
 export {router as Router, connectionsManager as ConnectionsManager};
