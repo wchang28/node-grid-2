@@ -17,7 +17,15 @@ function getDispatcher(req:express.Request) : Dispatcher {
     return g.dispatcher;
 }
 
-router.post('/submit', (req: express.Request, res: express.Response) => {
+function canSubmitJob(req: express.Request, res: express.Response, next: express.NextFunction) {
+    let user = getUser(req);
+    if (user.profile.canSubmitJob)
+        next();
+    else
+        res.status(401).json({err: 'not authorized'});
+}
+
+router.post('/submit', canSubmitJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
     dispatcher.submitJob(user, req.body, (err: any, jobId:string) => {
