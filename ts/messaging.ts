@@ -24,12 +24,12 @@ export interface INodeReady {
 }
 
 export interface ITask {
-    j: number;
+    j: string;
     t: number;
 }
 
 export interface IJobProgress {
-    jobId: number;
+    jobId: string;
     status: string;
     numTasks: number;
     numTasksFinished: number; 

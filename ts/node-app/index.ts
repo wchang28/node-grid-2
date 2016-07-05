@@ -8,7 +8,7 @@ import {GridMessage, INode, INodeReady, ITask} from '../messaging';
 
 let router = express.Router();
 
-let topicRouter = getTopicRouter('/event_stream', getConnectionFactory(5000));
+let topicRouter = getTopicRouter('/event_stream', getConnectionFactory(10000));
 let connectionsManager = topicRouter.connectionsManager;
 
 router.use('/events', topicRouter); // topic subscription endpoint is available at /events/event_stream from this route

@@ -21,7 +21,7 @@ export class GridDB {
             }
         });
     }
-    getJobProgress(jobId:number, done:(err:any, jobProgress: IJobProgress) => void) : void {
+    getJobProgress(jobId:string, done:(err:any, jobProgress: IJobProgress) => void) : void {
         this.ssql.query('select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
@@ -34,7 +34,7 @@ export class GridDB {
             }
         });
     }
-    getJobInfo(jobId:number, done:(err:any, jobInfo: IJobInfo) => void) : void {
+    getJobInfo(jobId:string, done:(err:any, jobInfo: IJobInfo) => void) : void {
         this.ssql.query('select * from [dbo].[fnc_NodeJSGridGetJobInfo](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
@@ -47,7 +47,7 @@ export class GridDB {
             }
         });
     }
-    killJob(jobId:number, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) : void {
+    killJob(jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) : void {
         let params = {
             'jobId': jobId
             ,'markJobAborted': markJobAborted

@@ -10,8 +10,14 @@ import {Dispatcher, INodeMessaging} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
 import {GridDB} from './gridDB';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
-import {Router as clientAppRouter} from './client';
-import {Router as adminRouter} from './admin';
+import {getConnectable as getClientConnectable} from './client';
+
+let clientConnectable = getClientConnectable();
+let clientApiRouter = clientConnectable.Router;
+let clientConnectionManager = clientConnectable.ConnectionsManager;
+let adminConnectable = getClientConnectable();
+let adminApiRouter = adminConnectable.Router;
+let adminConnectionManager = adminConnectable.ConnectionsManager;
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
@@ -57,13 +63,19 @@ dispatcher.on('changed', () => {
     // TODO: forward message to admin's connectionManager
 }).on('job_status_changed', (trackItem: IJobTrackItem) => {
     console.log(JSON.stringify(trackItem));
+    /*
     if (trackItem.ncks && trackItem.ncks.length > 0) {
-        for (let i in trackItem.ncks) {
-            let notificationCookie = trackItem.ncks[i];
-            let topic = '/topic/job/status_changed/' + notificationCookie;
-            // TODO: forward message to client's connectionManager
+        let getNotificationTopic = (notificationCookie: string) => '/topic/job/status_changed/' + notificationCookie
+        function getHandler(i: number) : (err: any) => void  {
+            return (err: any): void => {
+                if (i < trackItem.ncks.length-1) {
+                    clientConnectionManager.injectMessage(getNotificationTopic(trackItem.ncks[i+1]), {}, trackItem.jp, getHandler(i+1));
+                }
+            }
         }
+        clientConnectionManager.injectMessage(getNotificationTopic(trackItem.ncks[0]), {}, trackItem.jp, getHandler(0));
     }
+    */
 });
 
 let g: IGlobal = {
@@ -102,26 +114,28 @@ function authorizedAdmin(req: express.Request, res: express.Response, next: expr
     next();
 }
 
-adminApp.use('/admin', authorizedClient, authorizedAdmin, adminRouter);
+adminApp.use('/api', authorizedClient, authorizedAdmin, adminApiRouter);
+adminApp.use('/app', authorizedClient, authorizedAdmin, express.static(path.join(__dirname, '../public')));
 
+// hitting the root of admin app
 adminApp.get('/', (req: express.Request, res: express.Response) => {
-    // TODO: oauth2
+    // TODO: check session cookie and do oauth2
     let stateObj = req.query;	// query fields/state object might have marketing campaign code and application object short-cut link in it
     let state = JSON.stringify(stateObj);
     console.log('/: state=' + state);
-    let redirectUrl = '/admin';	// redirect user's browser to the /app path
+    let redirectUrl = '/app';	// redirect user's browser to the /app path
     if (state !== '{}') {
         redirectUrl += '#state=' + encodeURIComponent(state);	// pass state to browser application via URL fragment (#)
     }
     res.redirect(redirectUrl);
 });
 
-clientApp.use('/api', authorizedClient, clientAppRouter);
+clientApp.use('/api', authorizedClient, clientApiRouter);
 nodeApp.use('/node-app', nodeAppRouter);
 
-// /node-app/events/event_stream
-// /api/events/event_stream
-// /admin/events/event_stream
+// node: /node-app/events/event_stream
+// client: /api/events/event_stream
+// admin: /api/events/event_stream
 
 adminApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
 

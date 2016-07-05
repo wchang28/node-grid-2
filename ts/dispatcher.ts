@@ -31,9 +31,9 @@ export interface INodeMessaging {
 
 export interface IGridDB {
     registerNewJob: (user: IUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
-    getJobProgress: (jobId: number, done:(err:any, jobProgress: IJobProgress) => void) => void;
-    getJobInfo: (jobId: number, done:(err:any, jobInfo: IJobInfo) => void) => void;
-    killJob: (jobId:number, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
+    getJobProgress: (jobId: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
+    getJobInfo: (jobId: string, done:(err:any, jobInfo: IJobInfo) => void) => void;
+    killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
 }
 
 export interface IDispatcherJSON {
@@ -55,7 +55,7 @@ interface IKillJobCall {
 }
 
 interface IKillJobCallFactory {
-    (jobId:number, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall
+    (jobId:string, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall
 }
 
 // will emit the following events
@@ -181,9 +181,9 @@ class Queue extends events.EventEmitter {
     enqueueSingle(priority:number, task: ITaskItem) : void {
         let p = priority.toString();
         if (!this.__queue[p]) this.__queue[p] = {};
-        let j = task.j.toString();
-        if (!this.__queue[p][j]) this.__queue[p][j] = [];
-        this.__queue[p][j].push(task);
+        let jobId = task.j;
+        if (!this.__queue[p][jobId]) this.__queue[p][jobId] = [];
+        this.__queue[p][jobId].push(task);
         this.__numtasks++;
         this.emit('changed');
         this.emit('enqueued');
@@ -194,9 +194,9 @@ class Queue extends events.EventEmitter {
         if (!this.__queue[p]) this.__queue[p] = {};
         for (let i in tasks) {
             let task = tasks[i];
-            let j = task.j.toString();
-            if (!this.__queue[p][j]) this.__queue[p][j] = [];
-            this.__queue[p][j].push(task);
+            let jobId = task.j;
+            if (!this.__queue[p][jobId]) this.__queue[p][jobId] = [];
+            this.__queue[p][jobId].push(task);
         }
         this.__numtasks += tasks.length;
         this.emit('changed');
@@ -231,10 +231,10 @@ class Queue extends events.EventEmitter {
             return null;
         }
     }
-    private randomlyPickJob(q: {[jobId: string]: ITaskItem[]}) : number {
-        let jobIds:number[] = [];
-        for (let j in q) {
-            let jobId = parseInt(j);
+    // randomly pick a job from the priority queue
+    private randomlyPickAJob(q: {[jobId: string]: ITaskItem[]}) : string {
+        let jobIds:string[] = [];
+        for (let jobId in q) {
             jobIds.push(jobId);
         }
         let idx = this.getRandomInt(0, jobIds.length);
@@ -245,11 +245,10 @@ class Queue extends events.EventEmitter {
         while (this.__numtasks > 0 && items.length < maxToDequeue) {
             let priority = this.chooseByPriority();
             let p = priority.toString();
-            let jobId = this.randomlyPickJob(this.__queue[p]);
-            let j = jobId.toString();
-            let ti = this.__queue[p][j].shift();
-            if (this.__queue[p][j].length === 0)
-                delete this.__queue[p][j];
+            let jobId = this.randomlyPickAJob(this.__queue[p]);
+            let ti = this.__queue[p][jobId].shift();
+            if (this.__queue[p][jobId].length === 0)
+                delete this.__queue[p][jobId];
             if (JSON.stringify(this.__queue[p]) === '{}')
                 delete this.__queue[p];
             let task: ITaskItemDispatch = {
@@ -278,13 +277,12 @@ class Queue extends events.EventEmitter {
         this.__numtasks = 0;
         if (ps.length > 0) this.emit('changed');
     }
-    clearJobTasks(jobId: number) {
-        let j:string = jobId.toString();
+    clearJobTasks(jobId: string) {
         let numRemoved:number = 0;
         for (let p in this.__queue) {   // for each priority
-            if (this.__queue[p][j]) {   // found the job
-                numRemoved = this.__queue[p][j].length;
-                delete this.__queue[p][j];
+            if (this.__queue[p][jobId]) {   // found the job
+                numRemoved = this.__queue[p][jobId].length;
+                delete this.__queue[p][jobId];
                 if (JSON.stringify(this.__queue[p]) === '{}')
                     delete this.__queue[p];
                 break;
@@ -349,8 +347,8 @@ class JobsTracker extends events.EventEmitter {
         let trackItem = this.__trackItems[jobProgress.jobId];
         if (trackItem) {
             let oldJP = trackItem.jp;
-            let newJP = this.jobTransition(trackItem.jp, jobProgress);
-            if (newJP !== oldJP) {  // status changed
+            let newJP = this.jobTransition(oldJP, jobProgress);
+            if (newJP != oldJP) {  // status changed
                 trackItem.jp = newJP;
                 if (newJP.status === 'FINISHED' || newJP.status === 'ABORTED') {
                     delete this.__trackItems[newJP.jobId];
@@ -524,7 +522,7 @@ export class Dispatcher extends events.EventEmitter {
             }
         }
     }
-    submitJob(user: IUser, jobXML: string, done:(err:any, jobId: number) => void, notificationCookie:string = null): void {
+    submitJob(user: IUser, jobXML: string, done:(err:any, jobId: string) => void, notificationCookie:string = null): void {
         if (this.queueClosed) {
             done('queue is currently closed', null);
         } else {
@@ -555,14 +553,14 @@ export class Dispatcher extends events.EventEmitter {
                 this.__jobsTacker.feedJobProgress(jobProgress);
         });
     }
-    getJobProgress(jobId: number, done:(err:any, jobProgress: IJobProgress) => void): void {
+    getJobProgress(jobId: string, done:(err:any, jobProgress: IJobProgress) => void): void {
         this.__gridDB.getJobProgress(jobId, done);
     }
-    getJobInfo(jobId: number, done:(err:any, jobInfo: IJobInfo) => void): void {
+    getJobInfo(jobId: string, done:(err:any, jobInfo: IJobInfo) => void): void {
         this.__gridDB.getJobInfo(jobId, done);
     }
-    killJob(jobId: number, done: (err: any) => void): void {
-        let getKillJobCall : IKillJobCallFactory = (jobId:number, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
+    killJob(jobId: string, done: (err: any) => void): void {
+        let getKillJobCall : IKillJobCallFactory = (jobId:string, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
             return () : void => {
                 console.log('job ' + jobId.toString() + ' kill poll #' + (tryIndex+1).toString() + '...');
                 this.__gridDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => {

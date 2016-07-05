@@ -16,7 +16,7 @@ GO
 
 CREATE TABLE [dbo].[GridJobTasks](
 	[jobId] [bigint] NOT NULL,
-	[index] [bigint] NOT NULL,
+	[index] [int] NOT NULL,
 	[cmd] [varchar](max) NOT NULL,
 	[cookie] [varchar](250) NULL,
 	[stdin] [varchar](max) NULL,
@@ -49,8 +49,8 @@ with stat as
 	,[numTasks]=count(*)
 	,[startTime]=min([startTime])
 	,[maxFinishTime]=max([finishTime])
-	,[numTasksFinished]=cast(sum(iif([status]='FINISHED',1,0)) as bigint)
-	,[numSuccess]=cast(sum(iif([success] is null, 0, [success])) as bigint)
+	,[numTasksFinished]=cast(sum(iif([status]='FINISHED',1,0)) as int)
+	,[numSuccess]=cast(sum(iif([success] is null, 0, [success])) as int)
 	from [dbo].[GridJobTasks] (nolock)
 	group by [jobId]
 )
