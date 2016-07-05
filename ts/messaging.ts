@@ -3,14 +3,17 @@ export interface GridMessage {
     content: any
 }
 
-export interface IUserProfile {
-    canKillOtherUsersJob: boolean
+export interface IGridUserProfile {
+    canSubmitJob: boolean;
+    canKillOtherUsersJob: boolean;
+    canStartStopDispatching: boolean;
+    canOpenCloseQueue: boolean;
 }
 
-export interface IUser {
+export interface IGridUser {
     userId: string;
     priority: number;
-    profile: IUserProfile;
+    profile: IGridUserProfile;
 }
 
 export interface INode {

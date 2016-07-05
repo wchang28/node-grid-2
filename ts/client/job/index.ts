@@ -2,12 +2,12 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher} from '../../dispatcher';
-import {IUser, IJobInfo} from '../../messaging';
+import {IGridUser, IJobInfo} from '../../messaging';
 
 let router = express.Router();
 
-function getUser(req: express.Request): IUser {
-    let user:IUser = req["user"];
+function getUser(req: express.Request): IGridUser {
+    let user:IGridUser = req["user"];
     return user;
 }
 

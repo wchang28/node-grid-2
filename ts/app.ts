@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import {IGlobal} from "./global";
-import {GridMessage, ITask, IUser, IJobTrackItem} from "./messaging";
+import {GridMessage, ITask, IGridUser, IJobTrackItem} from "./messaging";
 import {Dispatcher, INodeMessaging} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
@@ -87,11 +87,14 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
     /////////////////////////////////////////////////////////////////
     // 1. verify user using token in the header
     // 2. get user profile with prioity and admin flag
-    let user:IUser = {
+    let user:IGridUser = {
         userId: 'wchang'
         ,priority: 5
         ,profile: {
-            canKillOtherUsersJob: true
+            canSubmitJob: true
+            ,canKillOtherUsersJob: true
+            ,canStartStopDispatching: true
+            ,canOpenCloseQueue: true
         }
     }
     req["user"] = user;
@@ -99,14 +102,8 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
     /////////////////////////////////////////////////////////////////
 }
 
-function authorizedAdmin(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    //console.log('reaching authorizedAdmin middleware, url=' + req.baseUrl);
-    // TODO:
-    next();
-}
-
-adminApp.use('/api', authorizedClient, authorizedAdmin, clientApiRouter);
-adminApp.use('/app', authorizedClient, authorizedAdmin, express.static(path.join(__dirname, '../public')));
+adminApp.use('/api', authorizedClient, clientApiRouter);
+adminApp.use('/app', authorizedClient, express.static(path.join(__dirname, '../public')));
 
 // hitting the root of admin app
 adminApp.get('/', (req: express.Request, res: express.Response) => {

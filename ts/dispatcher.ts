@@ -1,6 +1,6 @@
 
 import * as events from 'events';
-import {INode, INodeReady, ITask, IUser, IJobProgress, IJobInfo, IJobTrackItem, IRunningProcessByNode} from './messaging';
+import {INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobTrackItem, IRunningProcessByNode} from './messaging';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -30,7 +30,7 @@ export interface INodeMessaging {
 }
 
 export interface IGridDB {
-    registerNewJob: (user: IUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
+    registerNewJob: (user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobProgress: (jobId: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobInfo: (jobId: string, done:(err:any, jobInfo: IJobInfo) => void) => void;
     killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
@@ -522,7 +522,7 @@ export class Dispatcher extends events.EventEmitter {
             }
         }
     }
-    submitJob(user: IUser, jobXML: string, done:(err:any, jobId: string) => void, notificationCookie:string = null): void {
+    submitJob(user: IGridUser, jobXML: string, done:(err:any, jobId: string) => void, notificationCookie:string = null): void {
         if (this.queueClosed) {
             done('queue is currently closed', null);
         } else {
