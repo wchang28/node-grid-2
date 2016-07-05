@@ -117,7 +117,7 @@ clientApp.get('/', (req: express.Request, res: express.Response) => {
 nodeApp.use('/node-app', nodeAppRouter);
 
 // node: /node-app/events/event_stream
-// client and admin: /api/events/event_stream
+// client: /api/events/event_stream
 
 clientApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
 
