@@ -8,16 +8,10 @@ import {IGlobal} from "./global";
 import {GridMessage, ITask, IUser, IJobTrackItem} from "./messaging";
 import {Dispatcher, INodeMessaging} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
+import {ClientMessaging} from './clientMessaging';
 import {GridDB} from './gridDB';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
-import {getConnectable as getClientConnectable} from './client';
-
-let clientConnectable = getClientConnectable();
-let clientApiRouter = clientConnectable.Router;
-let clientConnectionManager = clientConnectable.ConnectionsManager;
-let adminConnectable = getClientConnectable();
-let adminApiRouter = adminConnectable.Router;
-let adminConnectionManager = adminConnectable.ConnectionsManager;
+import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './client';
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
@@ -50,32 +44,29 @@ let bpx = bodyParser.text({
 clientApp.use(bpx);
 
 let nodeMessaging: INodeMessaging = new NodeMessaging(nodeAppConnectionsManager);
+let clientMessaging = new ClientMessaging(clientConnectionsManager);
 let dispatcher = new Dispatcher(nodeMessaging, new GridDB(config.sqlConfig));
 dispatcher.on('changed', () => {
     let o = dispatcher.toJSON();
-    //console.log(JSON.stringify(o));
-    let topic = '/topic/dispatcher/';
-    // TODO: forward message to admin's connectionManager
+    clientMessaging.notifyClientsDispatcherChanged(o, (err:any) => {
+        if (err) {
+            console.error('!!! Error notifying client on dispatcher-changed: ' + JSON.stringify(err));
+        }
+    });
 }).on('jobs_tracking_changed', () => {
     let o = dispatcher.trackingJobs;
-    //console.log(JSON.stringify(o));
-    let topic = '/topic/dispatcher/';
-    // TODO: forward message to admin's connectionManager
+    clientMessaging.notifyClientsJobsTrackingChanged(o, (err:any) => {
+        if (err) {
+            console.error('!!! Error notifying client on jobs-tracking-changed: ' + JSON.stringify(err));
+        }
+    });
 }).on('job_status_changed', (trackItem: IJobTrackItem) => {
     console.log(JSON.stringify(trackItem));
-    /*
-    if (trackItem.ncks && trackItem.ncks.length > 0) {
-        let getNotificationTopic = (notificationCookie: string) => '/topic/job/status_changed/' + notificationCookie
-        function getHandler(i: number) : (err: any) => void  {
-            return (err: any): void => {
-                if (i < trackItem.ncks.length-1) {
-                    clientConnectionManager.injectMessage(getNotificationTopic(trackItem.ncks[i+1]), {}, trackItem.jp, getHandler(i+1));
-                }
-            }
+    clientMessaging.notifyClientsJobStatusChanged(trackItem.ncks, trackItem.jp, (err:any) => {
+        if (err) {
+            console.error('!!! Error notifying client on jobs-status-changed: ' + JSON.stringify(err));
         }
-        clientConnectionManager.injectMessage(getNotificationTopic(trackItem.ncks[0]), {}, trackItem.jp, getHandler(0));
-    }
-    */
+    });
 });
 
 let g: IGlobal = {
@@ -114,7 +105,7 @@ function authorizedAdmin(req: express.Request, res: express.Response, next: expr
     next();
 }
 
-adminApp.use('/api', authorizedClient, authorizedAdmin, adminApiRouter);
+adminApp.use('/api', authorizedClient, authorizedAdmin, clientApiRouter);
 adminApp.use('/app', authorizedClient, authorizedAdmin, express.static(path.join(__dirname, '../public')));
 
 // hitting the root of admin app
@@ -134,8 +125,7 @@ clientApp.use('/api', authorizedClient, clientApiRouter);
 nodeApp.use('/node-app', nodeAppRouter);
 
 // node: /node-app/events/event_stream
-// client: /api/events/event_stream
-// admin: /api/events/event_stream
+// client and admin: /api/events/event_stream
 
 adminApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
 
