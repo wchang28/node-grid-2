@@ -72,4 +72,6 @@ function getJobInfo(req: express.Request, res: express.Response, next: express.N
     }
 }
 
+router.use('/:jobId', getJobInfo, jobOperationRouter);
+
 export {router as Router}; 
