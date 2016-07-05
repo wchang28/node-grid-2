@@ -161,6 +161,10 @@ class Nodes extends events.EventEmitter {
         }
         return (ret.length > 0 ? ret : null);
     }
+    getNode(id:string): INodeItem {
+        let node = this.__nodes[id];
+        return (node ? node : null);
+    }
     toJSON(): INodeItem[] {
         let ret: INodeItem[] = [];
         for (let conn_id in this.__nodes)
@@ -602,6 +606,7 @@ export class Dispatcher extends events.EventEmitter {
             }
         });
     }
+    getNode(nodeId:string): INodeItem {return this.__nodes.getNode(nodeId);}
     toJSON(): IDispatcherJSON {
         return {
             nodes: this.__nodes.toJSON()

@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
-import {Dispatcher} from '../../dispatcher';
+import {Dispatcher, INodeItem} from '../../dispatcher';
 import {IGridUser} from '../../messaging';
 
 let router = express.Router();
@@ -66,5 +66,34 @@ router.get('/dispatching/stop', canStartStopDispatching, (req:express.Request, r
     dispatcher.dispatchEnabled = false;
     res.json({});
 });
+
+let nodeRouter = express.Router();
+let nodeOperationRouter = express.Router();
+
+nodeOperationRouter.get('/info', (req: express.Request, res: express.Response) => {
+    let node:INodeItem = req['node'];
+    res.json(node);
+});
+
+function getNode(req: express.Request, res: express.Response, next: express.NextFunction) {
+    let nodeId:string = req.params['nodeId'];
+    if (!nodeId)
+        res.status(400).json({err: 'bad node id'});
+    else {
+        let dispatcher = getDispatcher(req);
+        let node = dispatcher.getNode(nodeId);
+        if (!node)
+            res.status(400).json({err: 'bad node id'});
+        else {
+            req['node'] = node;
+            next();
+        }
+    }
+}
+
+nodeRouter.use('/:nodeId', getNode, nodeOperationRouter);
+
+router.use('/node', nodeRouter);
+
 
 export {router as Router};
