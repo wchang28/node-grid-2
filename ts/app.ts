@@ -18,17 +18,14 @@ let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let clientApp = express();  // client facing app
 let nodeApp = express();   // node facing app
-let adminApp = express();   // admin app
 
 import nc = require('no-cache-express');
 clientApp.use(nc);
 nodeApp.use(nc);
-adminApp.use(nc);
 
 let bpj = bodyParser.json({"limit":"999mb"});   // json body middleware
 clientApp.use(bpj);
 nodeApp.use(bpj);
-adminApp.use(bpj);
 
 // xml body middleware
 let bpx = bodyParser.text({
@@ -75,7 +72,6 @@ let g: IGlobal = {
 
 clientApp.set("global", g);
 nodeApp.set("global", g);
-adminApp.set("global", g);
 
 function authorizedClient(req: express.Request, res: express.Response, next: express.NextFunction): void {
     //console.log('reaching authorizedClient middleware, url=' + req.baseUrl);
@@ -102,11 +98,11 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
     /////////////////////////////////////////////////////////////////
 }
 
-adminApp.use('/api', authorizedClient, clientApiRouter);
-adminApp.use('/app', authorizedClient, express.static(path.join(__dirname, '../public')));
+clientApp.use('/api', authorizedClient, clientApiRouter);
+clientApp.use('/app', authorizedClient, express.static(path.join(__dirname, '../public')));
 
 // hitting the root of admin app
-adminApp.get('/', (req: express.Request, res: express.Response) => {
+clientApp.get('/', (req: express.Request, res: express.Response) => {
     // TODO: check session cookie and do oauth2
     let stateObj = req.query;	// query fields/state object might have marketing campaign code and application object short-cut link in it
     let state = JSON.stringify(stateObj);
@@ -118,13 +114,12 @@ adminApp.get('/', (req: express.Request, res: express.Response) => {
     res.redirect(redirectUrl);
 });
 
-clientApp.use('/api', authorizedClient, clientApiRouter);
 nodeApp.use('/node-app', nodeAppRouter);
 
 // node: /node-app/events/event_stream
 // client and admin: /api/events/event_stream
 
-adminApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
+clientApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
 
 /*
 let server = null;
@@ -175,15 +170,4 @@ clientAppServer.listen(clientAppPort, clientAppHost, () => {
 	let port = clientAppServer.address().port;
 	// console.log('app server listening at %s://%s:%s', (config.https ? 'https' : 'http'), host, port);
     console.log('client app server listening at %s://%s:%s', 'http', host, port);
-});
-
-let adminAppServer = http.createServer(adminApp);
-let adminAppPort = 26356;
-let adminAppHost = "127.0.0.1";
-
-adminAppServer.listen(adminAppPort, adminAppHost, () => {
-	let host = adminAppServer.address().address;
-	let port = adminAppServer.address().port;
-	// console.log('app server listening at %s://%s:%s', (config.https ? 'https' : 'http'), host, port);
-    console.log('admin app server listening at %s://%s:%s', 'http', host, port);
 });
