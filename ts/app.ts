@@ -98,7 +98,7 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
     /////////////////////////////////////////////////////////////////
 }
 
-clientApp.use('/api', authorizedClient, clientApiRouter);
+clientApp.use('/services', authorizedClient, clientApiRouter);
 clientApp.use('/app', authorizedClient, express.static(path.join(__dirname, '../public')));
 
 // hitting the root of admin app
