@@ -25,15 +25,19 @@ function canSubmitJob(req: express.Request, res: express.Response, next: express
         res.status(401).json({err: 'not authorized'});
 }
 
+// body: job in xml
+// query:
+// 1. nc (optional)
 router.post('/submit', canSubmitJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
+    let query = req.query;
     dispatcher.submitJob(user, req.body, (err: any, jobId:string) => {
         if (err)
             res.status(400).json({err});
         else
             res.json({jobId});
-    }, (req.query['notificationCookie'] ? req.query['notificationCookie'] : null));
+    }, (query['nc'] ? query['nc'] : null));
 });
 
 function canKillJob(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -61,6 +65,23 @@ jobOperationRouter.get('/kill', canKillJob, (req: express.Request, res: express.
 jobOperationRouter.get('/info', (req: express.Request, res: express.Response) => {
     let jobInfo:IJobInfo = req['jobInfo'];
     res.json(jobInfo);
+});
+
+// query:
+// 1. failedTasksOnly (optional)
+// 2. nc (optional)
+jobOperationRouter.get('/re_submit', canSubmitJob, (req: express.Request, res: express.Response) => {
+    let dispatcher = getDispatcher(req);
+    let user = getUser(req);
+    let jobInfo:IJobInfo = req['jobInfo'];
+    let query = req.query;
+    let failedTasksOnly = (query['failedTasksOnly'] ? true : false);
+    dispatcher.reSubmitJob(user, jobInfo.jobId, failedTasksOnly, (err: any, jobId:string) => {
+        if (err)
+            res.status(400).json({err});
+        else
+            res.json({jobId});
+    }, (query['nc'] ? query['nc'] : null));
 });
 
 function getJobInfo(req: express.Request, res: express.Response, next: express.NextFunction) {

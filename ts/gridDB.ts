@@ -21,6 +21,27 @@ export class GridDB {
             }
         });
     }
+    reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) : void {
+        let params = {
+            'userId': user.userId
+            ,'priority': user.priority
+            ,'oldJobId': oldJobId
+            ,'failedTasksOnly': failedTasksOnly
+        };
+        this.ssql.execute('[dbo].[stp_NodeJSGridReSubmitJob]', params, (err: any, recordsets: any) : void => {
+            if (err)
+                done(err, null);
+            else {
+                let ret = recordsets[0][0];
+                if (ret.err != 0) {
+                    done(ret.error, null);
+                } else {
+                    let ret = recordsets[1][0];
+                    done(null, ret);
+                }
+            }
+        });
+    }
     getJobProgress(jobId:string, done:(err:any, jobProgress: IJobProgress) => void) : void {
         this.ssql.query('select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
             if (err)

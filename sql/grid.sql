@@ -199,6 +199,14 @@ BEGIN
 	declare @numTasks int
 	select @numTasks=max([id])+1 from @tmp
 
+	if (@numTasks is null)
+	begin
+		select
+		[err]=1
+		,[error]='no task to run'
+		return
+	end
+
 	select
 	[err]=0
 	,[error]=null
@@ -231,6 +239,94 @@ BEGIN
 	,[cmd]
 	,[cookie]=iif([cookie]='', null, [cookie])
 	,[stdin]=iif([stdin]='', null, [stdin])
+	,[status]='IDLE'
+	from @tmp
+	order by [id] asc
+
+	select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)
+
+END
+
+GO
+
+CREATE PROCEDURE [dbo].[stp_NodeJSGridReSubmitJob]
+	@userId varchar(100)
+	,@priority int
+	,@oldJobId bigint
+	,@failedTasksOnly bit = 0
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	IF not EXISTS (SELECT [jobId] from [dbo].[GridJobs] WHERE [jobId] = @oldJobId) 
+	begin
+		select
+		[err]=1
+		,[error]='bad job id'
+		return
+	end
+
+	declare @tmp table
+	(
+		[id] bigint identity(0,1)
+		,[cmd] varchar(max)
+		,[cookie] varchar(256)
+		,[stdin] varchar(max)
+	)
+
+	insert into @tmp
+	([cmd],[cookie],[stdin])
+	select
+	[cmd]
+	,[cookie]
+	,[stdin]
+	FROM [dbo].[GridJobTasks] (nolock)
+	where
+	[jobId]=@oldJobId
+	and 1=iif(@failedTasksOnly=1, iif(isnull([success], 0) = 1, 0, 1) , 1)
+
+	declare @numTasks int
+	select @numTasks=max([id])+1 from @tmp
+
+	if (@numTasks is null)
+	begin
+		select
+		[err]=1
+		,[error]='no task to run'
+		return
+	end
+		
+	select
+	[err]=0
+	,[error]=null
+	-- return
+
+	declare @description varchar(250)
+	declare @cookie varchar(250)
+	declare @jobId bigint
+
+	select
+	@description=[description]
+	,@cookie=[cookie]
+	FROM [dbo].[GridJobs] (nolock)
+	where [jobId]=@oldJobId
+
+	insert into [dbo].[GridJobs]
+	([description],[cookie],[userId],[priority],[submitTime],[aborted])
+	values (@description, @cookie, @userId, @priority, getdate(), 0)
+
+	set @jobId = @@IDENTITY
+
+	delete from [dbo].[GridJobTasks] where [jobId]=@jobId
+
+	insert into [dbo].[GridJobTasks]
+	([jobId],[index],[cmd],[cookie],[stdin],[status])
+	select
+	[jobId]=@jobId
+	,[index]=[id]
+	,[cmd]
+	,[cookie]
+	,[stdin]
 	,[status]='IDLE'
 	from @tmp
 	order by [id] asc

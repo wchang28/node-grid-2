@@ -33,6 +33,7 @@ export interface INodeMessaging {
 
 export interface IGridDB {
     registerNewJob: (user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
+    reSubmitJob: (user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobProgress: (jobId: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobInfo: (jobId: string, done:(err:any, jobInfo: IJobInfo) => void) => void;
     killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
@@ -577,6 +578,24 @@ export class Dispatcher extends events.EventEmitter {
                 }
             });
         }
+    }
+    reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobId: string) => void, notificationCookie:string = null) : void {
+        if (this.queueClosed) {
+            done('queue is currently closed', null);
+        } else {
+            this.__gridDB.reSubmitJob(user, oldJobId, failedTasksOnly, (err:any, jobProgress: IJobProgress) => {
+                if (!err) {
+                    this.__jobsTacker.addJob(jobProgress, notificationCookie);
+                    let tasks: ITaskItem[] = [];
+                    for (let i:number = 0; i < jobProgress.numTasks; i++)
+                        tasks.push({j: jobProgress.jobId, t: i});
+                    this.__queue.enqueue(user.priority, tasks);
+                    done(null, jobProgress.jobId);
+                } else {
+                    done(err, null);
+                }
+            });
+        }        
     }
     addNewNode(newNode: INode) : void {this.__nodes.addNewNode(newNode);}
     removeNode(nodeId: string) : void {this.__nodes.removeNode(nodeId);}
