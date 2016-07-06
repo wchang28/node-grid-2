@@ -20,7 +20,9 @@ interface ITaskItemDispatch extends ITaskItem {
     priority: number;  // priority
 }
 
-interface IQueueJSON {
+export interface IQueueJSON {
+    priorities: number[];
+    numJobs: number;
     numTasks: number;
 }
 
@@ -39,10 +41,11 @@ export interface IGridDB {
 export interface IDispatcherJSON {
     nodes: INodeItem[];
     queueClosed: boolean;
+    queue: IQueueJSON;
     dispatchEnabled: boolean;
-    numTasksInQueue: number;
     dispatching: boolean;
     numOutstandingAcks: number;
+    numTrackingJobs: number;
 } 
 
 interface IInterval {
@@ -178,6 +181,7 @@ class Nodes extends events.EventEmitter {
 // 2. enqueued
 class Queue extends events.EventEmitter {
     private __numtasks: number = 0;
+    private __numJobs: number = 0;
     private __queue: {[priority:string]: {[jobId: string]: ITaskItem[]} } = {}; // queue by priority number and jobId
     constructor() {
         super();
@@ -186,7 +190,10 @@ class Queue extends events.EventEmitter {
         let p = priority.toString();
         if (!this.__queue[p]) this.__queue[p] = {};
         let jobId = task.j;
-        if (!this.__queue[p][jobId]) this.__queue[p][jobId] = [];
+        if (!this.__queue[p][jobId]) {
+            this.__queue[p][jobId] = [];
+            this.__numJobs++;
+        }
         this.__queue[p][jobId].push(task);
         this.__numtasks++;
         this.emit('changed');
@@ -196,10 +203,13 @@ class Queue extends events.EventEmitter {
     enqueue(priority:number, tasks: ITaskItem[]) : void {
         let p = priority.toString();
         if (!this.__queue[p]) this.__queue[p] = {};
-        for (let i in tasks) {
+        for (let i in tasks) {  // for each task
             let task = tasks[i];
             let jobId = task.j;
-            if (!this.__queue[p][jobId]) this.__queue[p][jobId] = [];
+            if (!this.__queue[p][jobId]) {
+                this.__queue[p][jobId] = [];
+                this.__numJobs++;
+            }
             this.__queue[p][jobId].push(task);
         }
         this.__numtasks += tasks.length;
@@ -251,8 +261,10 @@ class Queue extends events.EventEmitter {
             let p = priority.toString();
             let jobId = this.randomlyPickAJob(this.__queue[p]);
             let ti = this.__queue[p][jobId].shift();
-            if (this.__queue[p][jobId].length === 0)
+            if (this.__queue[p][jobId].length === 0) {
                 delete this.__queue[p][jobId];
+                this.__numJobs--;
+            }
             if (JSON.stringify(this.__queue[p]) === '{}')
                 delete this.__queue[p];
             let task: ITaskItemDispatch = {
@@ -278,6 +290,7 @@ class Queue extends events.EventEmitter {
             let p = ps[i];
             delete this.__queue[p];
         }
+        this.__numJobs = 0;
         this.__numtasks = 0;
         if (ps.length > 0) this.emit('changed');
     }
@@ -287,6 +300,7 @@ class Queue extends events.EventEmitter {
             if (this.__queue[p][jobId]) {   // found the job
                 numRemoved = this.__queue[p][jobId].length;
                 delete this.__queue[p][jobId];
+                this.__numJobs--;
                 if (JSON.stringify(this.__queue[p]) === '{}')
                     delete this.__queue[p];
                 break;
@@ -296,10 +310,23 @@ class Queue extends events.EventEmitter {
         if (numRemoved > 0) this.emit('changed');
     }
     toJSON(): IQueueJSON {
-        return {numTasks: this.__numtasks};
+        let priorities: number[] = [];
+        for (let p in this.__queue)
+            priorities.push(parseInt(p));
+        priorities.sort();
+        return {
+            priorities: priorities
+            ,numJobs: this.__numJobs
+            ,numTasks: this.__numtasks
+        };
     }
 }
 
+// will emit the following events
+// 1. change
+// 2. job_added
+// 3. job_removed
+// 4. job_status_changed
 class JobsTracker extends events.EventEmitter {
     private __trackItems: {[jobId: string]: IJobTrackItem} = {};
     private __numJobs: number = 0;
@@ -320,6 +347,7 @@ class JobsTracker extends events.EventEmitter {
             };
             this.__trackItems[jobProgress.jobId] = trackItem;
             this.__numJobs++;
+            this.emit('job_added', jobProgress.jobId);
             this.emit('change');
             this.emit('job_status_changed', trackItem);
         }
@@ -357,12 +385,14 @@ class JobsTracker extends events.EventEmitter {
                 if (newJP.status === 'FINISHED' || newJP.status === 'ABORTED') {
                     delete this.__trackItems[newJP.jobId];
                     this.__numJobs--;
+                    this.emit('job_removed', newJP.jobId);
                 }
                 this.emit('change');
                 this.emit('job_status_changed', trackItem);
             }
         }
     }
+    get numJobs():number {return this.__numJobs;}
     toJSON(): IJobProgress[] {
         let ret: IJobProgress[] = [];
         for (let jobId in this.__trackItems)
@@ -401,6 +431,10 @@ export class Dispatcher extends events.EventEmitter {
             this.emit('jobs_tracking_changed');
         }).on('job_status_changed', (jobTrackItem: IJobTrackItem) => {
             this.emit('job_status_changed', jobTrackItem);
+        }).on('job_added', ()=> {
+            this.emit('changed');
+        }).on('job_removed', ()=> {
+            this.emit('changed');
         });
     }
 
@@ -617,10 +651,11 @@ export class Dispatcher extends events.EventEmitter {
         return {
             nodes: this.__nodes.toJSON()
             ,queueClosed: this.queueClosed
+            ,queue: this.__queue.toJSON()
             ,dispatchEnabled: this.dispatchEnabled
-            ,numTasksInQueue: this.__queue.toJSON().numTasks
             ,dispatching: this.dispatching
             ,numOutstandingAcks: this.__numOutstandingAcks
+            ,numTrackingJobs: this.__jobsTacker.numJobs
         };
     }
     get trackingJobs(): IJobProgress[] {return this.__jobsTacker.toJSON();}
