@@ -91,6 +91,7 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
             ,canKillOtherUsersJob: true
             ,canStartStopDispatching: true
             ,canOpenCloseQueue: true
+            ,canEnableDisableNode: true
         }
     }
     req["user"] = user;

@@ -8,6 +8,7 @@ export interface IGridUserProfile {
     canKillOtherUsersJob: boolean;
     canStartStopDispatching: boolean;
     canOpenCloseQueue: boolean;
+    canEnableDisableNode: boolean;
 }
 
 export interface IGridUser {

@@ -607,6 +607,12 @@ export class Dispatcher extends events.EventEmitter {
         });
     }
     getNode(nodeId:string): INodeItem {return this.__nodes.getNode(nodeId);}
+    setNodeEnabled(nodeId: string, enabled: boolean) : void {
+        if (enabled)
+            this.__nodes.enableNode(nodeId);
+        else
+            this.__nodes.disableNode(nodeId);
+    }
     toJSON(): IDispatcherJSON {
         return {
             nodes: this.__nodes.toJSON()

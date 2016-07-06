@@ -75,6 +75,28 @@ nodeOperationRouter.get('/info', (req: express.Request, res: express.Response) =
     res.json(node);
 });
 
+function canEnableDisableNode(req: express.Request, res: express.Response, next: express.NextFunction) {
+    let user = getUser(req);
+    if (user.profile.canEnableDisableNode)
+        next();
+    else
+        res.status(401).json({err: 'not authorized'});
+}
+
+nodeOperationRouter.get('/enable', canEnableDisableNode, (req: express.Request, res: express.Response) => {
+    let dispatcher = getDispatcher(req);
+    let node:INodeItem = req['node'];
+    dispatcher.setNodeEnabled(node.id, true);
+    res.json({});
+});
+
+nodeOperationRouter.get('/disable', canEnableDisableNode, (req: express.Request, res: express.Response) => {
+    let dispatcher = getDispatcher(req);
+    let node:INodeItem = req['node'];
+    dispatcher.setNodeEnabled(node.id, false);
+    res.json({});
+});
+
 function getNode(req: express.Request, res: express.Response, next: express.NextFunction) {
     let nodeId:string = req.params['nodeId'];
     if (!nodeId)
