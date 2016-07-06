@@ -9,9 +9,10 @@ import {GridMessage, INode, INodeReady, ITask} from '../messaging';
 let router = express.Router();
 
 let topicRouter = getTopicRouter('/event_stream', getConnectionFactory(10000));
-let connectionsManager = topicRouter.connectionsManager;
-
 router.use('/events', topicRouter); // topic subscription endpoint is available at /events/event_stream from this route
+
+let routerEventEmitter = topicRouter.eventEmitter;
+let connectionsManager = topicRouter.connectionsManager;
 
 let getDispatcher = (req:any) : Dispatcher => {
     let request: express.Request = req;
@@ -19,20 +20,20 @@ let getDispatcher = (req:any) : Dispatcher => {
     return g.dispatcher;
 }
 
-topicRouter.eventEmitter.on('client_connect', (params: ConnectedEventParams) : void => {
+routerEventEmitter.on('client_connect', (params: ConnectedEventParams) : void => {
     console.log('node ' + params.conn_id + ' @ ' + params.remoteAddress + ' connected to the SSE topic endpoint');
     let dispatcher = getDispatcher(params.req);
     let node:INode = {id: params.conn_id, name: params.remoteAddress};
     dispatcher.addNewNode(node);
 });
 
-topicRouter.eventEmitter.on('client_disconnect', (params: ConnectedEventParams) : void => {
+routerEventEmitter.on('client_disconnect', (params: ConnectedEventParams) : void => {
     console.log('node ' + params.conn_id + ' @ ' + params.remoteAddress +  ' disconnected from the SSE topic endpoint');
     let dispatcher = getDispatcher(params.req);
     dispatcher.removeNode(params.conn_id);
 });
 
-topicRouter.eventEmitter.on('client_cmd', (params: CommandEventParams) => {
+routerEventEmitter.on('client_cmd', (params: CommandEventParams) => {
     let dispatcher = getDispatcher(params.req);
     let nodeId = params.conn_id;
     if (params.cmd === 'send') {
@@ -51,5 +52,4 @@ topicRouter.eventEmitter.on('client_cmd', (params: CommandEventParams) => {
     }
 });
 
-export {router as Router};
-export {connectionsManager as ConnectionsManager};
+export {router as Router, connectionsManager as ConnectionsManager};
