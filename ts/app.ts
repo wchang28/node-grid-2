@@ -42,6 +42,7 @@ clientApp.use(bpx);
 
 let nodeMessaging: INodeMessaging = new NodeMessaging(nodeAppConnectionsManager);
 let clientMessaging = new ClientMessaging(clientConnectionsManager);
+
 let dispatcher = new Dispatcher(nodeMessaging, new GridDB(config.sqlConfig));
 dispatcher.on('changed', () => {
     let o = dispatcher.toJSON();
@@ -62,6 +63,15 @@ dispatcher.on('changed', () => {
     clientMessaging.notifyClientsJobStatusChanged(trackItem.ncks, trackItem.jp, (err:any) => {
         if (err) {
             console.error('!!! Error notifying client on jobs-status-changed: ' + JSON.stringify(err));
+        }
+    });
+});
+
+clientConnectionsManager.on('change', () => {
+    let o = clientConnectionsManager.toJSON();
+    clientMessaging.notifyClientsConnectionsChanged(o, (err:any) => {
+        if (err) {
+            console.error('!!! Error notifying client on connections-changed: ' + JSON.stringify(err));
         }
     });
 });

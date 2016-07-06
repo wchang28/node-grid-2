@@ -21,6 +21,16 @@ export class ClientMessaging {
         };
         this.connectionsManager.injectMessage(ClientMessaging.getDispatcherTopic(), {}, msg, done);
     }
+    static getConnectionsTopic() : string {
+        return '/topic/connections';
+    }
+    notifyClientsConnectionsChanged(connections:any, done: (err:any) => void) : void {
+        let msg: GridMessage = {
+            type: 'connections-changed'
+            ,content: connections
+        };
+        this.connectionsManager.injectMessage(ClientMessaging.getConnectionsTopic(), {}, msg, done);
+    }
     static getClientJobNotificationTopic(notificationCookie: string) : string {
         return '/topic/job/' + notificationCookie;
     }
