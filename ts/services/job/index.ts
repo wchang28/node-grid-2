@@ -75,7 +75,8 @@ jobOperationRouter.get('/re_submit', canSubmitJob, (req: express.Request, res: e
     let user = getUser(req);
     let jobInfo:IJobInfo = req['jobInfo'];
     let query = req.query;
-    let failedTasksOnly = (query['failedTasksOnly'] ? true : false);
+    let fto = query['failedTasksOnly'];
+    let failedTasksOnly = (fto ? (isNaN(parseInt(fto)) ? false : parseInt(fto) !== 0) : false);
     dispatcher.reSubmitJob(user, jobInfo.jobId, failedTasksOnly, (err: any, jobId:string) => {
         if (err)
             res.status(400).json({err});
