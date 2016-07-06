@@ -11,7 +11,7 @@ import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
 import {GridDB} from './gridDB';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
-import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './client';
+import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
