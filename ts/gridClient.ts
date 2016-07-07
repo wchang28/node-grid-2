@@ -18,7 +18,8 @@ interface IAjaxon {
 }
 
 export interface IOAuth2Config {
-    tokenGrantUrl: string
+    tokenGrantUrl: string;
+    rejectUnauthorized?: boolean;
 }
 
 export interface IGridDispatcherConfig {
