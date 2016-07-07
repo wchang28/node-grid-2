@@ -39,19 +39,27 @@ for (let i = 0; i < 15; i++) {
 }
 
 let client = new GridClient(config);
+
 client.login(username, password, (err:any, session: ISession) => {
-    let job = session.runJob(js);
-    //let job = session.reRunJob('24', true)
-    job.on('submitted', (jobId: string) => {
-        console.log('job summitted, joId=' + jobId);
-    }).on('status-changed', (jp: IJobProgress) => {
-        console.log(JSON.stringify(jp));
-    }).on('error', (err:any) => {
-        console.log('!!! Error: ' + JSON.stringify(err));
-    }).on('done', (jp: IJobProgress) => {
-        console.log('job ' + job.jobId + ' finished with status = ' + jp.status);
-        session.logout();
-        process.exit(0);
-    });
-    job.run();
+    if (err) {
+        console.error('!!! Login error: ' + JSON.stringify(err));
+        process.exit(1);
+    } else {
+        let job = session.runJob(js);
+        //let job = session.reRunJob('24', true)
+        job.on('submitted', (jobId: string) => {
+            console.log('job summitted, joId=' + jobId);
+        }).on('status-changed', (jp: IJobProgress) => {
+            console.log(JSON.stringify(jp));
+        }).on('error', (err:any) => {
+            console.error('!!! Error: ' + JSON.stringify(err));
+            session.logout();
+            process.exit(1);
+        }).on('done', (jp: IJobProgress) => {
+            console.log('job ' + job.jobId + ' finished with status = ' + jp.status);
+            session.logout();
+            process.exit(0);
+        });
+        job.run();
+    }
 });
