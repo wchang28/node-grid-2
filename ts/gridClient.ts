@@ -90,7 +90,6 @@ class JobReSubmmit implements IJobSubmit {
     }
 }
 
-
 export interface IGridJob {
     jobId?:string;
     run: () => void;
