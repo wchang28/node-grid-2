@@ -403,3 +403,26 @@ RETURN
 )
 
 GO
+
+CREATE FUNCTION [dbo].[fnc_NodeJSGridMultiJobsProgress]
+(	
+	@xml xml
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	with jobs as
+	(
+		select
+		[jobId]=a.b.value('@i', 'bigint') 
+		FROM @xml.nodes('/jobs/j') a(b)
+
+	)
+	select
+	p.*
+	from jobs j
+	cross apply [dbo].[fnc_NodeJSGridGetJobProgress](j.jobId) p
+)
+
+GO
