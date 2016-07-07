@@ -8,9 +8,23 @@ import {TaskRunner} from './taskRunner';
 let EventSource = require('eventsource');
 let $ = require('jquery-no-dom');
 import treeKill = require('tree-kill');
+import {IGridDBConfiguration} from './gridDBConfig';
+
+interface IDispatcherConfig {
+    eventSourceUrl: string;
+    eventSourceInitDict?: any;
+}
+
+interface IConfiguration {
+    numCPUs?: number;
+    reservedCPUs?: number;
+    nodeName?:string;
+    dbConfig: IGridDBConfiguration;
+    dispatcherConfig: IDispatcherConfig;
+}
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../launcher_testing_config.json') : process.argv[2]);
-let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+let config: IConfiguration = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 function getDefaultNodeName() : string {
     let interfaces = os.networkInterfaces();
@@ -30,16 +44,16 @@ function getDefaultNodeName() : string {
     }
 }
 
-let dispatcherConfig = config["dispatcher"];
-let url:string = dispatcherConfig["eventSourceUrl"];
-let eventSourceInitDict = dispatcherConfig["eventSourceInitDict"];
+let dispatcherConfig = config.dispatcherConfig;
+let url = dispatcherConfig.eventSourceUrl;
+let eventSourceInitDict = dispatcherConfig.eventSourceInitDict;
 let cpus = os.cpus();
-let numCPUs:number = (config['numCPUs'] ? config['numCPUs'] : cpus.length - (config['reservedCPUs'] ? config['reservedCPUs'] : 2));
+let numCPUs:number = (config.numCPUs ? config.numCPUs : cpus.length - (config.reservedCPUs ? config.reservedCPUs : 2));
 numCPUs = Math.max(numCPUs, 1);
-let nodeName:string = (config["nodeName"] ? config["nodeName"] : getDefaultNodeName());
+let nodeName:string = (config.nodeName ? config.nodeName : getDefaultNodeName());
 console.log('nodeName=' + nodeName + ', cpus=' + cpus.length + ', numCPUs=' + numCPUs);
 
-let gridDB = new GridDB(config.sqlConfig);
+let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 gridDB.on('error', (err:any) => {
     console.error('!!! Database connection error: ' + JSON.stringify(err));
 }).on('connected', () => {
@@ -68,7 +82,6 @@ gridDB.on('error', (err:any) => {
         msgBorker.send('/topic/dispatcher', {}, msg, done);
     }
 
-
     function nodeRunTask(nodeId:string, task: ITask, done: (err: any) => void) {
         gridDB.getTaskExecParams(task, nodeId, nodeName, (err:any, taskExecParams: ITaskExecParams) => {
             if (err)
@@ -94,7 +107,7 @@ gridDB.on('error', (err:any) => {
     }
 
     msgBorker.on('connect', (nodeId:string) : void => {
-        console.log('connected: nodeId=' + nodeId);
+        console.log('connected to the dispatcher: nodeId=' + nodeId);
         let sub_id = msgBorker.subscribe('/topic/node/' + nodeId
         ,(msg: IMessage): void => {
             console.log('msg-rcvd: ' + JSON.stringify(msg));

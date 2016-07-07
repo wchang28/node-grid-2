@@ -12,7 +12,7 @@ export interface QueryCallback {
 export class SimpleMSSQL extends events.EventEmitter {
     private __connection: sql.Connection = null;
     private static NOT_CONNECTED: string = 'not connected to the database';
-    constructor(private __sqlConfig: sql.Configuration, private __reconnectIntervalMS: number = 5000) {
+    constructor(private __sqlConfig: sql.Configuration, private __reconnectIntervalMS: number) {
         super();
     }
     private onConnectionError(err) : void {

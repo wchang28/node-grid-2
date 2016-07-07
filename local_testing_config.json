@@ -4,12 +4,26 @@
 		"host": "127.0.0.1"
 		,"port": 23784
 	}
-	,"sqlConfig":
+	,"dbConfig":
 	{
-		"user": "FKH_Splitting"
-		,"password": "F1r5tk3y2015"
-		,"server": "52.1.187.144"
-		,"database": "TestDB"
-		,"requestTimeout": 120000
+		"sqlConfig":
+		{
+			"user": "FKH_Splitting"
+			,"password": "F1r5tk3y2015"
+			,"server": "52.1.187.144"
+			,"database": "TestDB"
+			,"requestTimeout": 120000
+		}
+		,"dbOptions":
+		{
+			"reconnectIntervalMS": 5000
+		}
+	}
+	,"dispatcherConfig":
+	{
+        "tasksDispatchFailureMaxRertries": 3
+        ,"jobsPollingIntervalMS": 500
+        ,"jobsKillPollingIntervalMS": 3000
+        ,"jobsKillMaxRetries": 5	
 	}
 }

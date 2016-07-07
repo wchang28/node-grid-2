@@ -2,6 +2,13 @@ import * as events from 'events';
 import {IGridUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
 import {SimpleMSSQL, Configuration} from './simpleMSSQL';
 import {DOMParser, XMLSerializer} from 'xmldom';
+import * as _ from 'lodash';
+
+export {Configuration as SQLConfiguration} from './simpleMSSQL';
+
+export interface IGridDBOptions {
+    reconnectIntervalMS?: number;
+}
 
 // will emit the following events
 // 1. connected
@@ -9,9 +16,19 @@ import {DOMParser, XMLSerializer} from 'xmldom';
 // 3. disconnected
 export class GridDB extends events.EventEmitter {
     private __ssql: SimpleMSSQL;
-    constructor(sqlConfig: Configuration, reconnectIntervalMS: number = 5000) {
+    private static defaultOptions: IGridDBOptions = {
+        reconnectIntervalMS: 5000
+    };
+    private initOptions(options:IGridDBOptions) : IGridDBOptions {
+        options = (options || GridDB.defaultOptions);
+        options = _.assignIn({}, GridDB.defaultOptions, options);
+        options.reconnectIntervalMS = Math.max(1000, options.reconnectIntervalMS);
+        return options;
+    }
+    constructor(sqlConfig: Configuration, options: IGridDBOptions = null) {
         super();
-        this.__ssql = new SimpleMSSQL(sqlConfig, reconnectIntervalMS);
+        options = this.initOptions(options);
+        this.__ssql = new SimpleMSSQL(sqlConfig, options.reconnectIntervalMS);
         this.__ssql.on('connected', () => {
             this.emit('connected');
         }).on('error', (err:any) => {

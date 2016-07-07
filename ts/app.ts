@@ -7,17 +7,23 @@ import * as bodyParser from 'body-parser';
 import noCache = require('no-cache-express');
 import {IGlobal} from "./global";
 import {GridMessage, ITask, IGridUser, IJobTrackItem} from "./messaging";
-import {Dispatcher, INodeMessaging} from './dispatcher';
+import {Dispatcher, INodeMessaging, IDispatcherConfig} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
 import {GridDB} from './gridDB';
+import {IGridDBConfiguration} from './gridDBConfig';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
 
-let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
-let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+interface IConfiguration {
+    dbConfig: IGridDBConfiguration;
+    dispatcherConfig?: IDispatcherConfig;
+}
 
-let gridDB = new GridDB(config.sqlConfig);
+let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
+let config: IConfiguration = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+
+let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 gridDB.on('error', (err: any) => {
     console.error('!!! Database connection error: ' + JSON.stringify(err));
 }).on('connected', () => {
@@ -49,7 +55,7 @@ gridDB.on('error', (err: any) => {
     let nodeMessaging: INodeMessaging = new NodeMessaging(nodeAppConnectionsManager);
     let clientMessaging = new ClientMessaging(clientConnectionsManager);
 
-    let dispatcher = new Dispatcher(nodeMessaging, gridDB);
+    let dispatcher = new Dispatcher(nodeMessaging, gridDB, config.dispatcherConfig);
     dispatcher.on('changed', () => {
         let o = dispatcher.toJSON();
         clientMessaging.notifyClientsDispatcherChanged(o, (err:any) => {
@@ -57,14 +63,14 @@ gridDB.on('error', (err: any) => {
                 console.error('!!! Error notifying client on dispatcher-changed: ' + JSON.stringify(err));
             }
         });
-    }).on('jobs_tracking_changed', () => {
+    }).on('jobs-tracking-changed', () => {
         let o = dispatcher.trackingJobs;
         clientMessaging.notifyClientsJobsTrackingChanged(o, (err:any) => {
             if (err) {
                 console.error('!!! Error notifying client on jobs-tracking-changed: ' + JSON.stringify(err));
             }
         });
-    }).on('job_status_changed', (trackItem: IJobTrackItem) => {
+    }).on('job-status-changed', (trackItem: IJobTrackItem) => {
         clientMessaging.notifyClientsJobStatusChanged(trackItem.ncks, trackItem.jp, (err:any) => {
             if (err) {
                 console.error('!!! Error notifying client on jobs-status-changed: ' + JSON.stringify(err));
@@ -78,6 +84,10 @@ gridDB.on('error', (err: any) => {
         console.log('job ' + jobId.toString() + ' kill process finished.' + (err ? ' error=' + JSON.stringify(err) : ' job was killed successfully :-)'));
     }).on('kill-job-poll', (jobId: string, pollNumber: number) => {
         console.log('job ' + jobId.toString() + ' kill poll #' + pollNumber.toString() + '...');
+    }).on('job-submitted', (jobId: string) => {
+        console.log('job ' + jobId.toString() + ' was submitted');
+    }).on('job-finished', (jobId: string) => {
+        console.log('job ' + jobId.toString() + ' is finished');
     });
 
     clientConnectionsManager.on('change', () => {

@@ -509,13 +509,15 @@ class JobsStatusPolling extends events.EventEmitter {
 
 // will emit the following events
 // 1. changed
-// 2. jobs_tracking_changed
-// 3. job_status_changed
+// 2. jobs-tracking-changed
+// 3. job-status-changed
 // 4. error
 // 5. kill-job-begin
 // 6. kill-job-end
 // 7. kill-job-poll
 // 8. jobs-polling
+// 9. job-submitted
+// 10. job-finished
 export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
@@ -568,12 +570,14 @@ export class Dispatcher extends events.EventEmitter {
         });
 
         this.__jobsTacker.on('change', () => {
-            this.emit('jobs_tracking_changed');
+            this.emit('jobs-tracking-changed');
         }).on('job_status_changed', (jobTrackItem: IJobTrackItem) => {
-            this.emit('job_status_changed', jobTrackItem);
-        }).on('job_added', () => {
+            this.emit('job-status-changed', jobTrackItem);
+        }).on('job_added', (jobId: string) => {
+            this.emit('job-submitted', jobId);
             this.emit('changed');
-        }).on('job_removed', () => {
+        }).on('job_removed', (jobId: string) => {
+            this.emit('job-finished', jobId);
             this.emit('changed');
         });
 
