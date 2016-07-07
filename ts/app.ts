@@ -59,7 +59,7 @@ dispatcher.on('changed', () => {
         }
     });
 }).on('job_status_changed', (trackItem: IJobTrackItem) => {
-    console.log(JSON.stringify(trackItem));
+    //console.log(JSON.stringify(trackItem));
     clientMessaging.notifyClientsJobStatusChanged(trackItem.ncks, trackItem.jp, (err:any) => {
         if (err) {
             console.error('!!! Error notifying client on jobs-status-changed: ' + JSON.stringify(err));

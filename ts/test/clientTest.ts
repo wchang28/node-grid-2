@@ -20,17 +20,29 @@ let js:IGridJobSubmit = {
     ,tasks: []
 };
 
-for (let i:number = 0; i < 100; i++) {
+/*
+for (let i = 0; i < 100; i++) {
     let task: ITaskItem  = {
         cmd: 'echo Hi from Wen'
-        ,cookie: i.toString()
+        ,cookie: (i+1).toString()
+    }
+    js.tasks.push(task);
+}
+*/
+
+for (let i = 0; i < 15; i++) {
+    let task: ITaskItem  = {
+        cmd: 'sleep 15'
+        ,cookie: (i+1).toString()
     }
     js.tasks.push(task);
 }
 
+
 let client = new GridClient(config);
 client.login(username, password, (err:any, session: ISession) => {
     let job = session.runJob(js);
+    //let job = session.reRunJob('24', true)
     job.on('submitted', (jobId: string) => {
         console.log('job summitted, joId=' + jobId);
     }).on('status-changed', (jp: IJobProgress) => {

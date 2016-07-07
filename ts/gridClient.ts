@@ -55,7 +55,7 @@ class JobSubmmit implements IJobSubmit {
         if (!jobSubmit || !jobSubmit.tasks || jobSubmit.tasks.length === 0) {
             throw "no tasks for job";
         }
-        let doc = new DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?>','text/xml');
+        let doc = new DOMParser().parseFromString('<?xml version="1.0"?>','text/xml');
         let root = doc.createElement('job');
         if (jobSubmit.description) root.setAttribute('description', jobSubmit.description);
         if (jobSubmit.cookie) root.setAttribute('cookie', jobSubmit.cookie);
