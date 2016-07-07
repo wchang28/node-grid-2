@@ -1,5 +1,6 @@
 import {IGridUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
 import {SimpleMSSQL} from 'simple-mssql';
+import {DOMParser, XMLSerializer} from 'xmldom';
 
 export class GridDB {
     private ssql: SimpleMSSQL;
@@ -53,6 +54,25 @@ export class GridDB {
                 else
                     done(null, dt[0]);
             }
+        });
+    }
+    getMultiJobsProgress(jobIds:string[], done:(err:any, jobsProgress: IJobProgress[]) => void) : void {
+        let doc = new DOMParser().parseFromString('<?xml version="1.0"?>','text/xml');
+        let root = doc.createElement('jobs');
+        doc.appendChild(root);
+        for (let i in jobIds) {
+            let jobId = jobIds[i];
+            let el = doc.createElement('j');
+            el.setAttribute('i', jobId);
+            root.appendChild(el);
+        }
+        let serializer = new XMLSerializer();
+        let xml = serializer.serializeToString(doc);
+        this.ssql.query('select * from [dbo].[fnc_NodeJSGridMultiJobsProgress](@xml)', {'xml': xml}, (err: any, recordsets: any) : void => {
+            if (err)
+                done(err, null);
+            else
+                done(null, recordsets[0]);
         });
     }
     getJobInfo(jobId:string, done:(err:any, jobInfo: IJobInfo) => void) : void {

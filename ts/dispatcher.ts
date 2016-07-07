@@ -35,6 +35,7 @@ export interface IGridDB {
     registerNewJob: (user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
     reSubmitJob: (user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobProgress: (jobId: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
+    getMultiJobsProgress: (jobIds:string[], done:(err:any, jobsProgress: IJobProgress[]) => void) => void;
     getJobInfo: (jobId: string, done:(err:any, jobInfo: IJobInfo) => void) => void;
     killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
 }
@@ -376,24 +377,48 @@ class JobsTracker extends events.EventEmitter {
                 return oldJP;
         }
     }
-    feedJobProgress(jobProgress: IJobProgress) : void {
-        let trackItem = this.__trackItems[jobProgress.jobId];
+    // returns the job status has been changed
+    private feedJobProgressImpl(jobProgress: IJobProgress) : boolean {
+        let jobId = jobProgress.jobId;
+        let trackItem = this.__trackItems[jobId];
         if (trackItem) {
             let oldJP = trackItem.jp;
             let newJP = this.jobTransition(oldJP, jobProgress);
             if (newJP != oldJP) {  // status changed
                 trackItem.jp = newJP;
                 if (newJP.status === 'FINISHED' || newJP.status === 'ABORTED') {
-                    delete this.__trackItems[newJP.jobId];
+                    delete this.__trackItems[jobId];
                     this.__numJobs--;
-                    this.emit('job_removed', newJP.jobId);
+                    this.emit('job_removed', jobId);
                 }
-                this.emit('change');
                 this.emit('job_status_changed', trackItem);
+                return true;
+            } else
+                return false;
+        } else
+            return false;
+    }
+
+    feedJobProgress(jobProgress: IJobProgress) : void {
+        if (this.feedJobProgressImpl(jobProgress))
+            this.emit('change');
+    }
+
+    feedMultiJobsProgress(jobsProgress: IJobProgress[]) : void {
+        if (jobsProgress && jobsProgress.length > 0) {
+            let changed = false;
+            for (let i in jobsProgress) {
+                let statusChanged = this.feedJobProgressImpl(jobsProgress[i]);
+                if (statusChanged && !changed)
+                    changed = true;
             }
+            if (changed)
+                this.emit('change');
         }
     }
+
     get numJobs():number {return this.__numJobs;}
+
     toJSON(): IJobProgress[] {
         let ret: IJobProgress[] = [];
         for (let jobId in this.__trackItems)
