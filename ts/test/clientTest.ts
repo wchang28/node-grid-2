@@ -38,7 +38,6 @@ for (let i = 0; i < 15; i++) {
     js.tasks.push(task);
 }
 
-
 let client = new GridClient(config);
 client.login(username, password, (err:any, session: ISession) => {
     let job = session.runJob(js);
