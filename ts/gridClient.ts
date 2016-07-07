@@ -121,7 +121,7 @@ export interface IGridJob {
 };
 
 // will emit the follwoing events:
-// 1. job-id
+// 1. submitted
 // 2. status-changed
 // 3. done
 // 4. error
@@ -143,7 +143,7 @@ class GridJob extends events.EventEmitter implements IGridJob {
                     let jp: IJobProgress = gMsg.content;
                     if (!this.__jobId) {
                         this.__jobId = jp.jobId;
-                        this.emit('job-id', this.__jobId);
+                        this.emit('submitted', this.__jobId);
                     }
                     this.emit('status-changed', jp);
                     if (jp.status === 'FINISHED' || jp.status === 'ABORTED') {
@@ -166,7 +166,7 @@ class GridJob extends events.EventEmitter implements IGridJob {
                         } else {    // submit successful
                             if (!this.__jobId) {
                                 this.__jobId = jobId;
-                                this.emit('job-id', this.__jobId);
+                                this.emit('submitted', this.__jobId);
                             }
                         }
                     });
@@ -222,3 +222,5 @@ export class GridClient {
         done(null, session);
     }
 }
+
+export {IJobProgress};
