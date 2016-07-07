@@ -18,7 +18,7 @@ let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testi
 let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.sqlConfig);
-gridDB.ssql.on('error', (err: any) => {
+gridDB.on('error', (err: any) => {
     console.error('!!! Database connection error: ' + JSON.stringify(err));
 }).on('connected', () => {
     console.error('connected to the database :-)');
@@ -197,4 +197,4 @@ gridDB.ssql.on('error', (err: any) => {
     });
 });
 
-gridDB.ssql.connect();  // connect to the grid database
+gridDB.connect();  // connect to the grid database

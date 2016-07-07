@@ -5,10 +5,14 @@ export interface QueryCallback {
     (err: any, recordsets: any): void;
 }
 
+// will emit the following events
+// 1. connected
+// 2. error
+// 3. disconnected
 export class SimpleMSSQL extends events.EventEmitter {
     private __connection: sql.Connection = null;
     private static NOT_CONNECTED: string = 'not connected to the database';
-    constructor(private __sqlConfig: sql.Configuration) {
+    constructor(private __sqlConfig: sql.Configuration, private __reconnectIntervalMS: number = 5000) {
         super();
     }
     private onConnectionError(err) : void {
@@ -16,7 +20,7 @@ export class SimpleMSSQL extends events.EventEmitter {
         this.__connection = null;
         setTimeout(() => {
             this.connect();
-        }, 5000);
+        }, this.__reconnectIntervalMS);
         this.emit('error', err);
     }
     connect() : void {

@@ -40,7 +40,7 @@ let nodeName:string = (config["nodeName"] ? config["nodeName"] : getDefaultNodeN
 console.log('nodeName=' + nodeName + ', cpus=' + cpus.length + ', numCPUs=' + numCPUs);
 
 let gridDB = new GridDB(config.sqlConfig);
-gridDB.ssql.on('error', (err:any) => {
+gridDB.on('error', (err:any) => {
     console.error('!!! Database connection error: ' + JSON.stringify(err));
 }).on('connected', () => {
     console.error('connected to the database :-)');
@@ -138,4 +138,4 @@ gridDB.ssql.on('error', (err:any) => {
     msgBorker.connect();  // connect to the dispatcher
 });
 
-gridDB.ssql.connect();  // connect to the grid database
+gridDB.connect();  // connect to the grid database

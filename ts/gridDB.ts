@@ -1,15 +1,28 @@
+import * as events from 'events';
 import {IGridUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
 import {SimpleMSSQL, Configuration} from './simpleMSSQL';
 import {DOMParser, XMLSerializer} from 'xmldom';
 
-export {SimpleMSSQL} from './simpleMSSQL';
-
-export class GridDB {
+// will emit the following events
+// 1. connected
+// 2. error
+// 3. disconnected
+export class GridDB extends events.EventEmitter {
     private __ssql: SimpleMSSQL;
-    constructor(sqlConfig: Configuration) {
-        this.__ssql = new SimpleMSSQL(sqlConfig); 
+    constructor(sqlConfig: Configuration, reconnectIntervalMS: number = 5000) {
+        super();
+        this.__ssql = new SimpleMSSQL(sqlConfig, reconnectIntervalMS);
+        this.__ssql.on('connected', () => {
+            this.emit('connected');
+        }).on('error', (err:any) => {
+            this.emit('error', err);
+        }).on('disconnected', () => {
+            this.emit('disconnected');
+        });
     }
-    get ssql(): SimpleMSSQL {return this.__ssql;}
+    private get ssql(): SimpleMSSQL {return this.__ssql;}
+    connect() {this.ssql.connect();}
+    disconnect() {this.ssql.disconnect();}
     registerNewJob(user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
         this.ssql.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
             if (err)

@@ -1,5 +1,7 @@
 
 import * as events from 'events';
+import * as _ from 'lodash';
+
 import {INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobTrackItem, IRunningProcessByNode} from './messaging';
 
 interface ITaskItem extends ITask {
@@ -67,6 +69,13 @@ interface IKillJobCall {
 
 interface IKillJobCallFactory {
     (jobId:string, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall
+}
+
+export interface IDispatcherConfig {
+    tasksDispatchFailureMaxRertries?: number;
+    jobsPollingIntervalMS?: number;
+    jobsKillPollingIntervalMS?: number;
+    jobsKillMaxRetries?: number;
 }
 
 // will emit the following events
@@ -506,6 +515,7 @@ class JobsStatusPolling extends events.EventEmitter {
 // 5. kill-job-begin
 // 6. kill-job-end
 // 7. kill-job-poll
+// 8. jobs-polling
 export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
@@ -514,16 +524,35 @@ export class Dispatcher extends events.EventEmitter {
     private __queue: Queue = new Queue();
     private __jobsTacker: JobsTracker = new JobsTracker();
     private __jobsPolling: JobsStatusPolling = null;
-    constructor(private __nodeMessaging: INodeMessaging, private __gridDB: IGridDB) {
+    private static defaultConfig:IDispatcherConfig = {
+        tasksDispatchFailureMaxRertries: 3
+        ,jobsPollingIntervalMS: 500
+        ,jobsKillPollingIntervalMS: 3000
+        ,jobsKillMaxRetries: 5
+    };
+    private __config: IDispatcherConfig = null;
+    private initConfig(config: IDispatcherConfig = null) : void {
+        config = (config || Dispatcher.defaultConfig);
+        this.__config = _.assignIn({}, Dispatcher.defaultConfig, config);
+        this.__config.tasksDispatchFailureMaxRertries = Math.max(1, this.__config.tasksDispatchFailureMaxRertries);
+        this.__config.jobsPollingIntervalMS = Math.max(200, this.__config.jobsPollingIntervalMS);
+        this.__config.jobsKillPollingIntervalMS = Math.max(1000, this.__config.jobsKillPollingIntervalMS);
+        this.__config.jobsKillMaxRetries = Math.max(2, this.__config.jobsKillMaxRetries);
+    }
+    constructor(private __nodeMessaging: INodeMessaging, private __gridDB: IGridDB, config: IDispatcherConfig = null) {
         super();
 
-        this.__jobsPolling = new JobsStatusPolling(this.__gridDB, 500);
+        this.initConfig(config);
+        
+        this.__jobsPolling = new JobsStatusPolling(this.__gridDB, this.__config.jobsPollingIntervalMS);
         this.__jobsPolling.on('changed', () => {
             this.emit('changed');
         }).on('error', (err:any) => {
             this.emit('error', err);
         }).on('jobs-status', (jobsProgress:IJobProgress[]) => {
             this.__jobsTacker.feedMultiJobsProgress(jobsProgress);
+        }).on('polling', () => {
+            this.emit('jobs-polling');
         });
         
         this.__queue.on('enqueued', () => {
@@ -648,7 +677,7 @@ export class Dispatcher extends events.EventEmitter {
                     if (err) {
                         this.decrementOutstandingAcks();
                         this.emit('error', err);
-                        if (task.r < 3) {
+                        if (task.r < this.__config.tasksDispatchFailureMaxRertries) {
                             let t: ITaskItem = {
                                 j: task.j
                                 ,t: task.t
@@ -758,7 +787,7 @@ export class Dispatcher extends events.EventEmitter {
                 else {
                     this.emit('kill-job-begin', jobId);
                     this.__queue.clearJobTasks(jobId);
-                    getKillJobCall(jobId, true, 3000, 5, 0, (err: any) => {
+                    getKillJobCall(jobId, true, this.__config.jobsKillPollingIntervalMS, this.__config.jobsKillMaxRetries, 0, (err: any) => {
                         this.emit('kill-job-end', jobId, err);
                         done(err);
                     })();
