@@ -1,12 +1,15 @@
 import {IGridUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
-import {SimpleMSSQL} from 'simple-mssql';
+import {SimpleMSSQL, Configuration} from './simpleMSSQL';
 import {DOMParser, XMLSerializer} from 'xmldom';
 
+export {SimpleMSSQL} from './simpleMSSQL';
+
 export class GridDB {
-    private ssql: SimpleMSSQL;
-    constructor(sqlConfig:any) {
-        this.ssql = new SimpleMSSQL(sqlConfig); 
+    private __ssql: SimpleMSSQL;
+    constructor(sqlConfig: Configuration) {
+        this.__ssql = new SimpleMSSQL(sqlConfig); 
     }
+    get ssql(): SimpleMSSQL {return this.__ssql;}
     registerNewJob(user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
         this.ssql.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
             if (err)

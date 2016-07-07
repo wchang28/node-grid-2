@@ -40,6 +40,11 @@ export interface IGridDB {
     killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
 }
 
+export interface IJobsStatusPollingJSON {
+    numJobs: number;
+    started: boolean; 
+}
+
 export interface IDispatcherJSON {
     nodes: INodeItem[];
     queueClosed: boolean;
@@ -48,6 +53,7 @@ export interface IDispatcherJSON {
     dispatching: boolean;
     numOutstandingAcks: number;
     numTrackingJobs: number;
+    jobsPolling: IJobsStatusPollingJSON;
 } 
 
 interface IInterval {
@@ -427,10 +433,76 @@ class JobsTracker extends events.EventEmitter {
     }
 }
 
+// will emit the followings events
+// 1. changed
+// 2. polling
+// 3. error
+// 4. jobs-status
+class JobsStatusPolling extends events.EventEmitter {
+    private __numJobs:number = 0;
+    private __queues: {[jobId:string]:boolean} = {};
+    private __timer: NodeJS.Timer = null;
+    constructor(private __gridDB: IGridDB, private __pollingIntervalMS: number) {
+        super();
+    }
+    addJob(jobId: string) : void {
+        if (!this.__queues[jobId]) {
+            this.__queues[jobId] = true;
+            this.__numJobs++;
+            this.emit('changed');
+        }
+    }
+    private clearJobs() : void {
+        this.__queues = {};
+        this.__numJobs = 0;
+        this.emit('changed');
+    }
+    start() : void {
+        let timerProc = () : void => {
+            let jobIds: string[] = [];
+            for (let jobId in this.__queues)
+                jobIds.push(jobId);
+            if (jobIds.length > 0) {
+                this.emit('polling', jobIds);
+                this.__gridDB.getMultiJobsProgress(jobIds, (err:any, jobsProgress:IJobProgress[]) => {
+                    if (err) {
+                        this.emit('error', err);
+                    } else {
+                        this.emit('jobs-status', jobsProgress);
+                        this.clearJobs();
+                    }
+                });
+            }
+            this.__timer = setTimeout(timerProc, this.__pollingIntervalMS);
+        };
+        if (!this.__timer) {
+            this.__timer = setTimeout(timerProc, this.__pollingIntervalMS);
+            this.emit('changed');
+        }
+    }
+    stop(): void {
+        if (this.__timer) {
+            clearTimeout(this.__timer);
+            this.__timer = null;
+            this.emit('changed');
+        }
+    }
+    get numJobs(): number {return this.__numJobs;}
+    get started(): boolean {return (this.__timer != null);}
+    toJSON(): IJobsStatusPollingJSON {
+        let ret: IJobsStatusPollingJSON = {
+            numJobs: this.numJobs
+            ,started: this.started
+        };
+        return ret;
+    }
+}
+
 // will emit the following events
 // 1. changed
 // 2. jobs_tracking_changed
 // 3. job_status_changed
+// 4. error
 export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
@@ -438,9 +510,19 @@ export class Dispatcher extends events.EventEmitter {
     private __nodes: Nodes = new Nodes();
     private __queue: Queue = new Queue();
     private __jobsTacker: JobsTracker = new JobsTracker();
+    private __jobsPolling: JobsStatusPolling = null;
     constructor(private __nodeMessaging: INodeMessaging, private __gridDB: IGridDB) {
         super();
 
+        this.__jobsPolling = new JobsStatusPolling(this.__gridDB, 500);
+        this.__jobsPolling.on('changed', () => {
+            this.emit('changed');
+        }).on('error', (err:any) => {
+            this.emit('error', err);
+        }).on('jobs-status', (jobsProgress:IJobProgress[]) => {
+            this.__jobsTacker.feedMultiJobsProgress(jobsProgress);
+        });
+        
         this.__queue.on('enqueued', () => {
             this.dispatchTasksIfNecessary();
         }).on('changed', () => {
@@ -462,6 +544,8 @@ export class Dispatcher extends events.EventEmitter {
         }).on('job_removed', ()=> {
             this.emit('changed');
         });
+
+        this.__jobsPolling.start(); // start the jobs polling
     }
 
     get queueClosed() : boolean {return this.__queueClosed;}
@@ -560,7 +644,7 @@ export class Dispatcher extends events.EventEmitter {
                     let task = tasks[i];
                     if (err) {
                         this.decrementOutstandingAcks();
-                        // TODO: emit dispatch error event
+                        this.emit('error', err);
                         if (task.r < 3) {
                             let t: ITaskItem = {
                                 j: task.j
@@ -628,12 +712,15 @@ export class Dispatcher extends events.EventEmitter {
     onNodeCompleteTask(nodeId: string, task: ITask): void {
         this.__nodes.decrementCPUUsageCount(nodeId);
         let jobId = task.j;
+        /*
         this.__gridDB.getJobProgress(jobId, (err:any, jobProgress: IJobProgress) => {
-            if (err) {
-                console.log('!!! Error getting job progress for job ' + jobId.toString() + ': ' + JSON.stringify(err));
-            } else
+            if (err)
+                this.emit('error', err);
+            else
                 this.__jobsTacker.feedJobProgress(jobProgress);
         });
+        */
+        this.__jobsPolling.addJob(jobId);
     }
     getJobProgress(jobId: string, done:(err:any, jobProgress: IJobProgress) => void): void {
         this.__gridDB.getJobProgress(jobId, done);
@@ -700,6 +787,7 @@ export class Dispatcher extends events.EventEmitter {
             ,dispatching: this.dispatching
             ,numOutstandingAcks: this.__numOutstandingAcks
             ,numTrackingJobs: this.__jobsTacker.numJobs
+            ,jobsPolling: this.__jobsPolling.toJSON()
         };
     }
     get trackingJobs(): IJobProgress[] {return this.__jobsTacker.toJSON();}
