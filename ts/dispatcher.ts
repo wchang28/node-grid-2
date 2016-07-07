@@ -542,9 +542,9 @@ export class Dispatcher extends events.EventEmitter {
             this.emit('jobs_tracking_changed');
         }).on('job_status_changed', (jobTrackItem: IJobTrackItem) => {
             this.emit('job_status_changed', jobTrackItem);
-        }).on('job_added', ()=> {
+        }).on('job_added', () => {
             this.emit('changed');
-        }).on('job_removed', ()=> {
+        }).on('job_removed', () => {
             this.emit('changed');
         });
 
@@ -726,7 +726,6 @@ export class Dispatcher extends events.EventEmitter {
     killJob(jobId: string, done: (err: any) => void): void {
         let getKillJobCall : IKillJobCallFactory = (jobId:string, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
             return () : void => {
-                //console.log('job ' + jobId.toString() + ' kill poll #' + (tryIndex+1).toString() + '...');
                 this.emit('kill-job-poll', jobId, tryIndex+1);
                 this.__gridDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => {
                     if (err)
