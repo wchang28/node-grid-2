@@ -135,7 +135,7 @@ gridDB.ssql.on('error', (err:any) => {
         console.error('!!! Error:' + JSON.stringify(err));
     });
 
-    msgBorker.connect();
+    msgBorker.connect();  // connect to the dispatcher
 });
 
-gridDB.ssql.connect();
+gridDB.ssql.connect();  // connect to the grid database

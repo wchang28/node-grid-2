@@ -20,15 +20,16 @@ let js:IGridJobSubmit = {
     ,tasks: []
 };
 
-for (let i = 0; i < 10000; i++) {
+/*
+for (let i = 0; i < 100; i++) {
     let task: ITaskItem  = {
         cmd: 'echo Hi from Wen'
         ,cookie: (i+1).toString()
     }
     js.tasks.push(task);
 }
+*/
 
-/*
 for (let i = 0; i < 15; i++) {
     let task: ITaskItem  = {
         cmd: 'sleep 15'
@@ -36,7 +37,6 @@ for (let i = 0; i < 15; i++) {
     }
     js.tasks.push(task);
 }
-*/
 
 let client = new GridClient(config);
 

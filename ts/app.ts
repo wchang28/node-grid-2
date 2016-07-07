@@ -65,7 +65,6 @@ gridDB.ssql.on('error', (err: any) => {
             }
         });
     }).on('job_status_changed', (trackItem: IJobTrackItem) => {
-        //console.log(JSON.stringify(trackItem));
         clientMessaging.notifyClientsJobStatusChanged(trackItem.ncks, trackItem.jp, (err:any) => {
             if (err) {
                 console.error('!!! Error notifying client on jobs-status-changed: ' + JSON.stringify(err));
@@ -73,6 +72,12 @@ gridDB.ssql.on('error', (err: any) => {
         });
     }).on('error',(err: any) => {
         console.error('!!! Dispatcher error: ' + JSON.stringify(err));
+    }).on('kill-job-begin', (jobId: string) => {
+        console.log('killing job ' + jobId.toString() + '...');
+    }).on('kill-job-end', (jobId: string, err: any) => {
+        console.log('job ' + jobId.toString() + ' kill process finished.' + (err ? ' error=' + JSON.stringify(err) : ' job was killed successfully :-)'));
+    }).on('kill-job-poll', (jobId: string, pollNumber: number) => {
+        console.log('job ' + jobId.toString() + ' kill poll #' + pollNumber.toString() + '...');
     });
 
     clientConnectionsManager.on('change', () => {
@@ -189,8 +194,7 @@ gridDB.ssql.on('error', (err: any) => {
             // console.log('app server listening at %s://%s:%s', (config.https ? 'https' : 'http'), host, port);
             console.log('client app server listening at %s://%s:%s', 'http', host, port);
         });
-
     });
 });
 
-gridDB.ssql.connect();
+gridDB.ssql.connect();  // connect to the grid database

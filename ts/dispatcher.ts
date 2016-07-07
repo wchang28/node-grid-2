@@ -503,6 +503,9 @@ class JobsStatusPolling extends events.EventEmitter {
 // 2. jobs_tracking_changed
 // 3. job_status_changed
 // 4. error
+// 5. kill-job-begin
+// 6. kill-job-end
+// 7. kill-job-poll
 export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
@@ -712,14 +715,6 @@ export class Dispatcher extends events.EventEmitter {
     onNodeCompleteTask(nodeId: string, task: ITask): void {
         this.__nodes.decrementCPUUsageCount(nodeId);
         let jobId = task.j;
-        /*
-        this.__gridDB.getJobProgress(jobId, (err:any, jobProgress: IJobProgress) => {
-            if (err)
-                this.emit('error', err);
-            else
-                this.__jobsTacker.feedJobProgress(jobProgress);
-        });
-        */
         this.__jobsPolling.addJob(jobId);
     }
     getJobProgress(jobId: string, done:(err:any, jobProgress: IJobProgress) => void): void {
@@ -731,7 +726,8 @@ export class Dispatcher extends events.EventEmitter {
     killJob(jobId: string, done: (err: any) => void): void {
         let getKillJobCall : IKillJobCallFactory = (jobId:string, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
             return () : void => {
-                console.log('job ' + jobId.toString() + ' kill poll #' + (tryIndex+1).toString() + '...');
+                //console.log('job ' + jobId.toString() + ' kill poll #' + (tryIndex+1).toString() + '...');
+                this.emit('kill-job-poll', jobId, tryIndex+1);
                 this.__gridDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => {
                     if (err)
                         done(err);
@@ -761,10 +757,10 @@ export class Dispatcher extends events.EventEmitter {
                 if (jobProgress.status === 'FINISHED' || jobProgress.status === 'ABORTED')
                     done('job already finished');
                 else {
-                    console.log('killing job ' + jobId.toString() + '...');
+                    this.emit('kill-job-begin', jobId);
                     this.__queue.clearJobTasks(jobId);
                     getKillJobCall(jobId, true, 3000, 5, 0, (err: any) => {
-                        console.log('job ' + jobId.toString() + ' kill process finished.' + (err ? ' error=' + JSON.stringify(err) : ' job was killed successfully :-)'));
+                        this.emit('kill-job-end', jobId, err);
                         done(err);
                     })();
                 }
