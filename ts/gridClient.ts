@@ -5,6 +5,7 @@ import * as ajaxon from 'ajaxon';
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
 import {ClientMessaging} from './clientMessaging';
 import {GridMessage, IJobProgress} from './messaging';
+import {DOMParser, XMLSerializer} from 'xmldom';
 
 let $J = ajaxon($);
 
@@ -50,11 +51,34 @@ interface IJobSubmit {
 class JobSubmmit implements IJobSubmit {
     constructor(private __dispatcherConfig: IGridDispatcherConfig, private __accessToken: string, private __jobSubmit:IGridJobSubmit) {}
     private static makeJobXML(jobSubmit:IGridJobSubmit) : string {
-        // TODO:
-        return '';
+        if (!jobSubmit || !jobSubmit.tasks || jobSubmit.tasks.length === 0) {
+            throw "no tasks for job";
+        }
+        let doc = new DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?>','text/xml');
+        let root = doc.createElement('job');
+        if (jobSubmit.description) root.setAttribute('description', jobSubmit.description);
+        if (jobSubmit.cookie) root.setAttribute('cookie', jobSubmit.cookie);
+        doc.appendChild(root);
+        for (let i in jobSubmit.tasks) {
+            let task = jobSubmit.tasks[i];
+            let el = doc.createElement('t');
+            if (!task.cmd) throw 'cmd not optional for task';
+            el.setAttribute('c', task.cmd);
+            if (task.cookie) el.setAttribute('k', task.cookie);
+            if (task.stdin) el.setAttribute('i', task.stdin);
+            root.appendChild(el);
+        }
+        let serializer = new XMLSerializer();
+        return serializer.serializeToString(doc);
     }
     submit(notificationCookie:string, done: (err:any, jobId:string) => void) : void {
-        let xml = JobSubmmit.makeJobXML(this.__jobSubmit);
+        let xml = null;
+        try {
+            xml = JobSubmmit.makeJobXML(this.__jobSubmit);
+        } catch(e) {
+            done(e, null);
+            return;
+        }
         if (typeof this.__dispatcherConfig.rejectUnauthorized === 'boolean') $.ajax.defaults({rejectUnauthorized: this.__dispatcherConfig.rejectUnauthorized});
         let settings:any = {
             type: "POST"

@@ -26,6 +26,7 @@
     "simple-mssql": "git+https://github.com/wchang28/simple-mssql.git",
     "sse-topic-conn": "git+https://github.com/wchang28/sse-topic-conn.git",
     "sse-topic-router": "git+https://github.com/wchang28/sse-topic-router.git",
-    "tree-kill": "^1.1.0"
+    "tree-kill": "^1.1.0",
+    "xmldom": "^0.1.22"
   }
 }
