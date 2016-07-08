@@ -90,12 +90,13 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                         </thead>
                         <tbody>
                             <tr><td>Priorities in queue</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.queue.priorities.join(',') : " "}</td></tr>
-                            <tr><td>No. jobs in queue</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.queue.numJobs : " "}</td></tr>
-                            <tr><td>No. tasks in queue</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.queue.numTasks : " "}</td></tr>
+                            <tr><td>No. job(s) in queue</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.queue.numJobs : " "}</td></tr>
+                            <tr><td>No. task(s) in queue</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.queue.numTasks : " "}</td></tr>
                             <tr><td>Queue closed</td><td>{this.state.dispatcherJSON ? this.booleanString(this.state.dispatcherJSON.queueClosed) : " "}</td></tr>
                             <tr><td>Dispatching enabled</td><td>{this.state.dispatcherJSON ? this.booleanString(this.state.dispatcherJSON.dispatchEnabled) : " "}</td></tr>
                             <tr><td>Dispatching</td><td>{this.state.dispatcherJSON ? this.booleanString(this.state.dispatcherJSON.dispatching) : " "}</td></tr>
-                            <tr><td>No. of outstanding ACKs</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.numOutstandingAcks : " "}</td></tr>
+                            <tr><td>No. of outstanding ACK(s)</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.numOutstandingAcks : " "}</td></tr>
+                            <tr><td>No. of tracking job(s)</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.numTrackingJobs : " "}</td></tr>
                         </tbody>
                     </table>
                 </div>
