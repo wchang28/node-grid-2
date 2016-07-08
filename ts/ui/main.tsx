@@ -24,12 +24,14 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     private msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 10000);
     constructor(props:IGridAdminAppProps) {
         super(props);
+        this.state = {};
         this.state.conn_id = null;
         this.state.sub_id = null;
         this.state.dispatcherJSON = null;
         this.state.jobsProgress = null;
     }
     componentDidMount() {
+        console.log('componentDidMount()')
         this.msgBroker.on('connected', (conn_id:string) => {
             console.log('connected to the dispatcher: conn_id=' + conn_id);
             this.setState({conn_id: conn_id});
@@ -61,6 +63,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.msgBroker.connect();
     }
     componentWillUnmount() {
+        console.log('componentWillUnmount()')
         this.msgBroker.disconnect();
     }
     render() {
