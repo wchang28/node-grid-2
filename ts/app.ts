@@ -14,6 +14,7 @@ import {GridDB} from './gridDB';
 import {IGridDBConfiguration} from './gridDBConfig';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
+import * as events from 'events';
 
 interface IConfiguration {
     dbConfig: IGridDBConfiguration;
@@ -22,6 +23,36 @@ interface IConfiguration {
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config: IConfiguration = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+
+class ClientMessagingCoalescing extends events.EventEmitter {
+    private __dirty = false;
+    private __timer: NodeJS.Timer = null;
+    constructor(private __pollingIntervalMS: number) {
+        super();
+    }
+    mark() : void {
+        if (!this.__dirty) this.__dirty = true;
+    }
+    start() : void {
+        let timerProc = () : void => {
+            if (this.__dirty) {
+                this.__dirty = false;
+                this.emit('trigger');
+            }
+            this.__timer = setTimeout(timerProc, this.__pollingIntervalMS);
+        };
+        if (!this.__timer) {
+            this.__timer = setTimeout(timerProc, this.__pollingIntervalMS);
+        }
+    }
+    stop(): void {
+        if (this.__timer) {
+            clearTimeout(this.__timer);
+            this.__timer = null;
+        }
+    }
+    get started(): boolean {return (this.__timer != null);}
+}
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 gridDB.on('error', (err: any) => {
@@ -56,20 +87,28 @@ gridDB.on('error', (err: any) => {
     let clientMessaging = new ClientMessaging(clientConnectionsManager);
 
     let dispatcher = new Dispatcher(nodeMessaging, gridDB, config.dispatcherConfig);
-    dispatcher.on('changed', () => {
-        let o = dispatcher.toJSON();
-        clientMessaging.notifyClientsDispatcherChanged(o, (err:any) => {
+
+    let msgCoalesce = new ClientMessagingCoalescing(5000);
+    msgCoalesce.on('trigger', () => {
+        clientMessaging.notifyClientsDispatcherChanged(dispatcher.toJSON(), (err:any) => {
             if (err) {
                 console.error('!!! Error notifying client on dispatcher-changed: ' + JSON.stringify(err));
             }
         });
+    });
+    msgCoalesce.start();
+
+    dispatcher.on('changed', () => {
+        msgCoalesce.mark();
     }).on('jobs-tracking-changed', () => {
+        /*
         let o = dispatcher.trackingJobs;
         clientMessaging.notifyClientsJobsTrackingChanged(o, (err:any) => {
             if (err) {
                 console.error('!!! Error notifying client on jobs-tracking-changed: ' + JSON.stringify(err));
             }
         });
+        */
     }).on('job-status-changed', (trackItem: IJobTrackItem) => {
         clientMessaging.notifyClientsJobStatusChanged(trackItem.ncks, trackItem.jp, (err:any) => {
             if (err) {
@@ -98,7 +137,7 @@ gridDB.on('error', (err: any) => {
             }
         });
     });
-
+    
     let g: IGlobal = {
         dispatcher
     };
