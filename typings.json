@@ -4,6 +4,8 @@
     "lodash": "registry:npm/lodash#4.0.0+20160701205107",
     "mime": "registry:npm/mime#1.3.0+20160423043021",
     "mssql": "registry:npm/mssql#3.3.0+20160526152843",
+    "react": "registry:npm/react#15.0.1+20160601175240",
+    "react-dom": "registry:npm/react-dom#15.0.1+20160705210405",
     "tree-kill": "registry:npm/tree-kill#1.1.0+20160610190428"
   },
   "globalDependencies": {

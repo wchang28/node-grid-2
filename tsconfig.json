@@ -12,6 +12,7 @@
     "./typings/index.d.ts",
     "./ts/app.ts",
     "./ts/launcherApp.ts",
-    "./ts/test/clientTest.ts"
+    "./ts/test/clientTest.ts" ,
+    "./ts/ui/main.tsx"
   ]
 }
