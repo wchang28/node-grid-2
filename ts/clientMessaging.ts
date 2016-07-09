@@ -1,26 +1,35 @@
 import {ConnectionsManager} from 'sse-topic-router';
 import {GridMessage, IJobProgress} from './messaging';
-import {IDispatcherJSON} from './dispatcher';
+import {IQueueJSON, INodeItem, IDispControl} from './dispatcher';
 
 export class ClientMessaging {
     constructor(private connectionsManager: ConnectionsManager) {}
+
     static getDispatcherTopic() : string {
         return '/topic/dispatcher';
     }
-    notifyClientsDispatcherChanged(dispatcherJSON: IDispatcherJSON, done: (err:any) => void) : void {
+    notifyClientsQueueChanged(queue: IQueueJSON, done: (err:any) => void) : void {
         let msg: GridMessage = {
-            type: 'changed'
-            ,content: dispatcherJSON
+            type: 'queue-changed'
+            ,content: queue
         };
         this.connectionsManager.injectMessage(ClientMessaging.getDispatcherTopic(), {}, msg, done);
     }
-    notifyClientsJobsTrackingChanged(trackingJobs: IJobProgress[], done: (err:any) => void) : void {
+    notifyClientsNodesChanged(nodes: INodeItem[], done: (err:any) => void) : void {
         let msg: GridMessage = {
-            type: 'jobs-tracking-changed'
-            ,content: trackingJobs
+            type: 'nodes-changed'
+            ,content: nodes
         };
         this.connectionsManager.injectMessage(ClientMessaging.getDispatcherTopic(), {}, msg, done);
     }
+    notifyClientsDispControlChanged(dispControl: IDispControl, done: (err:any) => void) : void {
+        let msg: GridMessage = {
+            type: 'ctrl-changed'
+            ,content: dispControl
+        };
+        this.connectionsManager.injectMessage(ClientMessaging.getDispatcherTopic(), {}, msg, done);
+    }
+
     static getConnectionsTopic() : string {
         return '/topic/connections';
     }
@@ -31,6 +40,7 @@ export class ClientMessaging {
         };
         this.connectionsManager.injectMessage(ClientMessaging.getConnectionsTopic(), {}, msg, done);
     }
+
     static getClientJobNotificationTopic(notificationCookie: string) : string {
         return '/topic/job/' + notificationCookie;
     }

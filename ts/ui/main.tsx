@@ -5,7 +5,7 @@ import * as ajaxon from 'ajaxon';
 require('eventsource-polyfill');
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
 import {GridMessage, IJobProgress} from '../messaging';
-import {IDispatcherJSON} from '../dispatcher';
+import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from '../dispatcher';
 import {ClientMessaging} from '../clientMessaging';
 
 let $J = ajaxon($);
@@ -17,9 +17,10 @@ interface IGridAdminAppProps {
 
 interface IGridAdminAppState {
     conn_id?: string;
-    sub_id?: string
-    dispatcherJSON?:IDispatcherJSON;
-    jobsProgress?: IJobProgress[];
+    sub_id?: string;
+    nodes?: INodeItem[];
+    queue?:IQueueJSON;
+    dispControl?: IDispControl;
 }
 
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
@@ -29,8 +30,9 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.state = {};
         this.state.conn_id = null;
         this.state.sub_id = null;
-        this.state.dispatcherJSON = null;
-        this.state.jobsProgress = null;
+        this.state.nodes = null;
+        this.state.queue = null;
+        this.state.dispControl = null;
     }
     componentDidMount() {
         $J('GET', '/services/dispatcher', {}, (err: any, dispatcherJSON: IDispatcherJSON) => {
@@ -38,7 +40,11 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                 console.error('!!! Error getting dispatcher sate');
             else {
                 //console.log(JSON.stringify(dispatcherJSON));
-                this.setState({dispatcherJSON: dispatcherJSON});
+                this.setState({
+                    nodes: dispatcherJSON.nodes
+                    ,queue: dispatcherJSON.queue
+                    ,dispControl: dispatcherJSON.dispControl
+                });
             }
         });
         //console.log('componentDidMount()')
@@ -48,14 +54,18 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             let sub_id = this.msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
             ,(msg: IMessage) => {
                 let gMsg: GridMessage = msg.body;
-                if (gMsg.type === 'changed') {
-                    //console.log('receive <<changed>>');
-                    let dispatcherJSON: IDispatcherJSON = gMsg.content;
-                    this.setState({dispatcherJSON: dispatcherJSON});
-                } else if (gMsg.type === 'jobs-tracking-changed') {
-                    //console.log('receive <<jobs-tracking-changed>>');
-                    let jobsProgress: IJobProgress[] = gMsg.content;
-                    this.setState({jobsProgress: jobsProgress});
+                if (gMsg.type === 'ctrl-changed') {
+                    //console.log('receive <<ctrl-changed>');
+                    let dispControl: IDispControl = gMsg.content;
+                    this.setState({dispControl: dispControl});
+                } else if (gMsg.type === 'nodes-changed') {
+                    //console.log('receive <<nodes-changed>>');
+                    let nodes: INodeItem[] = gMsg.content;
+                    this.setState({nodes: nodes});
+                } else if (gMsg.type === 'queue-changed') {
+                    //console.log('receive <<queue-changed>>');
+                    let queue: IQueueJSON = gMsg.content;
+                    this.setState({queue: queue});
                 }
             }
             ,{}
@@ -89,14 +99,11 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                             <tr><th>Item</th><th>Value</th></tr>
                         </thead>
                         <tbody>
-                            <tr><td>Priorities in queue</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.queue.priorities.join(',') : " "}</td></tr>
-                            <tr><td>No. job(s) in queue</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.queue.numJobs : " "}</td></tr>
-                            <tr><td>No. task(s) in queue</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.queue.numTasks : " "}</td></tr>
-                            <tr><td>Queue closed</td><td>{this.state.dispatcherJSON ? this.booleanString(this.state.dispatcherJSON.queueClosed) : " "}</td></tr>
-                            <tr><td>Dispatching enabled</td><td>{this.state.dispatcherJSON ? this.booleanString(this.state.dispatcherJSON.dispatchEnabled) : " "}</td></tr>
-                            <tr><td>Dispatching</td><td>{this.state.dispatcherJSON ? this.booleanString(this.state.dispatcherJSON.dispatching) : " "}</td></tr>
-                            <tr><td>No. of outstanding ACK(s)</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.numOutstandingAcks : " "}</td></tr>
-                            <tr><td>No. of tracking job(s)</td><td>{this.state.dispatcherJSON ? this.state.dispatcherJSON.numTrackingJobs : " "}</td></tr>
+                            <tr><td>Priorities in queue</td><td>{this.state.queue ? this.state.queue.priorities.join(',') : " "}</td></tr>
+                            <tr><td>No. job(s) in queue</td><td>{this.state.queue ? this.state.queue.numJobs : " "}</td></tr>
+                            <tr><td>No. task(s) in queue</td><td>{this.state.queue ? this.state.queue.numTasks : " "}</td></tr>
+                            <tr><td>Queue closed</td><td>{this.state.dispControl ? this.booleanString(this.state.dispControl.queueClosed) : " "}</td></tr>
+                            <tr><td>Task dispatching enabled</td><td>{this.state.dispControl ? this.booleanString(this.state.dispControl.dispatchEnabled) : " "}</td></tr>
                         </tbody>
                     </table>
                 </div>

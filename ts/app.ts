@@ -88,27 +88,32 @@ gridDB.on('error', (err: any) => {
 
     let dispatcher = new Dispatcher(nodeMessaging, gridDB, config.dispatcherConfig);
 
-    let msgCoalesce = new ClientMessagingCoalescing(5000);
+    let msgCoalesce = new ClientMessagingCoalescing(3000);
     msgCoalesce.on('trigger', () => {
-        clientMessaging.notifyClientsDispatcherChanged(dispatcher.toJSON(), (err:any) => {
+        clientMessaging.notifyClientsQueueChanged(dispatcher.queue, (err:any) => {
             if (err) {
-                console.error('!!! Error notifying client on dispatcher-changed: ' + JSON.stringify(err));
+                console.error('!!! Error notifying client on queue-changed: ' + JSON.stringify(err));
             }
         });
     });
     msgCoalesce.start();
 
-    dispatcher.on('changed', () => {
+    dispatcher.on('queue-changed', () => {
         msgCoalesce.mark();
-    }).on('jobs-tracking-changed', () => {
-        /*
-        let o = dispatcher.trackingJobs;
-        clientMessaging.notifyClientsJobsTrackingChanged(o, (err:any) => {
+    }).on('nodes-changed', () => {
+        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes, (err:any) => {
             if (err) {
-                console.error('!!! Error notifying client on jobs-tracking-changed: ' + JSON.stringify(err));
+                console.error('!!! Error notifying client on queue-changed: ' + JSON.stringify(err));
             }
         });
-        */
+    }).on('ctrl-changed', () => {
+        clientMessaging.notifyClientsDispControlChanged(dispatcher.dispControl, (err:any) => {
+            if (err) {
+                console.error('!!! Error notifying client on ctrl-changed: ' + JSON.stringify(err));
+            }
+        });
+    }).on('jobs-tracking-changed', () => {
+        // TODO:
     }).on('job-status-changed', (trackItem: IJobTrackItem) => {
         clientMessaging.notifyClientsJobStatusChanged(trackItem.ncks, trackItem.jp, (err:any) => {
             if (err) {
