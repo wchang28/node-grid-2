@@ -88,8 +88,9 @@ gridDB.on('error', (err: any) => {
 
     let dispatcher = new Dispatcher(nodeMessaging, gridDB, config.dispatcherConfig);
 
-    let msgCoalesce = new ClientMessagingCoalescing(3000);
+    let msgCoalesce = new ClientMessagingCoalescing(5000);
     msgCoalesce.on('trigger', () => {
+        console.log('<<triggered>>');
         clientMessaging.notifyClientsQueueChanged(dispatcher.queue, (err:any) => {
             if (err) {
                 console.error('!!! Error notifying client on queue-changed: ' + JSON.stringify(err));
