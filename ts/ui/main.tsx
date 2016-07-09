@@ -63,7 +63,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                     let nodes: INodeItem[] = gMsg.content;
                     this.setState({nodes: nodes});
                 } else if (gMsg.type === 'queue-changed') {
-                    //console.log('receive <<queue-changed>>');
+                    console.log('receive <<queue-changed>>');
                     let queue: IQueueJSON = gMsg.content;
                     this.setState({queue: queue});
                 }
