@@ -63,7 +63,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                     let nodes: INodeItem[] = gMsg.content;
                     this.setState({nodes: nodes});
                 } else if (gMsg.type === 'queue-changed') {
-                    console.log('receive <<queue-changed>>');
+                    console.log('receive <<queue-changed>>: ' + JSON.stringify(gMsg.content));
                     let queue: IQueueJSON = gMsg.content;
                     this.setState({queue: queue});
                 }
@@ -86,7 +86,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         //console.log('componentWillUnmount()')
         this.msgBroker.disconnect();
     }
-    booleanString(val: boolean) : string {return (val ? "Yes": "No");} 
+    booleanString(val: boolean) : string {return (val ? "Yes": "No");}
     render() {
         return (
             <div>
@@ -108,7 +108,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                     </table>
                 </div>
             </div>
-            );
+        );
     }
 }
 
