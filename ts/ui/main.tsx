@@ -2,14 +2,14 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as $ from 'jquery';
 import * as ajaxon from 'ajaxon';
-require('eventsource-polyfill');
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
 import {GridMessage, IJobProgress} from '../messaging';
 import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from '../dispatcher';
 import {ClientMessaging} from '../clientMessaging';
 
 let $J = ajaxon($);
-let EventSource = window['EventSource'];
+
+let EventSource = global['EventSource'];
 let eventSourceUrl = '/services/events/event_stream';
 
 interface IGridAdminAppProps {
@@ -23,9 +23,8 @@ interface IGridAdminAppState {
     dispControl?: IDispControl;
 }
 
-/*
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
-    private msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 10000);
+    private msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 2000);
     constructor(props:IGridAdminAppProps) {
         super(props);
         this.state = {};
@@ -35,7 +34,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.state.queue = null;
         this.state.dispControl = null;
     }
-    componentDidMount() {
+    private pollDispatcher() {
         $J('GET', '/services/dispatcher', {}, (err: any, dispatcherJSON: IDispatcherJSON) => {
             if (err)
                 console.error('!!! Error getting dispatcher sate');
@@ -48,8 +47,11 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                 });
             }
         });
+    }
+    componentDidMount() {
         //console.log('componentDidMount()')
         this.msgBroker.on('connect', (conn_id:string) => {
+            this.pollDispatcher();
             console.log('connected to the dispatcher: conn_id=' + conn_id);
             this.setState({conn_id: conn_id});
             let sub_id = this.msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
@@ -114,9 +116,9 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
 }
 
 ReactDOM.render(<GridAdminApp/>, document.getElementById('main'));
-*/
 
-let msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 10000);
+/*
+let msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 2000);
 
 msgBroker.on('connect', (conn_id:string) => {
     console.log('connected to the dispatcher: conn_id=' + conn_id);
@@ -147,3 +149,4 @@ msgBroker.on('connect', (conn_id:string) => {
 });
 
 msgBroker.connect();
+*/
