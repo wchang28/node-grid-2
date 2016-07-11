@@ -86,10 +86,13 @@ export interface IDispatcherConfig {
 }
 
 // will emit the following events
-// 1. changed
-// 2. more_cpus_available
-// 3. node_added
-// 4. node_removed
+// 1. usage-changed
+// 2. more-cpus-available
+// 3. node-added
+// 4. node-ready
+// 5. node-removed
+// 6. node-enabled
+// 6. node-disabled
 class Nodes extends events.EventEmitter {
     private __nodes: {[id:string]: INodeItem} = {};
     constructor() {
@@ -103,16 +106,16 @@ class Nodes extends events.EventEmitter {
         let node = this.__nodes[id];
         if (node) {
             node.cpusUsed++;
-            this.emit('changed');
+            this.emit('usage-changed');
         }
     }
     decrementCPUUsageCount(id: string) {
         let node = this.__nodes[id];
         if (node && node.cpusUsed > 0) {
             node.cpusUsed--;
-            this.emit('changed');
+            this.emit('usage-changed');
             if (this.nodeActive(node))
-                this.emit('more_cpus_available');
+                this.emit('more-cpus-available');
         }
     }
     enableNode(id: string) : void {
@@ -120,9 +123,9 @@ class Nodes extends events.EventEmitter {
         if (node) {
             if (!node.enabled) {
                 node.enabled = true;
-                this.emit('changed');
+                this.emit('node-enabled');
                 if (this.nodeActive(node)) {
-                    this.emit('more_cpus_available');
+                    this.emit('more-cpus-available');
                 }
             }
         }
@@ -132,7 +135,7 @@ class Nodes extends events.EventEmitter {
         if (node) {
             if (node.enabled) {
                 node.enabled = false;
-                this.emit('changed');
+                this.emit('node-disabled');
             }
         }
     }
@@ -146,8 +149,7 @@ class Nodes extends events.EventEmitter {
                 ,cpusUsed: 0
             }
             this.__nodes[newNode.id] = node;
-            this.emit('changed');
-            this.emit('node_added', newNode);
+            this.emit('node-added', newNode.id);
         }
     }
     markNodeReady(id: string, nodeReady: INodeReady) : void {
@@ -155,9 +157,9 @@ class Nodes extends events.EventEmitter {
         if (node) {
             node.numCPUs = nodeReady.numCPUs;
             if (nodeReady.name) node.name = nodeReady.name;
-            this.emit('changed');
+            this.emit('node-ready', id);
             if (this.nodeActive(node)) {
-                this.emit('more_cpus_available');
+                this.emit('more-cpus-available');
             }
         }        
     }
@@ -166,12 +168,7 @@ class Nodes extends events.EventEmitter {
         let node = this.__nodes[id];
         if (node) {
             delete this.__nodes[id];
-            this.emit('changed');
-            let removedNode: INode = {
-                id: node.id
-                ,name: node.name
-            };
-            this.emit('node_removed', removedNode);
+            this.emit('node-removed', id);
         }
     }
     getAvailableCPUs() : ICPUItem[] {
@@ -516,19 +513,24 @@ class JobsStatusPolling extends events.EventEmitter {
 
 // will emit the following events
 // 1. queue-changed
-// 2. nodes-changed
-// 3. states-changed
-// 4. ctrl-changed
-// 5. jobs-tracking-changed
-// 6. job-status-changed
-// 7. polling-changed
-// 8. error
-// 9. kill-job-begin
-// 10. kill-job-end
-// 11. kill-job-poll
-// 12. jobs-polling
-// 13. job-submitted
-// 14. job-finished
+// 2. nodes-usage-changed
+// 3. node-added
+// 4. node-ready
+// 5. node-removed
+// 6. node-enabled
+// 7. node-disabled
+// 8. states-changed
+// 9. ctrl-changed
+// 10. jobs-tracking-changed
+// 11. job-status-changed
+// 12. polling-changed
+// 13. error
+// 14. kill-job-begin
+// 15. kill-job-end
+// 16. kill-job-poll
+// 17. jobs-polling
+// 18. job-submitted
+// 19. job-finished
 export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
@@ -574,10 +576,20 @@ export class Dispatcher extends events.EventEmitter {
             this.emit('queue-changed');
         });
 
-        this.__nodes.on('changed', () => {
-            this.emit('nodes-changed');
-        }).on('more_cpus_available', () => {
+        this.__nodes.on('usage-changed', () => {
+            this.emit('nodes-usage-changed');
+        }).on('more-cpus-available', () => {
             this.dispatchTasksIfNecessary();
+        }).on('node-added', (nodeId: string) => {
+            this.emit('node-added');
+        }).on('node-ready', (nodeId: string) => {
+            this.emit('node-ready');
+        }).on('node-removed', (nodeId: string) => {
+            this.emit('node-removed');
+        }).on('node-enabled', (nodeId: string) => {
+            this.emit('node-enabled');
+        }).on('node-disabled', (nodeId: string) => {
+            this.emit('node-disabled');
         });
 
         this.__jobsTacker.on('changed', () => {

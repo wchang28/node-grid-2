@@ -88,12 +88,22 @@ gridDB.on('error', (err: any) => {
 
     let dispatcher = new Dispatcher(nodeMessaging, gridDB, config.dispatcherConfig);
 
+    function notifyClientsNodesChanges() {
+        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes, (err:any) => {
+            if (err) {
+                console.error('!!! Error notifying client on nodes-changed: ' + JSON.stringify(err));
+            }
+        });        
+    }
+
     let msgCoalesce = new ClientMessagingCoalescing(3000);
     msgCoalesce.on('trigger', () => {
         console.log('<<triggered>>');
         clientMessaging.notifyClientsQueueChanged(dispatcher.queue, (err:any) => {
             if (err) {
                 console.error('!!! Error notifying client on queue-changed: ' + JSON.stringify(err));
+            } else {
+                notifyClientsNodesChanges();
             }
         });
     });
@@ -101,12 +111,18 @@ gridDB.on('error', (err: any) => {
 
     dispatcher.on('queue-changed', () => {
         msgCoalesce.mark();
-    }).on('nodes-changed', () => {
-        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes, (err:any) => {
-            if (err) {
-                console.error('!!! Error notifying client on queue-changed: ' + JSON.stringify(err));
-            }
-        });
+    }).on('nodes-usage-changed', () => {
+        msgCoalesce.mark();
+    }).on('node-added', (nodeId:string) => {
+        notifyClientsNodesChanges();
+    }).on('node-ready', (nodeId:string) => {
+        notifyClientsNodesChanges();
+    }).on('node-removed', (nodeId:string) => {
+        notifyClientsNodesChanges();
+    }).on('node-enabled', (nodeId:string) => {
+        notifyClientsNodesChanges();
+    }).on('node-disabled', (nodeId:string) => {
+        notifyClientsNodesChanges();
     }).on('ctrl-changed', () => {
         clientMessaging.notifyClientsDispControlChanged(dispatcher.dispControl, (err:any) => {
             if (err) {
