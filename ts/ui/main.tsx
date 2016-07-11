@@ -90,6 +90,12 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.msgBroker.disconnect();
     }
     booleanString(val: boolean) : string {return (val ? "Yes": "No");}
+    geUtilizationString(used:number, total: number, showPercent:boolean=true) : string {
+        if (total === 0)
+            return "0/0" + (showPercent ? "=0.00%" : "");
+        else
+            return used.toString() + "/" + total.toString() + (showPercent ? "=" + (used/total*100.0).toFixed(2) + "%" : "");
+    }
     getGridUtilizationString() : string {
         let numUsed = 0;
         let numTotal = 0;
@@ -102,10 +108,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                 }
             }
         }
-        if (numTotal === 0)
-            return "(0/0) = 0.00%";
-        else
-            return "(" + numUsed.toString() + "/" + numTotal.toString() + ") = " + (numUsed/numTotal*100.0).toFixed(2) + "%";
+        return " (" + this.geUtilizationString(numUsed, numTotal, true) + ")";
     }
     getNodrRow() {
         if (this.state.nodes && this.state.nodes.length > 0) {
@@ -116,9 +119,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                         <td>{nodeItem.id}</td>
                         <td>{nodeItem.name}</td>
                         <td>{this.booleanString(nodeItem.enabled)}</td>
-                        <td>{nodeItem.cpusUsed}</td>
-                        <td>{nodeItem.numCPUs}</td>
-                        <td>{nodeItem.numCPUs > 0 ? (nodeItem.cpusUsed*100.0/nodeItem.numCPUs).toFixed(2) + "%": ""}</td>
+                        <td>{this.geUtilizationString(nodeItem.cpusUsed, nodeItem.numCPUs, false)}</td>
                     </tr>
                 );
             });
@@ -126,8 +127,6 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             return (
                 <tr>
                     <td>(None)</td>
-                    <td></td>
-                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -153,8 +152,6 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <th>Id</th>
                                             <th>Name</th>
                                             <th>Enabled</th>
-                                            <th>CPU(s) Used</th>
-                                            <th>No. of CPU(s)</th>
                                             <th>Usage</th>
                                         </tr>
                                     </thead>
