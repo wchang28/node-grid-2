@@ -581,15 +581,15 @@ export class Dispatcher extends events.EventEmitter {
         }).on('more-cpus-available', () => {
             this.dispatchTasksIfNecessary();
         }).on('node-added', (nodeId: string) => {
-            this.emit('node-added');
+            this.emit('node-added', nodeId);
         }).on('node-ready', (nodeId: string) => {
-            this.emit('node-ready');
+            this.emit('node-ready', nodeId);
         }).on('node-removed', (nodeId: string) => {
-            this.emit('node-removed');
+            this.emit('node-removed', nodeId);
         }).on('node-enabled', (nodeId: string) => {
-            this.emit('node-enabled');
+            this.emit('node-enabled', nodeId);
         }).on('node-disabled', (nodeId: string) => {
-            this.emit('node-disabled');
+            this.emit('node-disabled', nodeId);
         });
 
         this.__jobsTacker.on('changed', () => {
