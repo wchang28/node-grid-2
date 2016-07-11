@@ -25,6 +25,12 @@ routerEventEmitter.on('client_disconnect', (params: ConnectedEventParams) : void
     console.log('client ' + params.conn_id + ' @ ' + params.remoteAddress +  ' disconnected from the SSE topic endpoint');
 });
 
+routerEventEmitter.on('sse_send', (s: string) => {
+    if (s.match(/queue-changed/gi)) {
+        console.log('sending => ' + s);
+    }
+});
+
 router.get('/connections', (req: express.Request, res: express.Response) => {
     res.json(connectionsManager.toJSON());
 });

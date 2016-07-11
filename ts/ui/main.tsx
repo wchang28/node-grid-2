@@ -23,6 +23,7 @@ interface IGridAdminAppState {
     dispControl?: IDispControl;
 }
 
+/*
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
     private msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 10000);
     constructor(props:IGridAdminAppProps) {
@@ -113,3 +114,36 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
 }
 
 ReactDOM.render(<GridAdminApp/>, document.getElementById('main'));
+*/
+
+let msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 10000);
+
+msgBroker.on('connect', (conn_id:string) => {
+    console.log('connected to the dispatcher: conn_id=' + conn_id);
+    let sub_id = msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
+    ,(msg: IMessage) => {
+        let gMsg: GridMessage = msg.body;
+        if (gMsg.type === 'ctrl-changed') {
+            //console.log('receive <<ctrl-changed>');
+            let dispControl: IDispControl = gMsg.content;
+        } else if (gMsg.type === 'nodes-changed') {
+            //console.log('receive <<nodes-changed>>');
+            let nodes: INodeItem[] = gMsg.content;
+        } else if (gMsg.type === 'queue-changed') {
+            console.log('receive <<queue-changed>>: ' + JSON.stringify(gMsg.content));
+            let queue: IQueueJSON = gMsg.content;
+        }
+    }
+    ,{}
+    ,(err: any) => {
+        if (err) {
+            console.error('!!! Error: topic subscription failed');
+        } else {
+            console.log('topic subscribed sub_id=' + sub_id + " :-)");
+        }
+    });
+}).on('error', (err: any) => {
+    console.error('!!! Error:' + JSON.stringify(err));
+});
+
+msgBroker.connect();
