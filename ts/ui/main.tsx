@@ -141,46 +141,50 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             <div>
                 <div className="w3-row">
                     <div className="w3-col m8">
-                        <div className="w3-container w3-pale-green">
-                            <h4>Nodes {this.getGridUtilizationString()}</h4>
-                        </div>
-                        <div className="w3-container w3-white">
-                            <table className="w3-table w3-bordered w3-striped">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Id</th>
-                                        <th>Name</th>
-                                        <th>Enabled</th>
-                                        <th>CPU(s) Used</th>
-                                        <th>No. of CPU(s)</th>
-                                        <th>Usage</th>
-                                    </tr>
-                                </thead>
-                                <tbody>{this.getNodrRow()}</tbody>
-                            </table>
+                        <div className="w3-card-4 w3-margin">
+                            <div className="w3-container w3-pale-green">
+                                <h4>Nodes {this.getGridUtilizationString()}</h4>
+                            </div>
+                            <div className="w3-container w3-white">
+                                <table className="w3-table w3-bordered w3-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Id</th>
+                                            <th>Name</th>
+                                            <th>Enabled</th>
+                                            <th>CPU(s) Used</th>
+                                            <th>No. of CPU(s)</th>
+                                            <th>Usage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>{this.getNodrRow()}</tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                     <div className="w3-col m4">
-                        <div className="w3-container w3-pale-green">
-                            <h4>Queue</h4>
-                        </div>
-                        <div className="w3-container w3-white">
-                            <table className="w3-table w3-bordered w3-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Value</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td>Priorities in queue</td><td>{this.state.queue ? this.state.queue.priorities.join(',') : " "}</td></tr>
-                                    <tr><td>No. job(s) in queue</td><td>{this.state.queue ? this.state.queue.numJobs : " "}</td></tr>
-                                    <tr><td>No. task(s) in queue</td><td>{this.state.queue ? this.state.queue.numTasks : " "}</td></tr>
-                                    <tr><td>Queue closed</td><td>{this.state.dispControl ? this.booleanString(this.state.dispControl.queueClosed) : " "}</td></tr>
-                                    <tr><td>Task dispatching enabled</td><td>{this.state.dispControl ? this.booleanString(this.state.dispControl.dispatchEnabled) : " "}</td></tr>
-                                </tbody>
-                            </table>
+                        <div className="w3-card-4 w3-margin">
+                            <div className="w3-container w3-pale-green">
+                                <h4>Queue</h4>
+                            </div>
+                            <div className="w3-container w3-white">
+                                <table className="w3-table w3-bordered w3-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Priorities in queue</td><td>{this.state.queue ? this.state.queue.priorities.join(',') : " "}</td></tr>
+                                        <tr><td>No. job(s) in queue</td><td>{this.state.queue ? this.state.queue.numJobs : " "}</td></tr>
+                                        <tr><td>No. task(s) in queue</td><td>{this.state.queue ? this.state.queue.numTasks : " "}</td></tr>
+                                        <tr><td>Queue closed</td><td>{this.state.dispControl ? this.booleanString(this.state.dispControl.queueClosed) : " "}</td></tr>
+                                        <tr><td>Task dispatching enabled</td><td>{this.state.dispControl ? this.booleanString(this.state.dispControl.dispatchEnabled) : " "}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
