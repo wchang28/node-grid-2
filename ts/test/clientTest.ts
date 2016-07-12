@@ -6,7 +6,7 @@ let config: IGridClientConfig = {
         ,rejectUnauthorized: false
     }
     ,dispatcherConfig: {
-        url: 'http://127.0.0.1:26355'
+        url: 'http://win8-htpc:26355'
         ,rejectUnauthorized: false        
     }
 };
