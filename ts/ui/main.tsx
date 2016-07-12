@@ -134,7 +134,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         if (this.state.nodes && this.state.nodes.length > 0) {
             return this.state.nodes.map((nodeItem: INodeItem, index:number) => {
                 return (
-                    <tr>
+                    <tr key={index}>
                         <td>{index+1}</td>
                         <td>{nodeItem.id}</td>
                         <td>{nodeItem.name}</td>
@@ -156,6 +156,40 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                 </tr>
             );
         }
+    }
+    onQueueCloseClick(e:any) {
+        if (this.state.dispControl) {
+            if (this.state.dispControl.queueClosed) {
+                $J("GET", "/services/dispatcher/queue/accept", {}, (err:any, ret: any) => {
+                    if (err) {
+                        console.error('!!! Error opening queue: ' + JSON.stringify(err));
+                    }
+                });
+            } else {
+                 $J("GET", "/services/dispatcher/queue/deny", {}, (err:any, ret: any) => {
+                    if (err) {
+                        console.error('!!! Error closing queue: ' + JSON.stringify(err));
+                    }
+                });               
+            }
+        }
+    }
+    onDispatchingEnableClick(e:any) {
+        if (this.state.dispControl) {
+            if (this.state.dispControl.dispatchEnabled) {
+                $J("GET", "/services/dispatcher/dispatching/stop", {}, (err:any, ret: any) => {
+                    if (err) {
+                        console.error('!!! Unable to stop dispatching tasks: ' + JSON.stringify(err));
+                    }
+                });
+            } else {
+                 $J("GET", "/services/dispatcher/dispatching/start", {}, (err:any, ret: any) => {
+                    if (err) {
+                        console.error('!!! Unable to start dispatching tasks: ' + JSON.stringify(err));
+                    }
+                });               
+            }
+        }        
     }
     render() {
         return (
@@ -194,14 +228,39 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                         <tr>
                                             <th>Item</th>
                                             <th>Value</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr><td>Priorities in queue</td><td>{this.state.queue ? this.state.queue.priorities.join(',') : " "}</td></tr>
-                                        <tr><td>No. job(s) in queue</td><td>{this.state.queue ? this.state.queue.numJobs : " "}</td></tr>
-                                        <tr><td>No. task(s) in queue</td><td>{this.state.queue ? this.state.queue.numTasks : " "}</td></tr>
-                                        <tr><td>Queue closed</td><td>{this.state.dispControl ? this.booleanString(this.state.dispControl.queueClosed) : " "}</td></tr>
-                                        <tr><td>Task dispatching enabled</td><td>{this.state.dispControl ? this.booleanString(this.state.dispControl.dispatchEnabled) : " "}</td></tr>
+                                        <tr>
+                                            <td>Priorities in queue</td>
+                                            <td>{this.state.queue ? this.state.queue.priorities.join(',') : " "}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>No. job(s) in queue</td>
+                                            <td>{this.state.queue ? this.state.queue.numJobs : " "}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>No. task(s) in queue</td>
+                                            <td>{this.state.queue ? this.state.queue.numTasks : " "}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Queue closed</td>
+                                            <td>{this.state.dispControl ? this.booleanString(this.state.dispControl.queueClosed) : " "}</td>
+                                            <td>
+                                                <button onClick={this.onQueueCloseClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.queueClosed ? "Open" : "Close"}</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Task dispatching enabled</td>
+                                            <td>{this.state.dispControl ? this.booleanString(this.state.dispControl.dispatchEnabled) : " "}</td>
+                                            <td>
+                                                <button onClick={this.onDispatchingEnableClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.dispatchEnabled ? "Disable" : "Enable"}</button>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
