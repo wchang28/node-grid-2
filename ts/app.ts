@@ -247,7 +247,7 @@ gridDB.on('error', (err: any) => {
 
     let nodeAppServer = http.createServer(nodeApp);
     let nodeAppPort = 26354;
-    let nodeAppHost = "127.0.0.1";
+    let nodeAppHost = "0.0.0.0";
 
     nodeAppServer.listen(nodeAppPort, nodeAppHost, () => {
         let host = nodeAppServer.address().address;
@@ -257,7 +257,7 @@ gridDB.on('error', (err: any) => {
 
         let clientAppServer = http.createServer(clientApp);
         let clientAppPort = 26355;
-        let clientAppHost = "127.0.0.1";
+        let clientAppHost = "0.0.0.0";
 
         clientAppServer.listen(clientAppPort, clientAppHost, () => {
             let host = clientAppServer.address().address;
