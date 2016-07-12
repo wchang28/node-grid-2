@@ -110,6 +110,26 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         }
         return " (" + this.geUtilizationString(numUsed, numTotal, true) + ")";
     }
+    getNodeEnableDisableClickHandler(index: number) : (e:any) => void {
+        return ((e:any):void => {
+            let nodeItem = this.state.nodes[index];
+            let nodId=nodeItem.id;
+            if (nodeItem.enabled) {
+                $J("GET", "/services/dispatcher/node/" + nodId + "/disable", {}, (err:any, ret: any) => {
+                    if (err) {
+                        console.error('!!! Error disable node: ' + JSON.stringify(err));
+                    }
+                });
+            }
+            else {
+                $J("GET", "/services/dispatcher/node/" + nodId + "/enable", {}, (err:any, ret: any) => {
+                    if (err) {
+                        console.error('!!! Error enable node: ' + JSON.stringify(err));
+                    }
+                });
+            }
+        });
+    }
     getNodrRow() {
         if (this.state.nodes && this.state.nodes.length > 0) {
             return this.state.nodes.map((nodeItem: INodeItem, index:number) => {
@@ -120,6 +140,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                         <td>{nodeItem.name}</td>
                         <td>{this.booleanString(nodeItem.enabled)}</td>
                         <td>{this.geUtilizationString(nodeItem.cpusUsed, nodeItem.numCPUs, false)}</td>
+                        <td><button onClick={this.getNodeEnableDisableClickHandler(index)}>{nodeItem.enabled ? "Disable" : "Enable"}</button></td>
                     </tr>
                 );
             });
@@ -127,6 +148,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             return (
                 <tr>
                     <td>(None)</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -153,6 +175,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <th>Name</th>
                                             <th>Enabled</th>
                                             <th>Usage</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>{this.getNodrRow()}</tbody>
