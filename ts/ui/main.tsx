@@ -145,7 +145,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                 <h4>Nodes {this.getGridUtilizationString()}</h4>
                             </div>
                             <div className="w3-container w3-white">
-                                <table className="w3-table w3-bordered w3-striped">
+                                <table className="w3-table w3-bordered">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -166,7 +166,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                 <h4>Queue</h4>
                             </div>
                             <div className="w3-container w3-white">
-                                <table className="w3-table w3-bordered w3-striped">
+                                <table className="w3-table w3-bordered">
                                     <thead>
                                         <tr>
                                             <th>Item</th>
