@@ -1,11 +1,10 @@
 import * as events from 'events';
 import {IGridUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
-//import {SimpleMSSQL, Configuration} from './simpleMSSQL';
 import {SimpleMSSQL, Configuration} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
 import * as _ from 'lodash';
 
-export {Configuration as SQLConfiguration} from './simpleMSSQL';
+export {Configuration as SQLConfiguration} from 'mssql-simple';
 
 export interface IGridDBOptions {
     reconnectIntervalMS?: number;
