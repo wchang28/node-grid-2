@@ -43,7 +43,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     private pollDispatcher() {
         $J('GET', '/services/dispatcher', {}, (err: any, dispatcherJSON: IDispatcherJSON) => {
             if (err)
-                console.error('!!! Error getting dispatcher sate');
+                console.error('!!! Error getting dispatcher state');
             else {
                 this.setState({
                     nodes: dispatcherJSON.nodes
@@ -56,7 +56,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     private pollConnections() {
         $J('GET', '/services/connections', {}, (err: any, connections: ITopicConnection[]) => {
             if (err)
-                console.error('!!! Error getting dispatcher sate');
+                console.error('!!! Error getting client connections');
             else {
                 this.setState({
                     connections: connections
@@ -331,7 +331,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                     <div className="w3-col">
                         <div className="w3-card-4 w3-margin">
                             <div className="w3-container w3-pale-green">
-                                <h4>Connections</h4>
+                                <h4>Client Connections</h4>
                             </div>
                             <div className="w3-container w3-white">
                                 <table className="w3-table w3-bordered">
