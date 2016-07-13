@@ -1,21 +1,13 @@
 import * as events from 'events';
 let EventSource = require('eventsource');
 let $ = require('jquery-no-dom');
-import * as ajaxon from 'ajaxon'; 
+import {getAJaxon} from 'ajaxon'; 
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
 import {ClientMessaging} from './clientMessaging';
 import {GridMessage, IJobProgress} from './messaging';
 import {DOMParser, XMLSerializer} from 'xmldom';
 
-let $J = ajaxon($);
-
-interface ICompletionHandler {
-    (err: any, ret: any) : void;
-}
-
-interface IAjaxon {
-    (method: string, url: string, data:any, done: ICompletionHandler, headers?: any, rejectUnauthorized?:boolean) : void;
-}
+let $J = getAJaxon($);
 
 export interface IOAuth2Config {
     tokenGrantUrl: string;
