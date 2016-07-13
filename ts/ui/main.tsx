@@ -7,6 +7,12 @@ import {GridMessage, IJobProgress} from '../messaging';
 import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from '../dispatcher';
 import {ClientMessaging} from '../clientMessaging';
 
+interface ITopicConnection {
+    conn_id: string
+    remoteAddress: string
+    cookie: any;
+}
+
 let $J = ajaxon($);
 
 let EventSource = global['EventSource'];
@@ -17,10 +23,10 @@ interface IGridAdminAppProps {
 
 interface IGridAdminAppState {
     conn_id?: string;
-    sub_id?: string;
     nodes?: INodeItem[];
     queue?:IQueueJSON;
     dispControl?: IDispControl;
+    connections?: ITopicConnection[];
 }
 
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
@@ -29,17 +35,16 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         super(props);
         this.state = {};
         this.state.conn_id = null;
-        this.state.sub_id = null;
         this.state.nodes = null;
         this.state.queue = null;
         this.state.dispControl = null;
+        this.state.connections = null;
     }
     private pollDispatcher() {
         $J('GET', '/services/dispatcher', {}, (err: any, dispatcherJSON: IDispatcherJSON) => {
             if (err)
                 console.error('!!! Error getting dispatcher sate');
             else {
-                //console.log(JSON.stringify(dispatcherJSON));
                 this.setState({
                     nodes: dispatcherJSON.nodes
                     ,queue: dispatcherJSON.queue
@@ -48,40 +53,72 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             }
         });
     }
+    private pollConnections() {
+        $J('GET', '/services/connections', {}, (err: any, connections: ITopicConnection[]) => {
+            if (err)
+                console.error('!!! Error getting dispatcher sate');
+            else {
+                this.setState({
+                    connections: connections
+                });
+            }
+        });
+    }
+    private handleDispatcherMessages(gMsg: GridMessage) : void {
+        if (gMsg.type === 'ctrl-changed') {
+            //console.log('receive <<ctrl-changed>');
+            let dispControl: IDispControl = gMsg.content;
+            this.setState({dispControl: dispControl});
+        } else if (gMsg.type === 'nodes-changed') {
+            //console.log('receive <<nodes-changed>>');
+            let nodes: INodeItem[] = gMsg.content;
+            this.setState({nodes: nodes});
+        } else if (gMsg.type === 'queue-changed') {
+            //console.log('receive <<queue-changed>>: ' + JSON.stringify(gMsg.content));
+            let queue: IQueueJSON = gMsg.content;
+            this.setState({queue: queue});
+        }       
+    }
+    private handleConnectionsMessages(gMsg: GridMessage) : void {
+        if (gMsg.type === 'connections-changed') {
+            //console.log('receive <<connections-changed>');
+            let connections: ITopicConnection[] = gMsg.content;
+            this.setState({connections: connections});
+        }     
+    }
     componentDidMount() {
         //console.log('componentDidMount()')
         this.msgBroker.on('connect', (conn_id:string) => {
-            this.pollDispatcher();
             console.log('connected to the dispatcher: conn_id=' + conn_id);
+            this.pollDispatcher();
             this.setState({conn_id: conn_id});
-            let sub_id = this.msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
+            let sub_id_1 = this.msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
             ,(msg: IMessage) => {
-                let gMsg: GridMessage = msg.body;
-                if (gMsg.type === 'ctrl-changed') {
-                    //console.log('receive <<ctrl-changed>');
-                    let dispControl: IDispControl = gMsg.content;
-                    this.setState({dispControl: dispControl});
-                } else if (gMsg.type === 'nodes-changed') {
-                    //console.log('receive <<nodes-changed>>');
-                    let nodes: INodeItem[] = gMsg.content;
-                    this.setState({nodes: nodes});
-                } else if (gMsg.type === 'queue-changed') {
-                    console.log('receive <<queue-changed>>: ' + JSON.stringify(gMsg.content));
-                    let queue: IQueueJSON = gMsg.content;
-                    this.setState({queue: queue});
-                }
+                this.handleDispatcherMessages(msg.body);
             }
             ,{}
             ,(err: any) => {
                 if (err) {
                     console.error('!!! Error: topic subscription failed');
                 } else {
-                    this.setState({sub_id: sub_id});
-                    console.log('topic subscribed sub_id=' + sub_id + " :-)");
+                    console.log('topic subscribed sub_id=' + sub_id_1 + " :-)");
+                }
+            });
+            let sub_id_2 = this.msgBroker.subscribe(ClientMessaging.getConnectionsTopic()
+            ,(msg: IMessage) => {
+                this.handleConnectionsMessages(msg.body);
+            }
+            ,{}
+            ,(err: any) => {
+                if (err) {
+                    console.error('!!! Error: topic subscription failed');
+                } else {
+                    console.log('topic subscribed sub_id=' + sub_id_2 + " :-)");
                 }
             });
         }).on('error', (err: any) => {
             console.error('!!! Error:' + JSON.stringify(err));
+            this.setState({conn_id: null});
         });
         this.msgBroker.connect();
     }
@@ -130,7 +167,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             }
         });
     }
-    getNodrRow() {
+    getNodRows() {
         if (this.state.nodes && this.state.nodes.length > 0) {
             return this.state.nodes.map((nodeItem: INodeItem, index:number) => {
                 return (
@@ -150,6 +187,29 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                     <td>(None)</td>
                     <td></td>
                     <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            );
+        }
+    }
+    getConnectionRows() {
+        if (this.state.connections && this.state.connections.length > 0) {
+            return this.state.connections.map((connection: ITopicConnection, index:number) => {
+                return (
+                    <tr key={index}>
+                        <td>{index+1}</td>
+                        <td>{connection.conn_id}</td>
+                        <td>{connection.remoteAddress}</td>
+                        <td>{connection.cookie}</td>
+                    </tr>
+                );
+            });
+        } else {
+            return (
+                <tr>
+                    <td>(None)</td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -212,7 +272,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>{this.getNodrRow()}</tbody>
+                                    <tbody>{this.getNodRows()}</tbody>
                                 </table>
                             </div>
                         </div>
@@ -262,6 +322,28 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             </td>
                                         </tr>
                                     </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="w3-row">
+                    <div className="w3-col">
+                        <div className="w3-card-4 w3-margin">
+                            <div className="w3-container w3-pale-green">
+                                <h4>Connections</h4>
+                            </div>
+                            <div className="w3-container w3-white">
+                                <table className="w3-table w3-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Id</th>
+                                            <th>Remote Address</th>
+                                            <th>User</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>{this.getConnectionRows()}</tbody>
                                 </table>
                             </div>
                         </div>

@@ -5,13 +5,21 @@ import {Router as jobRouter} from './job';
 import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'sse-topic-router';
 import {getConnectionFactory} from 'sse-topic-conn';
 import * as events from 'events';
+import {IGridUser} from '../messaging';
 
 let router = express.Router();
+
+function getUser(req: express.Request): IGridUser {
+    let user:IGridUser = req["user"];
+    return user;
+}
 
 router.use('/job', jobRouter);
 router.use('/dispatcher', dispatcherRouter);
 
-let topicRouter = getTopicRouter('/event_stream', getConnectionFactory(10000));
+let topicRouter = getTopicRouter('/event_stream', getConnectionFactory(10000, (req: express.Request) => {
+    return getUser(req).userId;
+}));
 router.use('/events', topicRouter); // topic subscription endpoint is available at /events/event_stream from this route
 
 let routerEventEmitter = topicRouter.eventEmitter;
