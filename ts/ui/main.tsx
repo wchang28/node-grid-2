@@ -200,7 +200,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                 return (
                     <tr key={index}>
                         <td>{index+1}</td>
-                        <td>{connection.conn_id}</td>
+                        <td>{connection.conn_id + (connection.conn_id === this.state.conn_id ? " (Me)": "")}</td>
                         <td>{connection.remoteAddress}</td>
                         <td>{connection.cookie}</td>
                     </tr>
