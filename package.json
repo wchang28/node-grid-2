@@ -2,7 +2,8 @@
   "name": "node-grid-2",
   "version": "0.0.1",
   "description": "Node.js-based Grid v2",
-  "main": "index.js",
+  "main": "./js/gridClient.js",
+  "typings": "./js/gridClient.d.ts",
   "scripts": {
   },
   "repository": {
