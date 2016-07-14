@@ -231,19 +231,13 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     }
     onDispatchingEnableClick(e:any) {
         if (this.state.dispControl) {
-            if (this.state.dispControl.dispatchEnabled) {
-                $J("GET", "/services/dispatcher/dispatching/stop", {}, (err:any, ret: any) => {
-                    if (err) {
-                        console.error('!!! Unable to stop dispatching tasks: ' + JSON.stringify(err));
-                    }
-                });
-            } else {
-                 $J("GET", "/services/dispatcher/dispatching/start", {}, (err:any, ret: any) => {
-                    if (err) {
-                        console.error('!!! Unable to start dispatching tasks: ' + JSON.stringify(err));
-                    }
-                });               
-            }
+            this.session.setDispatchingEnabled(!this.state.dispControl.dispatchEnabled, (err:any, dispControl: IDispControl) => {
+                if (err) {
+                    console.error('!!! Unable to start/stop task dispatching: ' + JSON.stringify(err));
+                } else {
+                    this.setState({dispControl: dispControl});
+                }
+            });
         }        
     }
     render() {
@@ -350,37 +344,3 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
 }
 
 ReactDOM.render(<GridAdminApp/>, document.getElementById('main'));
-
-/*
-let msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 2000);
-
-msgBroker.on('connect', (conn_id:string) => {
-    console.log('connected to the dispatcher: conn_id=' + conn_id);
-    let sub_id = msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
-    ,(msg: IMessage) => {
-        let gMsg: GridMessage = msg.body;
-        if (gMsg.type === 'ctrl-changed') {
-            //console.log('receive <<ctrl-changed>');
-            let dispControl: IDispControl = gMsg.content;
-        } else if (gMsg.type === 'nodes-changed') {
-            //console.log('receive <<nodes-changed>>');
-            let nodes: INodeItem[] = gMsg.content;
-        } else if (gMsg.type === 'queue-changed') {
-            console.log('receive <<queue-changed>>: ' + JSON.stringify(gMsg.content));
-            let queue: IQueueJSON = gMsg.content;
-        }
-    }
-    ,{}
-    ,(err: any) => {
-        if (err) {
-            console.error('!!! Error: topic subscription failed');
-        } else {
-            console.log('topic subscribed sub_id=' + sub_id + " :-)");
-        }
-    });
-}).on('error', (err: any) => {
-    console.error('!!! Error:' + JSON.stringify(err));
-});
-
-msgBroker.connect();
-*/
