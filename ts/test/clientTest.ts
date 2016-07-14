@@ -21,7 +21,7 @@ let js:IGridJobSubmit = {
     ,tasks: []
 };
 
-for (let i = 0; i < 10000; i++) {
+for (let i = 0; i < 1000; i++) {
     let task: ITaskItem  = {
         cmd: 'echo Hi from Wen'
         ,cookie: (i+1).toString()

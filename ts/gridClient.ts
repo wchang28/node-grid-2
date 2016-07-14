@@ -5,6 +5,7 @@ import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broke
 import {ClientMessaging} from './clientMessaging';
 import {GridMessage, IJobProgress} from './messaging';
 import {DOMParser, XMLSerializer} from 'xmldom';
+import {IDispatcherJSON} from './dispatcher';
 
 export interface IOAuth2Config {
     tokenGrantUrl: string;
@@ -42,13 +43,16 @@ class ApiCallBase extends events.EventEmitter {
     get dispatcherConfig() : IGridDispatcherConfig {return this.__dispatcherConfig;}
     get accessToken() : string {return this.__accessToken;}
     protected get baseUrl() : string {
-        return (this.__dispatcherConfig.baseUrl ? this.__dispatcherConfig.baseUrl : "");
+        return (this.__dispatcherConfig && this.__dispatcherConfig.baseUrl ? this.__dispatcherConfig.baseUrl : "");
     }
     protected get authHeaders() : {[field:string]:string} {
         return (this.__accessToken ? {'Authorization': 'Bearer ' + this.__accessToken} : null)
     }
     protected getUrl(path:string) : string {
         return this.baseUrl + path;
+    }
+    protected get rejectUnauthorized() : boolean {
+        return (this.__dispatcherConfig ? this.__dispatcherConfig.rejectUnauthorized : null);
     }
 }
 
@@ -90,7 +94,7 @@ class JobSubmmit extends ApiCallBase implements IJobSubmitter {
             done(e, null);
             return;
         }
-        if (typeof this.__dispatcherConfig.rejectUnauthorized === 'boolean') this.$.ajax.defaults({rejectUnauthorized: this.__dispatcherConfig.rejectUnauthorized});
+        if (typeof this.rejectUnauthorized === 'boolean') this.$.ajax.defaults({rejectUnauthorized: this.rejectUnauthorized});
         let url = this.getUrl('/services/job/submit' + (notificationCookie ? '?nc=' +  notificationCookie : ''));
         let settings:any = {
             type: "POST"
@@ -122,7 +126,7 @@ class JobReSubmmit extends ApiCallBase implements IJobSubmitter {
         if (notificationCookie) data.nc = notificationCookie;
         this.$J('GET', url, data, (err: any, ret: any) => {
             done(err, (err ? null: ret['jobId']));
-        }, this.authHeaders, this.__dispatcherConfig.rejectUnauthorized);
+        }, this.authHeaders, this.rejectUnauthorized);
     }
 }
 
@@ -144,7 +148,7 @@ class GridJob extends ApiCallBase implements IGridJob {
         super($, dispatcherConfig, accessToken);
         let eventSourceUrl = this.getUrl('/services/events/event_stream');
         let eventSourceInitDict:any = {};
-        if (typeof dispatcherConfig.rejectUnauthorized === 'boolean') eventSourceInitDict.rejectUnauthorized = dispatcherConfig.rejectUnauthorized;
+        if (typeof this.rejectUnauthorized === 'boolean') eventSourceInitDict.rejectUnauthorized = this.rejectUnauthorized;
         eventSourceInitDict.headers = this.authHeaders;
         this.__msgBorker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl, eventSourceInitDict), 10000);
         this.__msgBorker.on('connect', (conn_id:string) : void => {
@@ -224,11 +228,17 @@ class Session extends ApiCallBase implements ISession {
         let js = new JobReSubmmit(this.$, this.dispatcherConfig, this.accessToken, oldJobId, failedTasksOnly);
         js.submit(null, done);
     }
+    getDispatcherJSON(done: (err:any, dispatcherJSON: IDispatcherJSON) => void) {
+        this.$J("GET", this.getUrl('/services/dispatcher'), {}, done, this.authHeaders, this.rejectUnauthorized);
+    }
     logout() : void {}
 }
 
 export class GridClient {
     constructor(private $:any, private __config: IGridClientConfig) {}
+    static webSession($:any) : ISession {
+        return new Session($, null, null);
+    }
     login(username: string, password: string, done:(err:any, session: ISession) => void) {
         // TODO: Do auth
         let accessToken = null;
