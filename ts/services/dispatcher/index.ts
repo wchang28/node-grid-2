@@ -38,13 +38,13 @@ function canOpenCloseQueue(req: express.Request, res: express.Response, next: ex
 router.get('/queue/accept', canOpenCloseQueue, (req:express.Request, res:express.Response) => {
     let dispatcher = getDispatcher(req);
     dispatcher.queueClosed = false;
-    res.json({});
+    res.json(dispatcher.dispControl);
 });
 
 router.get('/queue/deny', canOpenCloseQueue, (req:express.Request, res:express.Response) => {
     let dispatcher = getDispatcher(req);
     dispatcher.queueClosed = true;
-    res.json({});
+    res.json(dispatcher.dispControl);
 });
 
 function canStartStopDispatching(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -58,13 +58,13 @@ function canStartStopDispatching(req: express.Request, res: express.Response, ne
 router.get('/dispatching/start', canStartStopDispatching, (req:express.Request, res:express.Response) => {
     let dispatcher = getDispatcher(req);
     dispatcher.dispatchEnabled = true;
-    res.json({});
+    res.json(dispatcher.dispControl);
 });
 
 router.get('/dispatching/stop', canStartStopDispatching, (req:express.Request, res:express.Response) => {
     let dispatcher = getDispatcher(req);
     dispatcher.dispatchEnabled = false;
-    res.json({});
+    res.json(dispatcher.dispControl);
 });
 
 let nodeRouter = express.Router();
@@ -87,14 +87,14 @@ nodeOperationRouter.get('/enable', canEnableDisableNode, (req: express.Request, 
     let dispatcher = getDispatcher(req);
     let node:INodeItem = req['node'];
     dispatcher.setNodeEnabled(node.id, true);
-    res.json({});
+    res.json(node);
 });
 
 nodeOperationRouter.get('/disable', canEnableDisableNode, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let node:INodeItem = req['node'];
     dispatcher.setNodeEnabled(node.id, false);
-    res.json({});
+    res.json(node);
 });
 
 function getNode(req: express.Request, res: express.Response, next: express.NextFunction) {

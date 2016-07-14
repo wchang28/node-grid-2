@@ -154,21 +154,12 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     getNodeEnableDisableClickHandler(index: number) : (e:any) => void {
         return ((e:any):void => {
             let nodeItem = this.state.nodes[index];
-            let nodId=nodeItem.id;
-            if (nodeItem.enabled) {
-                $J("GET", "/services/dispatcher/node/" + nodId + "/disable", {}, (err:any, ret: any) => {
-                    if (err) {
-                        console.error('!!! Error disable node: ' + JSON.stringify(err));
-                    }
-                });
-            }
-            else {
-                $J("GET", "/services/dispatcher/node/" + nodId + "/enable", {}, (err:any, ret: any) => {
-                    if (err) {
-                        console.error('!!! Error enable node: ' + JSON.stringify(err));
-                    }
-                });
-            }
+            let nodeId=nodeItem.id;
+            this.session.setNodeEnabled(nodeId, !nodeItem.enabled, (err:any, nodeItem: INodeItem) => {
+                if (err) {
+                    console.error('!!! Error enable/disable node: ' + JSON.stringify(err));
+                }
+            });
         });
     }
     getNodRows() {

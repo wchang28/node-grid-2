@@ -5,7 +5,7 @@ import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broke
 import {ClientMessaging} from './clientMessaging';
 import {GridMessage, IJobProgress} from './messaging';
 import {DOMParser, XMLSerializer} from 'xmldom';
-import {IDispatcherJSON} from './dispatcher';
+import {IDispatcherJSON, INodeItem} from './dispatcher';
 
 export interface IOAuth2Config {
     tokenGrantUrl: string;
@@ -214,6 +214,7 @@ export interface ISession {
     reSumbitJob: (oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) => void;
     getDispatcherJSON: (done: (err:any, dispatcherJSON: IDispatcherJSON) => void) => void;
     getConnections: (done: (err:any, connections: any) => void) => void;
+    setNodeEnabled: (nodeId:string, enabled: boolean, done: (err:any, nodeItem: INodeItem) => void) => void;
     logout : () => void;
 }
 
@@ -245,6 +246,10 @@ class Session extends ApiCallBase implements ISession {
     }
     getConnections(done: (err:any, connections: any) => void) : void {
         this.$J("GET", '/services/connections', {}, done);
+    }
+    setNodeEnabled(nodeId:string, enabled: boolean, done: (err:any, nodeItem: INodeItem) => void): void {
+        let path = "/services/dispatcher/node/" + nodeId + "/" + (enabled? "enable": "disable");
+        this.$J("GET", path, {}, done);
     }
     logout() : void {}
 }
