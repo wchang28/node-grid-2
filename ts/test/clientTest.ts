@@ -1,3 +1,4 @@
+let $ = require('jquery-no-dom');
 import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, ITaskItem} from '../gridClient';
 
 let config: IGridClientConfig = {
@@ -6,7 +7,7 @@ let config: IGridClientConfig = {
         ,rejectUnauthorized: false
     }
     ,dispatcherConfig: {
-        url: 'http://win8-htpc:26355'
+        baseUrl: 'http://win8-htpc:26355'
         ,rejectUnauthorized: false        
     }
 };
@@ -38,7 +39,7 @@ for (let i = 0; i < 15; i++) {
 }
 */
 
-let client = new GridClient(config);
+let client = new GridClient($, config);
 
 client.login(username, password, (err:any, session: ISession) => {
     if (err) {
