@@ -1,7 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as $ from 'jquery';
-import {getAJaxon} from 'ajaxon';
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
 import {GridMessage, IJobProgress} from '../messaging';
 import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from '../dispatcher';
@@ -13,11 +12,6 @@ interface ITopicConnection {
     remoteAddress: string
     cookie: any;
 }
-
-let $J = getAJaxon($);
-
-let EventSource = global['EventSource'];
-let eventSourceUrl = '/services/events/event_stream';
 
 interface IGridAdminAppProps {
 }
