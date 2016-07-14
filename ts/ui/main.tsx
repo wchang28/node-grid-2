@@ -6,6 +6,7 @@ import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broke
 import {GridMessage, IJobProgress} from '../messaging';
 import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from '../dispatcher';
 import {ClientMessaging} from '../clientMessaging';
+import {GridClient, ISession} from '../gridClient';
 
 interface ITopicConnection {
     conn_id: string
@@ -30,6 +31,7 @@ interface IGridAdminAppState {
 }
 
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
+    private session: ISession = GridClient.webSession($);
     private msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 2000);
     constructor(props:IGridAdminAppProps) {
         super(props);
@@ -40,6 +42,20 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.state.dispControl = null;
         this.state.connections = null;
     }
+    private pollDispatcher() {
+        this.session.getDispatcherJSON((err: any, dispatcherJSON: IDispatcherJSON) => {
+            if (err)
+                console.error('!!! Error getting dispatcher state');
+            else {
+                this.setState({
+                    nodes: dispatcherJSON.nodes
+                    ,queue: dispatcherJSON.queue
+                    ,dispControl: dispatcherJSON.dispControl
+                });
+            }            
+        });
+    }
+    /*  
     private pollDispatcher() {
         $J('GET', '/services/dispatcher', {}, (err: any, dispatcherJSON: IDispatcherJSON) => {
             if (err)
@@ -53,6 +69,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             }
         });
     }
+    */
     private pollConnections() {
         $J('GET', '/services/connections', {}, (err: any, connections: ITopicConnection[]) => {
             if (err)

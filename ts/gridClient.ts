@@ -1,6 +1,6 @@
 import * as events from 'events';
 let EventSource = (global['EventSource'] || require('eventsource'));
-import {getAJaxon, IAjaxon} from 'ajaxon'; 
+import {getAJaxon, IAjaxon, ICompletionHandler} from 'ajaxon'; 
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
 import {ClientMessaging} from './clientMessaging';
 import {GridMessage, IJobProgress} from './messaging';
@@ -35,10 +35,10 @@ export interface IGridJobSubmit {
 }
 
 class ApiCallBase extends events.EventEmitter {
-    protected $J: IAjaxon = null;
+    protected __$J: IAjaxon = null;
     constructor(protected $:any, protected __dispatcherConfig: IGridDispatcherConfig, protected __accessToken: string) {
         super();
-        this.$J = getAJaxon($);
+        this.__$J = getAJaxon($);
     }
     get dispatcherConfig() : IGridDispatcherConfig {return this.__dispatcherConfig;}
     get accessToken() : string {return this.__accessToken;}
@@ -53,6 +53,16 @@ class ApiCallBase extends events.EventEmitter {
     }
     protected get rejectUnauthorized() : boolean {
         return (this.__dispatcherConfig ? this.__dispatcherConfig.rejectUnauthorized : null);
+    }
+    protected $J(method:string, path:string, data:any, done: ICompletionHandler) {
+        return this.__$J(method, this.getUrl(path), data, done, this.authHeaders, this.rejectUnauthorized);
+    }
+    protected $M(reconnectIntervalMS?: number): MsgBroker {
+        let eventSourceUrl = this.getUrl('/services/events/event_stream');
+        let eventSourceInitDict:any = {};
+        if (typeof this.rejectUnauthorized === 'boolean') eventSourceInitDict.rejectUnauthorized = this.rejectUnauthorized;
+        eventSourceInitDict.headers = this.authHeaders;
+        return new MsgBroker(() => new MessageClient(EventSource, this.$, eventSourceUrl, eventSourceInitDict), reconnectIntervalMS);        
     }
 }
 
@@ -119,14 +129,14 @@ class JobReSubmmit extends ApiCallBase implements IJobSubmitter {
         super($, dispatcherConfig, accessToken);
     }
     submit(notificationCookie:string, done: (err:any, jobId:string) => void) : void {
-        let url = this.getUrl('/services/job/' + this.__oldJobId + '/re_submit');
+        let path = '/services/job/' + this.__oldJobId + '/re_submit';
         let data:any = {
             failedTasksOnly: (this.__failedTasksOnly ? '1' : '0')
         };
         if (notificationCookie) data.nc = notificationCookie;
-        this.$J('GET', url, data, (err: any, ret: any) => {
+        this.$J('GET', path, data, (err: any, ret: any) => {
             done(err, (err ? null: ret['jobId']));
-        }, this.authHeaders, this.rejectUnauthorized);
+        });
     }
 }
 
@@ -146,11 +156,7 @@ class GridJob extends ApiCallBase implements IGridJob {
     private __msgBorker: MsgBroker = null;
     constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken:string, private __js:IJobSubmitter) {
         super($, dispatcherConfig, accessToken);
-        let eventSourceUrl = this.getUrl('/services/events/event_stream');
-        let eventSourceInitDict:any = {};
-        if (typeof this.rejectUnauthorized === 'boolean') eventSourceInitDict.rejectUnauthorized = this.rejectUnauthorized;
-        eventSourceInitDict.headers = this.authHeaders;
-        this.__msgBorker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl, eventSourceInitDict), 10000);
+        this.__msgBorker = this.$M(3000);
         this.__msgBorker.on('connect', (conn_id:string) : void => {
             this.__msgBorker.subscribe(ClientMessaging.getClientJobNotificationTopic(conn_id), (msg: IMessage) => {
                 //console.log('msg-rcvd: ' + JSON.stringify(msg));
@@ -205,6 +211,7 @@ export interface ISession {
     sumbitJob: (jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) => void;
     reRunJob: (oldJobId:string, failedTasksOnly:boolean) => IGridJob;
     reSumbitJob: (oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) => void;
+    getDispatcherJSON: (done: (err:any, dispatcherJSON: IDispatcherJSON) => void) => void;
     logout : () => void;
 }
 
@@ -229,7 +236,7 @@ class Session extends ApiCallBase implements ISession {
         js.submit(null, done);
     }
     getDispatcherJSON(done: (err:any, dispatcherJSON: IDispatcherJSON) => void) {
-        this.$J("GET", this.getUrl('/services/dispatcher'), {}, done, this.authHeaders, this.rejectUnauthorized);
+        this.$J("GET", '/services/dispatcher', {}, done);
     }
     logout() : void {}
 }
