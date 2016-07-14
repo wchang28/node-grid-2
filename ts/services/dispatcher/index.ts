@@ -35,13 +35,13 @@ function canOpenCloseQueue(req: express.Request, res: express.Response, next: ex
         res.status(401).json({err: 'not authorized'});
 }
 
-router.get('/queue/accept', canOpenCloseQueue, (req:express.Request, res:express.Response) => {
+router.get('/queue/open', canOpenCloseQueue, (req:express.Request, res:express.Response) => {
     let dispatcher = getDispatcher(req);
     dispatcher.queueClosed = false;
     res.json(dispatcher.dispControl);
 });
 
-router.get('/queue/deny', canOpenCloseQueue, (req:express.Request, res:express.Response) => {
+router.get('/queue/close', canOpenCloseQueue, (req:express.Request, res:express.Response) => {
     let dispatcher = getDispatcher(req);
     dispatcher.queueClosed = true;
     res.json(dispatcher.dispControl);

@@ -214,6 +214,7 @@ export interface ISession {
     reSumbitJob: (oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) => void;
     getDispatcherJSON: (done: (err:any, dispatcherJSON: IDispatcherJSON) => void) => void;
     setDispatchingEnabled: (enabled: boolean, done: (err:any, dispControl: IDispControl) => void) => void; 
+    setQueueOpened: (open: boolean, done: (err:any, dispControl: IDispControl) => void) => void;
     getConnections: (done: (err:any, connections: any) => void) => void;
     setNodeEnabled: (nodeId:string, enabled: boolean, done: (err:any, nodeItem: INodeItem) => void) => void;
     logout : () => void;
@@ -247,6 +248,10 @@ class Session extends ApiCallBase implements ISession {
     }
     setDispatchingEnabled(enabled: boolean, done: (err:any, dispControl: IDispControl) => void): void {
         let path = "/services/dispatcher/dispatching/" + (enabled? "start": "stop");
+        this.$J("GET", path, {}, done);
+    }
+    setQueueOpened(open: boolean, done: (err:any, dispControl: IDispControl) => void): void {
+        let path = "/services/dispatcher/queue/" + (open? "open": "close");
         this.$J("GET", path, {}, done);
     }
     getConnections(done: (err:any, connections: any) => void) : void {

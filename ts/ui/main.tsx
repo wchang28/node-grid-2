@@ -214,19 +214,13 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     }
     onQueueCloseClick(e:any) {
         if (this.state.dispControl) {
-            if (this.state.dispControl.queueClosed) {
-                $J("GET", "/services/dispatcher/queue/accept", {}, (err:any, ret: any) => {
-                    if (err) {
-                        console.error('!!! Error opening queue: ' + JSON.stringify(err));
-                    }
-                });
-            } else {
-                 $J("GET", "/services/dispatcher/queue/deny", {}, (err:any, ret: any) => {
-                    if (err) {
-                        console.error('!!! Error closing queue: ' + JSON.stringify(err));
-                    }
-                });               
-            }
+            this.session.setQueueOpened(this.state.dispControl.queueClosed, (err:any, dispControl: IDispControl) => {
+                if (err) {
+                    console.error('!!! Error opening/closing queue: ' + JSON.stringify(err));
+                } else {
+                    this.setState({dispControl: dispControl});
+                }
+            });
         }
     }
     onDispatchingEnableClick(e:any) {
