@@ -32,7 +32,6 @@ interface IGridAdminAppState {
 
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
     private session: ISession = GridClient.webSession($);
-    //private msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 2000);
     private msgBroker: MsgBroker = null;
     constructor(props:IGridAdminAppProps) {
         super(props);
@@ -44,7 +43,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.state.dispControl = null;
         this.state.connections = null;
     }
-    private pollDispatcher() {
+    private getDispatcherJSON() {
         this.session.getDispatcherJSON((err: any, dispatcherJSON: IDispatcherJSON) => {
             if (err)
                 console.error('!!! Error getting dispatcher state');
@@ -57,23 +56,8 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             }            
         });
     }
-    /*  
-    private pollDispatcher() {
-        $J('GET', '/services/dispatcher', {}, (err: any, dispatcherJSON: IDispatcherJSON) => {
-            if (err)
-                console.error('!!! Error getting dispatcher state');
-            else {
-                this.setState({
-                    nodes: dispatcherJSON.nodes
-                    ,queue: dispatcherJSON.queue
-                    ,dispControl: dispatcherJSON.dispControl
-                });
-            }
-        });
-    }
-    */
-    private pollConnections() {
-        $J('GET', '/services/connections', {}, (err: any, connections: ITopicConnection[]) => {
+    private getConnections() {
+        this.session.getConnections((err: any, connections: ITopicConnection[]) => {
             if (err)
                 console.error('!!! Error getting client connections');
             else {
@@ -109,7 +93,8 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         //console.log('componentDidMount()')
         this.msgBroker.on('connect', (conn_id:string) => {
             console.log('connected to the dispatcher: conn_id=' + conn_id);
-            this.pollDispatcher();
+            this.getDispatcherJSON();
+            this.getConnections();
             this.setState({conn_id: conn_id});
             let sub_id_1 = this.msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
             ,(msg: IMessage) => {

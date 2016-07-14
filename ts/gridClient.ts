@@ -213,6 +213,7 @@ export interface ISession {
     reRunJob: (oldJobId:string, failedTasksOnly:boolean) => IGridJob;
     reSumbitJob: (oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) => void;
     getDispatcherJSON: (done: (err:any, dispatcherJSON: IDispatcherJSON) => void) => void;
+    getConnections: (done: (err:any, connections: any) => void) => void;
     logout : () => void;
 }
 
@@ -239,8 +240,11 @@ class Session extends ApiCallBase implements ISession {
         let js = new JobReSubmmit(this.$, this.dispatcherConfig, this.accessToken, oldJobId, failedTasksOnly);
         js.submit(null, done);
     }
-    getDispatcherJSON(done: (err:any, dispatcherJSON: IDispatcherJSON) => void) {
+    getDispatcherJSON(done: (err:any, dispatcherJSON: IDispatcherJSON) => void) : void {
         this.$J("GET", '/services/dispatcher', {}, done);
+    }
+    getConnections(done: (err:any, connections: any) => void) : void {
+        this.$J("GET", '/services/connections', {}, done);
     }
     logout() : void {}
 }
