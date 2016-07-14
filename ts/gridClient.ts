@@ -156,7 +156,7 @@ class GridJob extends ApiCallBase implements IGridJob {
     private __msgBorker: MsgBroker = null;
     constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken:string, private __js:IJobSubmitter) {
         super($, dispatcherConfig, accessToken);
-        this.__msgBorker = this.$M(3000);
+        this.__msgBorker = this.$M(2000);
         this.__msgBorker.on('connect', (conn_id:string) : void => {
             this.__msgBorker.subscribe(ClientMessaging.getClientJobNotificationTopic(conn_id), (msg: IMessage) => {
                 //console.log('msg-rcvd: ' + JSON.stringify(msg));
@@ -207,6 +207,7 @@ class GridJob extends ApiCallBase implements IGridJob {
 }
 
 export interface ISession {
+    createMsgBroker: (reconnectIntervalMS?: number) => MsgBroker;
     runJob: (jobSubmit:IGridJobSubmit) => IGridJob;
     sumbitJob: (jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) => void;
     reRunJob: (oldJobId:string, failedTasksOnly:boolean) => IGridJob;
@@ -218,6 +219,9 @@ export interface ISession {
 class Session extends ApiCallBase implements ISession {
     constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: string) {
         super($, dispatcherConfig, accessToken);
+    }
+    createMsgBroker (reconnectIntervalMS?: number) : MsgBroker {
+        return this.$M(reconnectIntervalMS);
     }
     runJob(jobSubmit:IGridJobSubmit) : IGridJob {
         let js = new JobSubmmit(this.$, this.dispatcherConfig, this.accessToken, jobSubmit);

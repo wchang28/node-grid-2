@@ -32,9 +32,11 @@ interface IGridAdminAppState {
 
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
     private session: ISession = GridClient.webSession($);
-    private msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 2000);
+    //private msgBroker: MsgBroker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl), 2000);
+    private msgBroker: MsgBroker = null;
     constructor(props:IGridAdminAppProps) {
         super(props);
+        this.msgBroker = this.session.createMsgBroker(2000);
         this.state = {};
         this.state.conn_id = null;
         this.state.nodes = null;
