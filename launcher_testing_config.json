@@ -2,8 +2,7 @@
 	"reservedCPUs": 1
 	,"dispatcherConfig":
 	{
-		"eventSourceUrl": "http://127.0.0.1:26354/node-app/events/event_stream"
-		,"eventSourceInitDict": null
+		"baseUrl": "http://127.0.0.1:26354"
 	}
 	,"dbConfig":
 	{

@@ -9,18 +9,14 @@ let EventSource = require('eventsource');
 let $ = require('jquery-no-dom');
 import treeKill = require('tree-kill');
 import {IGridDBConfiguration} from './gridDBConfig';
-
-interface IDispatcherConfig {
-    eventSourceUrl: string;
-    eventSourceInitDict?: any;
-}
+import {IGridDispatcherConfig} from './gridClient';
 
 interface IConfiguration {
     numCPUs?: number;
     reservedCPUs?: number;
     nodeName?:string;
+    dispatcherConfig: IGridDispatcherConfig;
     dbConfig: IGridDBConfiguration;
-    dispatcherConfig: IDispatcherConfig;
 }
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../launcher_testing_config.json') : process.argv[2]);
@@ -45,8 +41,8 @@ function getDefaultNodeName() : string {
 }
 
 let dispatcherConfig = config.dispatcherConfig;
-let url = dispatcherConfig.eventSourceUrl;
-let eventSourceInitDict = dispatcherConfig.eventSourceInitDict;
+let eventSourceUrl = dispatcherConfig.baseUrl + '/node-app/events/event_stream';
+let eventSourceInitDict:any = (typeof dispatcherConfig.rejectUnauthorized === 'boolean' ? {rejectUnauthorized: dispatcherConfig.rejectUnauthorized} : null);
 let cpus = os.cpus();
 let numCPUs:number = (config.numCPUs ? config.numCPUs : cpus.length - (config.reservedCPUs ? config.reservedCPUs : 2));
 numCPUs = Math.max(numCPUs, 1);
@@ -59,7 +55,7 @@ gridDB.on('error', (err:any) => {
 }).on('connected', () => {
     console.error('connected to the database :-)');
 
-    let msgBorker = new MsgBroker(() => new MessageClient(EventSource, $, url, eventSourceInitDict) , 10000);
+    let msgBorker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl, eventSourceInitDict) , 10000);
 
     function sendDispatcherNodeReady(done: (err: any) => void) {
         console.log('sending a node-ready message...');
