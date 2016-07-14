@@ -4,7 +4,10 @@
   "description": "Node.js-based Grid v2",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wchang28/node-grid-2.git"
   },
   "keywords": [
     "node",
