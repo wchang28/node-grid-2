@@ -235,7 +235,8 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                 if (err) {
                     console.error('!!! Unable to start/stop task dispatching: ' + JSON.stringify(err));
                 } else {
-                    this.setState({dispControl: dispControl});
+                    console.log(JSON.stringify(dispControl));
+                    //this.setState({dispControl: dispControl});
                 }
             });
         }        
