@@ -44,11 +44,14 @@ class TestTokenVerifier {
 let tokenVerifier: IAcessTokenVerifier = new TestTokenVerifier();
 
 function addTestAccess(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    let access: oauth2.Access = {
-        token_type: 'Bearer'
-        ,access_token: '98ghqhvra89vajvo834perd9i8237627bgvm'
-    }
-    req['access'] = access; 
+    let authHeader = req.headers['authorization'];
+    if (!authHeader) {
+        let access: oauth2.Access = {
+            token_type: 'Bearer'
+            ,access_token: '98ghqhvra89vajvo834perd9i8237627bgvm'
+        }
+        req['access'] = access;
+    } 
     next();
 }
 
