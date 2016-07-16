@@ -1,5 +1,5 @@
 import * as events from 'events';
-import {IGridUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
+import {IGridUserProfile, IGridUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
 import {SimpleMSSQL, Configuration} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
 import * as _ from 'lodash';
@@ -40,8 +40,22 @@ export class GridDB extends events.EventEmitter {
     private get ssql(): SimpleMSSQL {return this.__ssql;}
     connect() {this.ssql.connect();}
     disconnect() {this.ssql.disconnect();}
+    getUserProfile(userId: string, done:(err:any, profile: IGridUserProfile) => void) : void {
+        // TODO:
+        //////////////////////////////////////////////////////////////////////////////////////////
+        let profile:IGridUserProfile = {
+            priority: 5
+            ,canSubmitJob: true
+            ,canKillOtherUsersJob: true
+            ,canStartStopDispatching: true
+            ,canOpenCloseQueue: true
+            ,canEnableDisableNode: true
+        };
+        done(null, profile);
+        //////////////////////////////////////////////////////////////////////////////////////////
+    }
     registerNewJob(user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
-        this.ssql.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
+        this.ssql.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.profile.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {
@@ -58,7 +72,7 @@ export class GridDB extends events.EventEmitter {
     reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) : void {
         let params = {
             'userId': user.userId
-            ,'priority': user.priority
+            ,'priority': user.profile.priority
             ,'oldJobId': oldJobId
             ,'failedTasksOnly': failedTasksOnly
         };

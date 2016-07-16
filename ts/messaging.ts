@@ -4,6 +4,7 @@ export interface GridMessage {
 }
 
 export interface IGridUserProfile {
+    priority: number;
     canSubmitJob: boolean;
     canKillOtherUsersJob: boolean;
     canStartStopDispatching: boolean;
@@ -14,7 +15,6 @@ export interface IGridUserProfile {
 export interface IGridUser {
     userId: string;
     userName:string;
-    priority: number;
     profile: IGridUserProfile;
 }
 

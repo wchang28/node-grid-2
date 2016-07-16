@@ -737,7 +737,7 @@ export class Dispatcher extends events.EventEmitter {
                     let tasks: ITaskItem[] = [];
                     for (let i:number = 0; i < jobProgress.numTasks; i++)
                         tasks.push({j: jobProgress.jobId, t: i});
-                    this.__queue.enqueue(user.priority, tasks);
+                    this.__queue.enqueue(user.profile.priority, tasks);
                     done(null, jobProgress.jobId);
                 } else {
                     done(err, null);
@@ -755,7 +755,7 @@ export class Dispatcher extends events.EventEmitter {
                     let tasks: ITaskItem[] = [];
                     for (let i:number = 0; i < jobProgress.numTasks; i++)
                         tasks.push({j: jobProgress.jobId, t: i});
-                    this.__queue.enqueue(user.priority, tasks);
+                    this.__queue.enqueue(user.profile.priority, tasks);
                     done(null, jobProgress.jobId);
                 } else {
                     done(err, null);

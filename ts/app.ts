@@ -6,7 +6,7 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import noCache = require('no-cache-express');
 import {IGlobal} from "./global";
-import {GridMessage, ITask, IGridUser, IJobTrackItem} from "./messaging";
+import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobTrackItem} from "./messaging";
 import {Dispatcher, INodeMessaging, IDispatcherConfig} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
@@ -16,6 +16,7 @@ import * as oauth2 from './oauth2';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
 import * as events from 'events';
+import * as errors from './errors';
 
 interface IAuthorizedUser {
     userId: string;
@@ -63,6 +64,8 @@ interface IConfiguration {
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config: IConfiguration = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
+let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
+
 function authorizedClient(req: express.Request, res: express.Response, next: express.NextFunction): void {
     let accessToken:oauth2.AccessToken = null;
     let authHeader = req.headers['authorization'];
@@ -83,33 +86,27 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
     }
 
     if (!accessToken) {
-        res.status(401).json({});// TODO:
+        res.status(401).json(errors.not_authorized);
         return;
     }
 
     tokenVerifier.verify(accessToken, (err: any, user:IAuthorizedUser) => {
         if (err) {
-
+            res.status(401).json(errors.not_authorized);
         } else {
-            // TODO:
-            /////////////////////////////////////////////////////////////////
-            // 1. verify user using token in the header
-            // 2. get user profile with prioity and admin flag
-            let gridUser:IGridUser = {
-                userId: user.userId
-                ,userName: user.userName
-                ,priority: 5
-                ,profile: {
-                    canSubmitJob: true
-                    ,canKillOtherUsersJob: true
-                    ,canStartStopDispatching: true
-                    ,canOpenCloseQueue: true
-                    ,canEnableDisableNode: true
+            gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
+                if (err)
+                    res.status(401).json(errors.not_authorized);
+                else {
+                    let gridUser:IGridUser = {
+                        userId: user.userId
+                        ,userName: user.userName
+                        ,profile: profile
+                    }
+                    req["user"] = gridUser;
+                    next();                    
                 }
-            }
-            req["user"] = gridUser;
-            next();
-            /////////////////////////////////////////////////////////////////
+            });
         }
     });
 }
@@ -144,7 +141,6 @@ class ClientMessagingCoalescing extends events.EventEmitter {
     get started(): boolean {return (this.__timer != null);}
 }
 
-let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 gridDB.on('error', (err: any) => {
     console.error('!!! Database connection error: ' + JSON.stringify(err));
 }).on('connected', () => {

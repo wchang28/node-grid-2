@@ -3,6 +3,7 @@ import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher, INodeItem} from '../../dispatcher';
 import {IGridUser} from '../../messaging';
+import * as errors from '../../errors';
 
 let router = express.Router();
 
@@ -32,7 +33,7 @@ function canOpenCloseQueue(req: express.Request, res: express.Response, next: ex
     if (user.profile.canOpenCloseQueue)
         next();
     else
-        res.status(401).json({err: 'not authorized'});
+        res.status(401).json(errors.not_authorized);
 }
 
 router.get('/queue/open', canOpenCloseQueue, (req:express.Request, res:express.Response) => {
@@ -52,7 +53,7 @@ function canStartStopDispatching(req: express.Request, res: express.Response, ne
     if (user.profile.canStartStopDispatching)
         next();
     else
-        res.status(401).json({err: 'not authorized'});
+        res.status(401).json(errors.not_authorized);
 }
 
 router.get('/dispatching/start', canStartStopDispatching, (req:express.Request, res:express.Response) => {
@@ -80,7 +81,7 @@ function canEnableDisableNode(req: express.Request, res: express.Response, next:
     if (user.profile.canEnableDisableNode)
         next();
     else
-        res.status(401).json({err: 'not authorized'});
+        res.status(401).json(errors.not_authorized);
 }
 
 nodeOperationRouter.get('/enable', canEnableDisableNode, (req: express.Request, res: express.Response) => {
@@ -100,12 +101,12 @@ nodeOperationRouter.get('/disable', canEnableDisableNode, (req: express.Request,
 function getNode(req: express.Request, res: express.Response, next: express.NextFunction) {
     let nodeId:string = req.params['nodeId'];
     if (!nodeId)
-        res.status(400).json({err: 'bad node id'});
+        res.status(400).json(errors.bad_node_id);
     else {
         let dispatcher = getDispatcher(req);
         let node = dispatcher.getNode(nodeId);
         if (!node)
-            res.status(400).json({err: 'bad node id'});
+            res.status(400).json(errors.invalid_node);
         else {
             req['node'] = node;
             next();
