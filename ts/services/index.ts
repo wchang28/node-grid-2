@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {Router as dispatcherRouter} from './dispatcher';
 import {Router as jobRouter} from './job';
+import {Router as userRouter} from './user';
 import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'sse-topic-router';
 import {getConnectionFactory} from 'sse-topic-conn';
 import * as events from 'events';
@@ -14,6 +15,7 @@ function getUser(req: express.Request): IGridUser {
     return user;
 }
 
+router.use('/user', userRouter);
 router.use('/job', jobRouter);
 router.use('/dispatcher', dispatcherRouter);
 
