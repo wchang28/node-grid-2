@@ -83,7 +83,7 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
     }
 
     if (!accessToken) {
-        res.status(400).json({});// TODO:
+        res.status(401).json({});// TODO:
         return;
     }
 
