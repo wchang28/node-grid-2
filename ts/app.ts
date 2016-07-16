@@ -257,7 +257,7 @@ gridDB.on('error', (err: any) => {
     clientApp.set("global", g);
     nodeApp.set("global", g);
 
-    clientApp.use('/services', authorizedClient, clientApiRouter);
+    clientApp.use('/services', addTestAccess, authorizedClient, clientApiRouter);  // TODO: remove addTestAccess later
     clientApp.use('/app', addTestAccess, authorizedClient, express.static(path.join(__dirname, '../public')));  // TODO: remove addTestAccess later
 
     // hitting the root of admin app
