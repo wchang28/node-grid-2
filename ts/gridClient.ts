@@ -6,6 +6,7 @@ import {ClientMessaging} from './clientMessaging';
 import {GridMessage, IJobProgress} from './messaging';
 import {DOMParser, XMLSerializer} from 'xmldom';
 import {IDispatcherJSON, INodeItem, IDispControl} from './dispatcher';
+import * as oauth2 from './oauth2';
 
 export interface IOAuth2Config {
     tokenGrantUrl: string;
@@ -36,17 +37,17 @@ export interface IGridJobSubmit {
 
 class ApiCallBase extends events.EventEmitter {
     protected __$J: IAjaxon = null;
-    constructor(protected $:any, protected __dispatcherConfig: IGridDispatcherConfig, protected __accessToken: string) {
+    constructor(protected $:any, protected __dispatcherConfig: IGridDispatcherConfig, protected __accessToken: oauth2.AccessToken) {
         super();
         this.__$J = getAJaxon($);
     }
     get dispatcherConfig() : IGridDispatcherConfig {return this.__dispatcherConfig;}
-    get accessToken() : string {return this.__accessToken;}
+    get accessToken() : oauth2.AccessToken {return this.__accessToken;}
     protected get baseUrl() : string {
         return (this.__dispatcherConfig && this.__dispatcherConfig.baseUrl ? this.__dispatcherConfig.baseUrl : "");
     }
     protected get authHeaders() : {[field:string]:string} {
-        return (this.__accessToken ? {'Authorization': 'Bearer ' + this.__accessToken} : null)
+        return (this.__accessToken ? {'Authorization': this.__accessToken.token_type + ' ' + this.__accessToken.access_token} : null)
     }
     protected getUrl(path:string) : string {
         return this.baseUrl + path;
@@ -72,7 +73,7 @@ interface IJobSubmitter {
 
 // job submission class
 class JobSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: string, private __jobSubmit:IGridJobSubmit) {
+    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: oauth2.AccessToken, private __jobSubmit:IGridJobSubmit) {
         super($, dispatcherConfig, accessToken);
     }
     private static makeJobXML(jobSubmit:IGridJobSubmit) : string {
@@ -125,7 +126,7 @@ class JobSubmmit extends ApiCallBase implements IJobSubmitter {
 
 // job re-submission class
 class JobReSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: string, private __oldJobId:string, private __failedTasksOnly:boolean) {
+    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: oauth2.AccessToken, private __oldJobId:string, private __failedTasksOnly:boolean) {
         super($, dispatcherConfig, accessToken);
     }
     submit(notificationCookie:string, done: (err:any, jobId:string) => void) : void {
@@ -154,7 +155,7 @@ export interface IGridJob {
 class GridJob extends ApiCallBase implements IGridJob {
     private __jobId:string = null;
     private __msgBorker: MsgBroker = null;
-    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken:string, private __js:IJobSubmitter) {
+    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken:oauth2.AccessToken, private __js:IJobSubmitter) {
         super($, dispatcherConfig, accessToken);
         this.__msgBorker = this.$M(2000);
         this.__msgBorker.on('connect', (conn_id:string) : void => {
@@ -221,7 +222,7 @@ export interface ISession {
 }
 
 class Session extends ApiCallBase implements ISession {
-    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: string) {
+    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: oauth2.AccessToken) {
         super($, dispatcherConfig, accessToken);
     }
     createMsgBroker (reconnectIntervalMS?: number) : MsgBroker {
@@ -271,7 +272,10 @@ export class GridClient {
     }
     login(username: string, password: string, done:(err:any, session: ISession) => void) {
         // TODO: Do auth
-        let accessToken = null;
+        let accessToken:oauth2.AccessToken = {
+            token_type: 'Bearer'
+            ,access_token: '98ghqhvra89vajvo834perd9i8237627bgvm'
+        };
         let session = new Session(this.$, this.__config.dispatcherConfig, accessToken);
         done(null, session);
     }

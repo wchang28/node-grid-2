@@ -12,9 +12,45 @@ import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
 import {GridDB} from './gridDB';
 import {IGridDBConfiguration} from './gridDBConfig';
+import * as oauth2 from './oauth2';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
 import * as events from 'events';
+
+interface IAuthorizedUser {
+    userId: string;
+    userName: string;
+}
+
+interface IAcessTokenVerifier {
+    verify: (accessToken: oauth2.AccessToken, done:(err:any, user: IAuthorizedUser) => void) => void;
+}
+
+class TestTokenVerifier {
+    costructor() {}
+    verify (accessToken: oauth2.AccessToken, done:(err:any, user: IAuthorizedUser) => void) : void {
+        if (accessToken.token_type === 'Bearer' && accessToken.access_token === '98ghqhvra89vajvo834perd9i8237627bgvm') {
+            let user:IAuthorizedUser = {
+                userId: 'genericGridUser7'
+                ,userName: 'genericGridUser'
+            };
+            done(null, user);
+        } else {
+            done('not authorized', null);
+        }
+    }
+}
+
+let tokenVerifier: IAcessTokenVerifier = new TestTokenVerifier();
+
+function addTestAccess(req: express.Request, res: express.Response, next: express.NextFunction): void {
+    let access: oauth2.Access = {
+        token_type: 'Bearer'
+        ,access_token: '98ghqhvra89vajvo834perd9i8237627bgvm'
+    }
+    req['access'] = access; 
+    next();
+}
 
 interface IConfiguration {
     dbConfig: IGridDBConfiguration;
@@ -23,6 +59,57 @@ interface IConfiguration {
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config: IConfiguration = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+
+function authorizedClient(req: express.Request, res: express.Response, next: express.NextFunction): void {
+    let accessToken:oauth2.AccessToken = null;
+    let authHeader = req.headers['authorization'];
+    if (authHeader) {
+        let x = authHeader.indexOf(' ');
+        if (x != -1) {
+            accessToken = {
+                token_type: authHeader.substr(0, x)
+                ,access_token: authHeader.substr(x+1)
+            }
+        }
+    } else if (req["access"]) {
+        let access: oauth2.Access = req["access"];
+        accessToken = {
+            token_type: access.token_type
+            ,access_token: access.access_token
+        }
+    }
+
+    if (!accessToken) {
+        res.status(400).json({});// TODO:
+        return;
+    }
+
+    tokenVerifier.verify(accessToken, (err: any, user:IAuthorizedUser) => {
+        if (err) {
+
+        } else {
+            // TODO:
+            /////////////////////////////////////////////////////////////////
+            // 1. verify user using token in the header
+            // 2. get user profile with prioity and admin flag
+            let gridUser:IGridUser = {
+                userId: user.userId
+                ,userName: user.userName
+                ,priority: 5
+                ,profile: {
+                    canSubmitJob: true
+                    ,canKillOtherUsersJob: true
+                    ,canStartStopDispatching: true
+                    ,canOpenCloseQueue: true
+                    ,canEnableDisableNode: true
+                }
+            }
+            req["user"] = gridUser;
+            next();
+            /////////////////////////////////////////////////////////////////
+        }
+    });
+}
 
 class ClientMessagingCoalescing extends events.EventEmitter {
     private __dirty = false;
@@ -167,34 +254,8 @@ gridDB.on('error', (err: any) => {
     clientApp.set("global", g);
     nodeApp.set("global", g);
 
-    function authorizedClient(req: express.Request, res: express.Response, next: express.NextFunction): void {
-        //console.log('reaching authorizedClient middleware, url=' + req.baseUrl);
-        //console.log('=========================================================');
-        //console.log(JSON.stringify(req.headers));
-        //console.log('=========================================================');
-
-        // TODO:
-        /////////////////////////////////////////////////////////////////
-        // 1. verify user using token in the header
-        // 2. get user profile with prioity and admin flag
-        let user:IGridUser = {
-            userId: 'wchang'
-            ,priority: 5
-            ,profile: {
-                canSubmitJob: true
-                ,canKillOtherUsersJob: true
-                ,canStartStopDispatching: true
-                ,canOpenCloseQueue: true
-                ,canEnableDisableNode: true
-            }
-        }
-        req["user"] = user;
-        next();
-        /////////////////////////////////////////////////////////////////
-    }
-
     clientApp.use('/services', authorizedClient, clientApiRouter);
-    clientApp.use('/app', authorizedClient, express.static(path.join(__dirname, '../public')));
+    clientApp.use('/app', addTestAccess, authorizedClient, express.static(path.join(__dirname, '../public')));  // TODO: remove addTestAccess later
 
     // hitting the root of admin app
     clientApp.get('/', (req: express.Request, res: express.Response) => {

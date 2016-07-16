@@ -13,6 +13,7 @@ export interface IGridUserProfile {
 
 export interface IGridUser {
     userId: string;
+    userName:string;
     priority: number;
     profile: IGridUserProfile;
 }
