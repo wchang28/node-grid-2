@@ -17,32 +17,32 @@ import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
 import * as events from 'events';
 import * as errors from './errors';
+import {IAuthorizedUser, IAccessTokenVerifier} from './accessTokenVerifier';
 
-interface IAuthorizedUser {
-    userId: string;
-    userName: string;
+/*
+class AJaxonTokenVerifier implements IAccessTokenVerifier {
+    private $:any = null;
+    constructor(jQuery:any, options:any) {
+        this.$ = jQuery;
+    }
 }
+*/
 
-interface IAcessTokenVerifier {
-    verify: (accessToken: oauth2.AccessToken, done:(err:any, user: IAuthorizedUser) => void) => void;
-}
-
-class TestTokenVerifier {
-    costructor() {}
-    verify (accessToken: oauth2.AccessToken, done:(err:any, user: IAuthorizedUser) => void) : void {
+class TestTokenVerifier implements IAccessTokenVerifier {
+    constructor() {}
+    verify(accessToken: oauth2.AccessToken, done:(err:errors.IError, user: IAuthorizedUser) => void) : void {
         if (accessToken.token_type === 'Bearer' && accessToken.access_token === '98ghqhvra89vajvo834perd9i8237627bgvm') {
             let user:IAuthorizedUser = {
                 userId: 'genericGridUser7'
                 ,userName: 'genericGridUser'
             };
             done(null, user);
-        } else {
-            done('not authorized', null);
-        }
+        } else
+            done(errors.not_authorized, null);
     }
 }
 
-let tokenVerifier: IAcessTokenVerifier = new TestTokenVerifier();
+let tokenVerifier: IAccessTokenVerifier = new TestTokenVerifier();
 
 function addTestAccess(req: express.Request, res: express.Response, next: express.NextFunction): void {
     let authHeader = req.headers['authorization'];
@@ -90,10 +90,10 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
         return;
     }
 
-    tokenVerifier.verify(accessToken, (err: any, user:IAuthorizedUser) => {
-        if (err) {
-            res.status(401).json(errors.not_authorized);
-        } else {
+    tokenVerifier.verify(accessToken, (err: errors.IError, user:IAuthorizedUser) => {
+        if (err)
+            res.status(401).json(err);
+        else {
             gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
                 if (err)
                     res.status(401).json(errors.not_authorized);
