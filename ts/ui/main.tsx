@@ -6,6 +6,7 @@ import {IGridUser, GridMessage, IJobProgress} from '../messaging';
 import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from '../dispatcher';
 import {ClientMessaging} from '../clientMessaging';
 import {GridClient, ISession} from '../gridClient';
+import {IGridJobSubmit, ITaskItem} from '../gridClient';
 
 interface ITopicConnection {
     conn_id: string
@@ -37,6 +38,30 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.state.queue = null;
         this.state.dispControl = null;
         this.state.connections = null;
+    }
+    private getTestJobSubmit() : IGridJobSubmit {
+        let js:IGridJobSubmit = {
+            description: 'this is a test'
+            ,cookie: 'test'
+            ,tasks: []
+        };
+
+        for (let i = 0; i < 1000; i++) {
+            let task: ITaskItem  = {
+                cmd: 'echo Hi everybody'
+                ,cookie: (i+1).toString()
+            }
+            js.tasks.push(task);
+        }
+        return js;
+    }
+    private onSubmitTestJob() {
+        this.session.sumbitJob(this.getTestJobSubmit(), (err:any, jobId:string) => {
+            if (err)
+                console.log('!!! Error submitting job: ' + JSON.stringify(err));
+            else
+                console.log('test job mitted, jobId=' + jobId);
+        });
     }
     private getDispatcherJSON() {
         this.session.getDispatcherJSON((err: any, dispatcherJSON: IDispatcherJSON) => {
@@ -299,6 +324,13 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <td>{this.state.dispControl ? this.booleanString(this.state.dispControl.dispatchEnabled) : " "}</td>
                                             <td>
                                                 <button disbaled={!this.props.currentUser.profile.canStartStopDispatching} onClick={this.onDispatchingEnableClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.dispatchEnabled ? "Disable" : "Enable"}</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Submit test job</td>
+                                            <td></td>
+                                            <td>
+                                                <button disbaled={!this.props.currentUser.profile.canStartStopDispatching} onClick={this.onSubmitTestJob.bind(this)}>Submit</button>
                                             </td>
                                         </tr>
                                     </tbody>
