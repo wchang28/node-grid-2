@@ -8,10 +8,7 @@
 <script src="eventsource.min.js"></script>
 <script>
   var __currentUser = null;
-  function setCurrentUser(user) {
-    __currentUser = user;
-    //console.log(JSON.stringify(__currentUser));
-  }
+  function setCurrentUser(user) {__currentUser = user;}
 </script>
 <script src="/services/user/me?cb=setCurrentUser"></script>
 <style>
