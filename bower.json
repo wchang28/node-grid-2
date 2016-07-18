@@ -20,6 +20,7 @@
     "tests"
   ],
   "dependencies": {
-    "font-awesome": "fontawesome#^4.6.3"
+    "font-awesome": "fontawesome#^4.6.3",
+    "w3-css": "git://github.com/wchang28/w3-css.git"
   }
 }
