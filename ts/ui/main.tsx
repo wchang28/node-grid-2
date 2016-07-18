@@ -7,8 +7,6 @@ import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from '../dispatche
 import {ClientMessaging} from '../clientMessaging';
 import {GridClient, ISession} from '../gridClient';
 
-let currentUser : IGridUser = global['__currentUser'];
-
 interface ITopicConnection {
     conn_id: string
     remoteAddress: string
@@ -87,7 +85,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         }     
     }
     componentDidMount() {
-        //console.log('componentDidMount()')
+        //console.log('componentDidMount():' + JSON.stringify(this.props.currentUser));
         this.msgBroker.on('connect', (conn_id:string) => {
             console.log('connected to the dispatcher: conn_id=' + conn_id);
             this.getDispatcherJSON();
@@ -337,4 +335,4 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     }
 }
 
-ReactDOM.render(<GridAdminApp currentUser={currentUser}/>, document.getElementById('main'));
+ReactDOM.render(<GridAdminApp currentUser={global['__currentUser']}/>, document.getElementById('main'));
