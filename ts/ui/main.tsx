@@ -330,7 +330,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <td>Submit test job</td>
                                             <td></td>
                                             <td>
-                                                <button disbaled={!this.props.currentUser.profile.canStartStopDispatching} onClick={this.onSubmitTestJob.bind(this)}>Submit</button>
+                                                <button disbaled={!this.props.currentUser.profile.canSubmitJob} onClick={this.onSubmitTestJob.bind(this)}>Submit</button>
                                             </td>
                                         </tr>
                                     </tbody>
