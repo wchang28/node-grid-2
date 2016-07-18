@@ -10,7 +10,7 @@ function getUser(req: express.Request): IGridUser {
 }
 
 router.get('/me', (req: express.Request, res: express.Response) => {
-    res.json(getUser(req));
+    res.jsonp(getUser(req));
 });
 
 export {router as Router}; 

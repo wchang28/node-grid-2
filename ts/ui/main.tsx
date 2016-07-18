@@ -2,10 +2,12 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as $ from 'jquery';
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
-import {GridMessage, IJobProgress} from '../messaging';
+import {IGridUser, GridMessage, IJobProgress} from '../messaging';
 import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from '../dispatcher';
 import {ClientMessaging} from '../clientMessaging';
 import {GridClient, ISession} from '../gridClient';
+
+let currentUser : IGridUser = global['__currentUser'];
 
 interface ITopicConnection {
     conn_id: string
@@ -14,6 +16,7 @@ interface ITopicConnection {
 }
 
 interface IGridAdminAppProps {
+    currentUser: IGridUser
 }
 
 interface IGridAdminAppState {
@@ -334,4 +337,4 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     }
 }
 
-ReactDOM.render(<GridAdminApp/>, document.getElementById('main'));
+ReactDOM.render(<GridAdminApp currentUser={currentUser}/>, document.getElementById('main'));

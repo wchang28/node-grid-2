@@ -169,6 +169,8 @@ gridDB.on('error', (err: any) => {
     });
     clientApp.use(bpx);
 
+    clientApp.set('jsonp callback name', 'cb');
+
     let nodeMessaging: INodeMessaging = new NodeMessaging(nodeAppConnectionsManager);
     let clientMessaging = new ClientMessaging(clientConnectionsManager);
 

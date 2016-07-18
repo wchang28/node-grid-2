@@ -6,6 +6,14 @@
 <link rel="stylesheet" href="/bower_components/font-awesome/css/font-awesome.min.css">
 <link rel="stylesheet" href="/bower_components/w3-css/css/w3.css">
 <script src="eventsource.min.js"></script>
+<script>
+  var __currentUser = null;
+  function setCurrentUser(user) {
+    __currentUser = user;
+    //console.log(JSON.stringify(__currentUser));
+  }
+</script>
+<script src="/services/user/me?cb=setCurrentUser"></script>
 <style>
 </style>
 <body>
