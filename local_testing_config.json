@@ -1,8 +1,19 @@
 {
-	"http":
+	"nodeWebServerConfig":
 	{
-		"host": "127.0.0.1"
-		,"port": 23784
+		"http":
+		{
+			"host": "0.0.0.0"
+			,"port": 26354
+		}
+	}
+	,"clientWebServerConfig":
+	{
+		"http":
+		{
+			"host": "0.0.0.0"
+			,"port": 26355
+		}
 	}
 	,"dbConfig":
 	{

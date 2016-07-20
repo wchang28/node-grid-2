@@ -1,5 +1,4 @@
-import * as http from 'http';
-import * as https from 'https';
+import {IWebServerConfig, startServer} from 'express-web-server';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as express from 'express';
@@ -56,13 +55,15 @@ function addTestAccess(req: express.Request, res: express.Response, next: expres
     next();
 }
 
-interface IConfiguration {
+interface IAppConfig {
+    nodeWebServerConfig: IWebServerConfig;
+    clientWebServerConfig: IWebServerConfig;
     dbConfig: IGridDBConfiguration;
     dispatcherConfig?: IDispatcherConfig;
 }
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
-let config: IConfiguration = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 
@@ -273,59 +274,16 @@ gridDB.on('error', (err: any) => {
 
     nodeApp.use('/node-app', nodeAppRouter);
 
+    // evenstream located at:
     // node: /node-app/events/event_stream
     // client: /services/events/event_stream
 
     clientApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
 
-    /*
-    let server = null;
-    let wsConfig = null;
-
-    if (config.https) {
-        wsConfig = config.https;
-        let sslConfig = wsConfig['ssl'];
-        let private_key_file = sslConfig["private_key_file"];
-        let certificate_file = sslConfig["certificate_file"];
-        let ca_files = sslConfig["ca_files"];
-        let privateKey  = fs.readFileSync(private_key_file, 'utf8');
-        let certificate = fs.readFileSync(certificate_file, 'utf8');
-        let credentials = {key: privateKey, cert: certificate};
-        if (ca_files && ca_files.length > 0) {
-            let ca = [];
-            for (var i in ca_files)
-                ca.push(fs.readFileSync(ca_files[i], 'utf8'));
-            credentials["ca"] = ca;
-        }
-        server = https.createServer(credentials, app);
-    } else {
-        wsConfig = config.http;
-        server = http.createServer(app);
-    }
-
-    let port = (wsConfig['port'] ? wsConfig['port'] : 81);
-    let host = (wsConfig['host'] ? wsConfig['host'] : "127.0.0.1");	
-    */
-
-    let nodeAppServer = http.createServer(nodeApp);
-    let nodeAppPort = 26354;
-    let nodeAppHost = "0.0.0.0";
-
-    nodeAppServer.listen(nodeAppPort, nodeAppHost, () => {
-        let host = nodeAppServer.address().address;
-        let port = nodeAppServer.address().port;
-        // console.log('app server listening at %s://%s:%s', (config.https ? 'https' : 'http'), host, port);
-        console.log('node app server listening at %s://%s:%s', 'http', host, port);
-
-        let clientAppServer = http.createServer(clientApp);
-        let clientAppPort = 26355;
-        let clientAppHost = "0.0.0.0";
-
-        clientAppServer.listen(clientAppPort, clientAppHost, () => {
-            let host = clientAppServer.address().address;
-            let port = clientAppServer.address().port;
-            // console.log('app server listening at %s://%s:%s', (config.https ? 'https' : 'http'), host, port);
-            console.log('client app server listening at %s://%s:%s', 'http', host, port);
+    startServer(config.nodeWebServerConfig, nodeApp, (secure:boolean, host:string, port:number) => {
+        console.log('node app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
+        startServer(config.clientWebServerConfig, clientApp, (secure:boolean, host:string, port:number) => {
+            console.log('client app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
         });
     });
 });
