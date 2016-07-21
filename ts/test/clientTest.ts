@@ -1,14 +1,25 @@
 let $ = require('jquery-no-dom');
 import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, ITaskItem} from '../gridClient';
 
-let config: IGridClientConfig = {
-    oauth2Config: {
-        tokenGrantUrl: ''
-        ,rejectUnauthorized: false
+let config: IGridClientConfig =
+{
+    "oauth2":
+     {
+        "tokenGrantOptions":
+        {
+            "url": 'http://127.0.0.1:3382/services/oauth2/token'
+            ,"rejectUnauthorized": false
+        }
+        ,"clientAppSettings":
+        {
+            "client_id": "jfbgrbtgbirutbgibrgtbriwgh9045hgrobv"
+            ,"client_secret": "598ty4ghh0u3ojfvnscUJYRUJfbgrsthrJFJ0J"
+        }
     }
-    ,dispatcherConfig: {
-        baseUrl: 'http://127.0.0.1:26355'
-        ,rejectUnauthorized: false        
+    ,"dispatcherConfig":
+    {
+        "baseUrl": "http://127.0.0.1:26355"
+        ,"rejectUnauthorized": false
     }
 };
 

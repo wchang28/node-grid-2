@@ -1,4 +1,4 @@
-import * as oauth2 from './oauth2';
+import * as oauth2 from 'oauth2';
 import * as errors from './errors';
 
 export interface IAuthorizedUser {

@@ -32,6 +32,7 @@
     "mssql": "^3.3.0",
     "mssql-simple": "git+https://github.com/wchang28/mssql-simple.git",
     "no-cache-express": "git+https://github.com/wchang28/no-cache-express.git",
+    "oauth2": "git+https://github.com/wchang28/oauth2.git",
     "react": "^15.2.0",
     "react-dom": "^15.2.0",
     "sse-topic-conn": "git+https://github.com/wchang28/sse-topic-conn.git",

@@ -11,7 +11,7 @@ import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
 import {GridDB} from './gridDB';
 import {IGridDBConfiguration} from './gridDBConfig';
-import * as oauth2 from './oauth2';
+import * as oauth2 from 'oauth2';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
 import * as events from 'events';

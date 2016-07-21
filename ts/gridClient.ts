@@ -6,20 +6,20 @@ import {ClientMessaging} from './clientMessaging';
 import {GridMessage, IJobProgress} from './messaging';
 import {DOMParser, XMLSerializer} from 'xmldom';
 import {IDispatcherJSON, INodeItem, IDispControl} from './dispatcher';
-import * as oauth2 from './oauth2';
-
-export interface IOAuth2Config {
-    tokenGrantUrl: string;
-    rejectUnauthorized?: boolean;
-}
+import * as oauth2 from 'oauth2';
 
 export interface IGridDispatcherConfig {
     baseUrl?: string;
     rejectUnauthorized?: boolean;
 }
 
+export interface IOauth2ClientSettings {
+    tokenGrantOptions: oauth2.TokenGrantOptions;
+    clientAppSettings: oauth2.ClientAppSettings;
+}
+
 export interface IGridClientConfig {
-    oauth2Config: IOAuth2Config;
+    oauth2: IOauth2ClientSettings
     dispatcherConfig: IGridDispatcherConfig;
 }
 
@@ -266,18 +266,32 @@ class Session extends ApiCallBase implements ISession {
 }
 
 export class GridClient {
-    constructor(private $:any, private __config: IGridClientConfig) {}
-    static webSession($:any) : ISession {
-        return new Session($, null, null);
+    private tokenGrant: oauth2.TokenGrant = null;
+    constructor(private jQuery:any, private __config: IGridClientConfig) {
+        this.tokenGrant = new oauth2.TokenGrant(this.jQuery, __config.oauth2.tokenGrantOptions, __config.oauth2.clientAppSettings);
+    }
+    static webSession(jQuery:any) : ISession {
+        return new Session(jQuery, null, null);
     }
     login(username: string, password: string, done:(err:any, session: ISession) => void) {
-        // TODO: Do auth
-        let accessToken:oauth2.AccessToken = {
-            token_type: 'Bearer'
-            ,access_token: '98ghqhvra89vajvo834perd9i8237627bgvm'
-        };
-        let session = new Session(this.$, this.__config.dispatcherConfig, accessToken);
-        done(null, session);
+        this.tokenGrant.getAccessTokenFromPassword(username, password, (err, access: oauth2.Access) => {
+            if (err) {
+                // done(err, null);
+                // TODO: remove the following test code later
+                ///////////////////////////////////////////////////////////////////////////////////
+                let accessToken:oauth2.AccessToken = {
+                    token_type: 'Bearer'
+                    ,access_token: '98ghqhvra89vajvo834perd9i8237627bgvm'
+                };
+                let session = new Session(this.jQuery, this.__config.dispatcherConfig, accessToken);
+                done(null, session);
+                ///////////////////////////////////////////////////////////////////////////////////
+            } else {
+                let accessToken: oauth2.AccessToken = {token_type: access.token_type, access_token: access.access_token};
+                let session = new Session(this.jQuery, this.__config.dispatcherConfig, accessToken);
+                done(null, session);
+            }
+        });
     }
 }
 
