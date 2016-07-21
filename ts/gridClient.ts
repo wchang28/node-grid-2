@@ -276,16 +276,7 @@ export class GridClient {
     login(username: string, password: string, done:(err:any, session: ISession) => void) {
         this.tokenGrant.getAccessTokenFromPassword(username, password, (err, access: oauth2.Access) => {
             if (err) {
-                // done(err, null);
-                // TODO: remove the following test code later
-                ///////////////////////////////////////////////////////////////////////////////////
-                let accessToken:oauth2.AccessToken = {
-                    token_type: 'Bearer'
-                    ,access_token: '98ghqhvra89vajvo834perd9i8237627bgvm'
-                };
-                let session = new Session(this.jQuery, this.__config.dispatcherConfig, accessToken);
-                done(null, session);
-                ///////////////////////////////////////////////////////////////////////////////////
+                done(err, null);
             } else {
                 let accessToken: oauth2.AccessToken = {token_type: access.token_type, access_token: access.access_token};
                 let session = new Session(this.jQuery, this.__config.dispatcherConfig, accessToken);
