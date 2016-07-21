@@ -18,15 +18,6 @@ import * as events from 'events';
 import * as errors from './errors';
 import {IAuthorizedUser, IAccessTokenVerifier} from './accessTokenVerifier';
 
-/*
-class AJaxonTokenVerifier implements IAccessTokenVerifier {
-    private $:any = null;
-    constructor(jQuery:any, options:any) {
-        this.$ = jQuery;
-    }
-}
-*/
-
 class TestTokenVerifier implements IAccessTokenVerifier {
     constructor() {}
     verify(accessToken: oauth2.AccessToken, done:(err:errors.IError, user: IAuthorizedUser) => void) : void {
@@ -34,6 +25,12 @@ class TestTokenVerifier implements IAccessTokenVerifier {
             let user:IAuthorizedUser = {
                 userId: 'genericGridUser7'
                 ,userName: 'genericGridUser'
+            };
+            done(null, user);
+        } else if (accessToken.token_type === 'Bearer' && accessToken.access_token === 'tiutrtugghir5899y4hggoirtwrogj45hrtg0p9wug45') {
+            let user:IAuthorizedUser = {
+                userId: 'gkfklgnh965yu690u50hj0j0j6'
+                ,userName: 'wchang'
             };
             done(null, user);
         } else
