@@ -18,6 +18,7 @@ import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManage
 import * as events from 'events';
 import * as errors from './errors';
 import {IAuthorizedUser, IAccessTokenVerifier} from './accessTokenVerifier';
+let $ = require('jquery-no-dom');
 
 class TestTokenVerifier implements IAccessTokenVerifier {
     constructor() {}
@@ -65,6 +66,7 @@ let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testi
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
+let tokenGrant = new oauth2.TokenGrant($, config.oauth2Options.tokenGrantOptions, config.oauth2Options.clientAppSettings);
 
 function authorizedClient(req: express.Request, res: express.Response, next: express.NextFunction): void {
     let accessToken:oauth2.AccessToken = null;
@@ -266,6 +268,37 @@ gridDB.on('error', (err: any) => {
 
     clientApp.use('/services', addTestAccess, authorizedClient, clientApiRouter);  // TODO: remove addTestAccess later
     clientApp.use('/app', addTestAccess, authorizedClient, express.static(path.join(__dirname, '../public')));  // TODO: remove addTestAccess later
+
+    // hitting the /authcode_callback via a browser redirect from the oauth2 server
+    clientApp.get('/authcode_callback', (req: express.Request, res: express.Response) => {
+        let query:oauth2.AuthCodeWorkflowQueryParams = req.query;
+        if (JSON.stringify(query) != '{}') {
+            console.log('auth_code='+query.code);
+            console.log('aquiring access token from auth_code...');
+            tokenGrant.getAccessTokenFromAuthCode(query.code, (err, access)  => {
+                if (err) {
+                    console.error('!!! Error: ' + JSON.stringify(err));
+                    res.status(400).json(err);
+                } else {
+                    console.log(':-) access token granted. access=' + JSON.stringify(access));
+                    let redirectUrl = '/';	// redirect user's browser to the root
+                    if (query.state) {
+                        try {
+                            let stateObj = JSON.parse(query.state);
+                            let ar = [];
+                            for (let fld in stateObj)
+                                ar.push(encodeURIComponent(fld) + '=' + encodeURIComponent(stateObj[fld]));
+                            if (ar.length > 0) redirectUrl += '?' + ar.join('&');
+                        } catch(e) {}
+                    }
+                    req.session["access"] = access;	// store the access token in session
+                    res.redirect(redirectUrl);
+                }
+            });
+        } else {
+            res.end('path='+req.path);
+        }
+    });
 
     // hitting the root of admin app
     clientApp.get('/', (req: express.Request, res: express.Response) => {

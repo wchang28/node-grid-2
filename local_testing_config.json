@@ -15,6 +15,21 @@
 			,"port": 26355
 		}
 	}
+    ,"oauth2Options":
+     {
+        "tokenGrantOptions":
+        {
+            "url": "http://127.0.0.1:3382/services/oauth2/token"
+            ,"rejectUnauthorized": false
+        }
+        ,"clientAppSettings":
+        {
+            "client_id": "jfbgrbtgbirutbgibrgtbriwgh9045hgrobv"
+            ,"client_secret": "598ty4ghh0u3ojfvnscUJYRUJfbgrsthrJFJ0J"
+			,"redirect_uri": "http://127.0.0.1:26355/authcode_callback"
+        }
+		,"authorizationRedirectUrl": "http://127.0.0.1:3382/services/oauth2/authorize"
+    }
 	,"dbConfig":
 	{
 		"sqlConfig":
