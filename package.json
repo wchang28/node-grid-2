@@ -4,8 +4,7 @@
   "description": "Node.js-based Grid v2",
   "main": "./js/gridClient.js",
   "typings": "./js/gridClient.d.ts",
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/wchang28/node-grid-2.git"
@@ -23,6 +22,7 @@
     "event-source-polyfill": "0.0.7",
     "eventsource": "^0.2.1",
     "express": "^4.14.0",
+    "express-session": "^1.14.0",
     "express-web-seerver": "git+https://github.com/wchang28/express-web-server.git",
     "jquery": "^3.0.0",
     "jquery-no-dom": "git+https://github.com/wchang28/jquery-no-dom.git",

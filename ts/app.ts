@@ -1,4 +1,5 @@
 import {IWebServerConfig, startServer} from 'express-web-server';
+import * as session from 'express-session';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as express from 'express';
@@ -55,6 +56,8 @@ function addTestAccess(req: express.Request, res: express.Response, next: expres
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
     clientWebServerConfig: IWebServerConfig;
+    oauth2ClientAppSettings: oauth2.ClientAppSettings;
+    oauth2AuthorizeUrl: string;
     dbConfig: IGridDBConfiguration;
     dispatcherConfig?: IDispatcherConfig;
 }
@@ -63,6 +66,24 @@ let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testi
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
+
+function getAuthorizeUrlWithQueryString(authorizeUrl: string, client_id: string, redirect_uri:string, state?:string) : string {
+	let url = authorizeUrl;
+	url += '?';
+	let query = {
+		response_type: 'code'
+		,client_id: client_id
+		,redirect_uri: redirect_uri
+	};
+	if (state) query["state"] = state;
+	let ar = [];
+	for (var fld in query) {
+		if (query[fld])
+			ar.push(encodeURIComponent(fld) + '=' + encodeURIComponent(query[fld]));
+	}
+	url += ar.join('&');
+	return url;
+}
 
 function authorizedClient(req: express.Request, res: express.Response, next: express.NextFunction): void {
     let accessToken:oauth2.AccessToken = null;
@@ -169,6 +190,15 @@ gridDB.on('error', (err: any) => {
 
     clientApp.set('jsonp callback name', 'cb');
 
+    let secureCookie = (config.clientWebServerConfig.https ? true : false);
+
+    clientApp.use(session({
+        secret: 'fhgdfgdfgdag05y5wgt',
+        resave: false,
+        saveUninitialized: false,
+        cookie: { path: '/', httpOnly: true, secure: secureCookie, maxAge: null }
+    }));
+
     let nodeMessaging: INodeMessaging = new NodeMessaging(nodeAppConnectionsManager);
     let clientMessaging = new ClientMessaging(clientConnectionsManager);
 
@@ -258,15 +288,20 @@ gridDB.on('error', (err: any) => {
 
     // hitting the root of admin app
     clientApp.get('/', (req: express.Request, res: express.Response) => {
-        // TODO: check session cookie and do oauth2
+        let sess = req.session;
         let stateObj = req.query;	// query fields/state object might have marketing campaign code and application object short-cut link in it
         let state = JSON.stringify(stateObj);
-        console.log('/: state=' + state);
-        let redirectUrl = '/app';	// redirect user's browser to the /app path
-        if (state !== '{}') {
-            redirectUrl += '#state=' + encodeURIComponent(state);	// pass state to browser application via URL fragment (#)
+        if (sess["access"]) {	// hitting the application root with access token in the session
+            console.log('/: state=' + state);
+            let redirectUrl = '/app';	// redirect user's browser to the /app path
+            if (state !== '{}') {
+                redirectUrl += '#state=' + encodeURIComponent(state);	// pass state to browser application via URL fragment (#)
+            }
+            res.redirect(redirectUrl);
+        } else {    // hitting the application root without access token in session
+            let redirectUrl = getAuthorizeUrlWithQueryString(oauth2AuthorizeUrl, config.oauth2ClientAppSettings.client_id, config.oauth2ClientAppSettings.redirect_uri, (state === '{}' ? null : state));
+            res.redirect(redirectUrl);
         }
-        res.redirect(redirectUrl);
     });
 
     nodeApp.use('/node-app', nodeAppRouter);
