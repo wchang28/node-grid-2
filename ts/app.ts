@@ -20,6 +20,8 @@ import * as errors from './errors';
 import {IAuthorizedUser, IAccessTokenVerifier} from './accessTokenVerifier';
 let $ = require('jquery-no-dom');
 
+// TODO: remove test code later
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class TestTokenVerifier implements IAccessTokenVerifier {
     constructor() {}
     verify(accessToken: oauth2.AccessToken, done:(err:errors.IError, user: IAuthorizedUser) => void) : void {
@@ -41,6 +43,7 @@ class TestTokenVerifier implements IAccessTokenVerifier {
 }
 
 let tokenVerifier: IAccessTokenVerifier = new TestTokenVerifier();
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
@@ -57,6 +60,7 @@ let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let tokenGrant = new oauth2.TokenGrant($, config.oauth2Options.tokenGrantOptions, config.oauth2Options.clientAppSettings);
 
 function authorizedClient(req: express.Request, res: express.Response, next: express.NextFunction): void {
+    let access: oauth2.Access = null;
     let accessToken:oauth2.AccessToken = null;
     let authHeader = req.headers['authorization'];
     if (authHeader) {
@@ -67,8 +71,8 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
                 ,access_token: authHeader.substr(x+1)
             }
         }
-    } else if (req["access"]) {
-        let access: oauth2.Access = req["access"];
+    } else if (req.session["access"]) {
+        access = req.session["access"];
         accessToken = {
             token_type: access.token_type
             ,access_token: access.access_token
@@ -81,9 +85,24 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
     }
 
     tokenVerifier.verify(accessToken, (err: errors.IError, user:IAuthorizedUser) => {
-        if (err)
+        if (err) {
+            // TODO: if error is token expired, do
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            /*
+            if (access && access.refresh_token) {
+                tokenGrant.refreshAccessToken(access.refresh_token, (err:any, access: oauth2.Access) => {
+                    if (err)
+                        res.status(401).json(err);
+                    else {
+                        req.session["access"] = access;
+                        authorizedClient(req, res, next);
+                    }
+                });
+            }
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            */
             res.status(401).json(err);
-        else {
+        } else {   // no error
             gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
                 if (err)
                     res.status(401).json(errors.not_authorized);
@@ -263,7 +282,7 @@ gridDB.on('error', (err: any) => {
         if (JSON.stringify(query) != '{}') {
             console.log('auth_code='+query.code);
             console.log('aquiring access token from auth_code...');
-            tokenGrant.getAccessTokenFromAuthCode(query.code, (err, access)  => {
+            tokenGrant.getAccessTokenFromAuthCode(query.code, (err, access: oauth2.Access)  => {
                 if (err) {
                     console.error('!!! Error: ' + JSON.stringify(err));
                     res.status(400).json(err);
