@@ -3,7 +3,7 @@ import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, I
 
 let config: IGridClientConfig =
 {
-    "oauth2":
+    "oauth2Options":
      {
         "tokenGrantOptions":
         {

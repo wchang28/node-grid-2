@@ -13,13 +13,8 @@ export interface IGridDispatcherConfig {
     rejectUnauthorized?: boolean;
 }
 
-export interface IOauth2ClientSettings {
-    tokenGrantOptions: oauth2.TokenGrantOptions;
-    clientAppSettings: oauth2.ClientAppSettings;
-}
-
 export interface IGridClientConfig {
-    oauth2: IOauth2ClientSettings
+    oauth2Options: oauth2.ClientAppOptions;
     dispatcherConfig: IGridDispatcherConfig;
 }
 
@@ -268,7 +263,7 @@ class Session extends ApiCallBase implements ISession {
 export class GridClient {
     private tokenGrant: oauth2.TokenGrant = null;
     constructor(private jQuery:any, private __config: IGridClientConfig) {
-        this.tokenGrant = new oauth2.TokenGrant(this.jQuery, __config.oauth2.tokenGrantOptions, __config.oauth2.clientAppSettings);
+        this.tokenGrant = new oauth2.TokenGrant(this.jQuery, __config.oauth2Options.tokenGrantOptions, __config.oauth2Options.clientAppSettings);
     }
     static webSession(jQuery:any) : ISession {
         return new Session(jQuery, null, null);
