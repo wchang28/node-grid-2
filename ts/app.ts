@@ -42,18 +42,6 @@ class TestTokenVerifier implements IAccessTokenVerifier {
 
 let tokenVerifier: IAccessTokenVerifier = new TestTokenVerifier();
 
-function addTestAccess(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    let authHeader = req.headers['authorization'];
-    if (!authHeader) {
-        let access: oauth2.Access = {
-            token_type: 'Bearer'
-            ,access_token: '98ghqhvra89vajvo834perd9i8237627bgvm'
-        }
-        req['access'] = access;
-    } 
-    next();
-}
-
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
     clientWebServerConfig: IWebServerConfig;
@@ -266,8 +254,8 @@ gridDB.on('error', (err: any) => {
     clientApp.set("global", g);
     nodeApp.set("global", g);
 
-    clientApp.use('/services', addTestAccess, authorizedClient, clientApiRouter);  // TODO: remove addTestAccess later
-    clientApp.use('/app', addTestAccess, authorizedClient, express.static(path.join(__dirname, '../public')));  // TODO: remove addTestAccess later
+    clientApp.use('/services', authorizedClient, clientApiRouter);
+    clientApp.use('/app', authorizedClient, express.static(path.join(__dirname, '../public')));
 
     // hitting the /authcode_callback via a browser redirect from the oauth2 server
     clientApp.get('/authcode_callback', (req: express.Request, res: express.Response) => {
