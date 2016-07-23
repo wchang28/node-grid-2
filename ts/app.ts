@@ -321,7 +321,13 @@ gridDB.on('error', (err: any) => {
             res.redirect(redirectUrl);
         } else {    // hitting the application root without access token in session
             let oauth2Options = config.oauth2Options;
-            let redirectUrl = oauth2.Utils.getBrowserAuthRedirectUrlWithQueryString(oauth2Options.authorizationRedirectUrl, oauth2Options.clientAppSettings.client_id, oauth2Options.clientAppSettings.redirect_uri, (state === '{}' ? null : state));
+            let params:oauth2.AuthorizationWorkflowParams = {
+                response_type: 'code'
+                ,client_id: oauth2Options.clientAppSettings.client_id
+                ,redirect_uri: oauth2Options.clientAppSettings.redirect_uri
+            };
+            if (state !== '{}') params.state = state;
+            let redirectUrl = oauth2.Utils.getAuthWorkflowRedirectUrlWithQueryString(oauth2Options.authorizationRedirectUrl, params);
             res.redirect(redirectUrl);
         }
     });
