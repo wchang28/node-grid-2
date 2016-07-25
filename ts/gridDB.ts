@@ -1,45 +1,17 @@
 import * as events from 'events';
 import {IGridUserProfile, IGridUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
-import {SimpleMSSQL, Configuration} from 'mssql-simple';
+import {SimpleMSSQL, Configuration, Options} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
-import * as _ from 'lodash';
-
-export {Configuration as SQLConfiguration} from 'mssql-simple';
-
-export interface IGridDBOptions {
-    reconnectIntervalMS?: number;
-}
+export {Configuration as SQLConfiguration, Options as DBOptions} from 'mssql-simple';
 
 // will emit the following events
 // 1. connected
 // 2. error
 // 3. disconnected
-export class GridDB extends events.EventEmitter {
-    private __ssql: SimpleMSSQL;
-    private static defaultOptions: IGridDBOptions = {
-        reconnectIntervalMS: 5000
-    };
-    private initOptions(options:IGridDBOptions) : IGridDBOptions {
-        options = (options || GridDB.defaultOptions);
-        options = _.assignIn({}, GridDB.defaultOptions, options);
-        options.reconnectIntervalMS = Math.max(1000, options.reconnectIntervalMS);
-        return options;
+export class GridDB extends SimpleMSSQL {
+    constructor(sqlConfig: Configuration, options?:Options) {
+        super(sqlConfig, options);
     }
-    constructor(sqlConfig: Configuration, options: IGridDBOptions = null) {
-        super();
-        options = this.initOptions(options);
-        this.__ssql = new SimpleMSSQL(sqlConfig, options.reconnectIntervalMS);
-        this.__ssql.on('connected', () => {
-            this.emit('connected');
-        }).on('error', (err:any) => {
-            this.emit('error', err);
-        }).on('disconnected', () => {
-            this.emit('disconnected');
-        });
-    }
-    private get ssql(): SimpleMSSQL {return this.__ssql;}
-    connect() {this.ssql.connect();}
-    disconnect() {this.ssql.disconnect();}
     getUserProfile(userId: string, done:(err:any, profile: IGridUserProfile) => void) : void {
         // TODO:
         //////////////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +27,7 @@ export class GridDB extends events.EventEmitter {
         //////////////////////////////////////////////////////////////////////////////////////////
     }
     registerNewJob(user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
-        this.ssql.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.profile.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
+        this.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.profile.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {
@@ -76,7 +48,7 @@ export class GridDB extends events.EventEmitter {
             ,'oldJobId': oldJobId
             ,'failedTasksOnly': failedTasksOnly
         };
-        this.ssql.execute('[dbo].[stp_NodeJSGridReSubmitJob]', params, (err: any, recordsets: any) : void => {
+        this.execute('[dbo].[stp_NodeJSGridReSubmitJob]', params, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {
@@ -91,7 +63,7 @@ export class GridDB extends events.EventEmitter {
         });
     }
     getJobProgress(jobId:string, done:(err:any, jobProgress: IJobProgress) => void) : void {
-        this.ssql.query('select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
+        this.query('select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {
@@ -115,7 +87,7 @@ export class GridDB extends events.EventEmitter {
         }
         let serializer = new XMLSerializer();
         let xml = serializer.serializeToString(doc);
-        this.ssql.query('select * from [dbo].[fnc_NodeJSGridMultiJobsProgress](@xml)', {'xml': xml}, (err: any, recordsets: any) : void => {
+        this.query('select * from [dbo].[fnc_NodeJSGridMultiJobsProgress](@xml)', {'xml': xml}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else
@@ -123,7 +95,7 @@ export class GridDB extends events.EventEmitter {
         });
     }
     getJobInfo(jobId:string, done:(err:any, jobInfo: IJobInfo) => void) : void {
-        this.ssql.query('select * from [dbo].[fnc_NodeJSGridGetJobInfo](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
+        this.query('select * from [dbo].[fnc_NodeJSGridGetJobInfo](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {
@@ -140,7 +112,7 @@ export class GridDB extends events.EventEmitter {
             'jobId': jobId
             ,'markJobAborted': markJobAborted
         };
-        this.ssql.execute('[dbo].[stp_NodeJSKillJob]', params, (err: any, recordsets: any) : void => {
+        this.execute('[dbo].[stp_NodeJSKillJob]', params, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null, null);
             else {
@@ -167,7 +139,7 @@ export class GridDB extends events.EventEmitter {
             ,'nodeId': nodeId
             ,'nodeName': nodeName
         };       
-        this.ssql.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any) : void => {
+        this.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {
@@ -177,7 +149,7 @@ export class GridDB extends events.EventEmitter {
         });
     }
     markTaskStart(task:ITask, pid:number, done:(err:any) => void) : void {
-        this.ssql.execute('[dbo].[stp_NodeJSGridJobTask]', {'jobId': task.j, 'taskIndex': task.t, 'pid': pid}, (err: any, recordsets: any) : void => {
+        this.execute('[dbo].[stp_NodeJSGridJobTask]', {'jobId': task.j, 'taskIndex': task.t, 'pid': pid}, (err: any, recordsets: any) : void => {
             done(err);
         });
     }
@@ -190,7 +162,7 @@ export class GridDB extends events.EventEmitter {
             ,'stdout': result.stdout
             ,'stderr': result.stderr
         };
-        this.ssql.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any) : void => {
+        this.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any) : void => {
             done(err);
         });
     }
