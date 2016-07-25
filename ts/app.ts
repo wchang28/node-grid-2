@@ -153,7 +153,7 @@ class ClientMessagingCoalescing extends events.EventEmitter {
 gridDB.on('error', (err: any) => {
     console.error('!!! Database connection error: ' + JSON.stringify(err));
 }).on('connected', () => {
-    console.error('connected to the database :-)');
+    console.log('connected to the database :-)');
 
     let clientApp = express();  // client facing app
     let nodeApp = express();   // node facing app
