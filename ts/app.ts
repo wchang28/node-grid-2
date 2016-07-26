@@ -25,20 +25,12 @@ let $ = require('jquery-no-dom');
 class TestTokenVerifier implements IAccessTokenVerifier {
     constructor() {}
     verify(accessToken: oauth2.AccessToken, done:(err:errors.IError, user: IAuthorizedUser) => void) : void {
-        if (accessToken.token_type === 'Bearer' && accessToken.access_token === '98ghqhvra89vajvo834perd9i8237627bgvm') {
+        if (accessToken.token_type === 'Bearer') {
             let user:IAuthorizedUser = {
-                userId: 'genericGridUser7'
-                ,userName: 'genericGridUser'
+                userId: '6ef1466e903a72203a62fbd9de01c234'
+                ,userName: 'fkh\\wchang'
                 ,displayName: 'Wen Chang'
-                ,email: 'wchang28@htomail.com'
-            };
-            done(null, user);
-        } else if (accessToken.token_type === 'Bearer' && accessToken.access_token === 'tiutrtugghir5899y4hggoirtwrogj45hrtg0p9wug45') {
-            let user:IAuthorizedUser = {
-                userId: 'gkfklgnh965yu690u50hj0j0j6'
-                ,userName: 'wchang'
-                ,displayName: 'Juei Chang'
-                ,email: 'wen_chang91775@yahoo.com'
+                ,email: 'wchang@firstkeylending.com'
             };
             done(null, user);
         } else

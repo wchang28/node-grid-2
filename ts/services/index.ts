@@ -21,7 +21,7 @@ router.use('/dispatcher', dispatcherRouter);
 
 let topicRouter = getTopicRouter('/event_stream', getConnectionFactory(10000, (req: express.Request) => {
     let user = getUser(req);
-    return {userId: user.userId, userName: user.userName};
+    return user;
 }));
 router.use('/events', topicRouter); // topic subscription endpoint is available at /events/event_stream from this route
 
