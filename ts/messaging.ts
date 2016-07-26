@@ -15,6 +15,8 @@ export interface IGridUserProfile {
 export interface IGridUser {
     userId: string;
     userName:string;
+    displayName: string;
+    email: string;
     profile: IGridUserProfile;
 }
 

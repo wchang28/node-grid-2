@@ -29,12 +29,16 @@ class TestTokenVerifier implements IAccessTokenVerifier {
             let user:IAuthorizedUser = {
                 userId: 'genericGridUser7'
                 ,userName: 'genericGridUser'
+                ,displayName: 'Wen Chang'
+                ,email: 'wchang28@htomail.com'
             };
             done(null, user);
         } else if (accessToken.token_type === 'Bearer' && accessToken.access_token === 'tiutrtugghir5899y4hggoirtwrogj45hrtg0p9wug45') {
             let user:IAuthorizedUser = {
                 userId: 'gkfklgnh965yu690u50hj0j0j6'
                 ,userName: 'wchang'
+                ,displayName: 'Juei Chang'
+                ,email: 'wen_chang91775@yahoo.com'
             };
             done(null, user);
         } else
@@ -110,6 +114,8 @@ function authorizedClient(req: express.Request, res: express.Response, next: exp
                     let gridUser:IGridUser = {
                         userId: user.userId
                         ,userName: user.userName
+                        ,displayName: user.displayName
+                        ,email: user.email
                         ,profile: profile
                     }
                     req["user"] = gridUser;

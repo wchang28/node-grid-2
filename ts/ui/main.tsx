@@ -212,13 +212,16 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     getConnectionRows() {
         if (this.state.connections && this.state.connections.length > 0) {
             return this.state.connections.map((connection: ITopicConnection, index:number) => {
+                let user:IGridUser= connection.cookie;
                 return (
                     <tr key={index}>
                         <td>{index+1}</td>
                         <td>{connection.conn_id + (connection.conn_id === this.state.conn_id ? " (Me)": "")}</td>
                         <td>{connection.remoteAddress}</td>
-                        <td>{connection.cookie.userId}</td>
-                        <td>{connection.cookie.userName}</td>
+                        <td>{user.userId}</td>
+                        <td>{user.userName}</td>
+                        <td>{user.displayName}</td>
+                        <td>{user.email}</td>
                     </tr>
                 );
             });
@@ -226,6 +229,8 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             return (
                 <tr>
                     <td>(None)</td>
+                    <td></td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -354,6 +359,8 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <th>Remote Address</th>
                                             <th>User Id</th>
                                             <th>Username</th>
+                                            <th>Display Name</th>
+                                            <th>EMail</th>
                                         </tr>
                                     </thead>
                                     <tbody>{this.getConnectionRows()}</tbody>
