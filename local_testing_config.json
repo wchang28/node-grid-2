@@ -30,9 +30,9 @@
         }
 		,"authorizationRedirectUrl": "http://127.0.0.1:33821/services/oauth2/authorize"
     }
-	,"tokenVerifierOptions":
+	,"authorizeEndpointOptions":
 	{
-		"url": "http://127.0.0.1:33821/services/oauth2/verify_token"
+		"url": "http://127.0.0.1:52131"
 		,"rejectUnauthorized": false	
 	}
 	,"dbConfig":

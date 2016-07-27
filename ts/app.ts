@@ -18,14 +18,13 @@ import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManage
 import * as events from 'events';
 import * as errors from './errors';
 let $ = require('jquery-no-dom');
-import {IAuthorizedUser, IAccessTokenVerifier} from './accessTokenVerifier';
-import {TokenVerifierOptions, TokenVerifier} from './tokenVerifier';
+import * as auth_client from 'polaris-auth-client';
 
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
     clientWebServerConfig: IWebServerConfig;
     oauth2Options: oauth2.ClientAppOptions;
-    tokenVerifierOptions: TokenVerifierOptions;
+    authorizeEndpointOptions: auth_client.IAuthorizeEndpointOptions;
     dbConfig: IGridDBConfiguration;
     dispatcherConfig?: IDispatcherConfig;
 }
@@ -35,7 +34,7 @@ let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let tokenGrant = new oauth2.TokenGrant($, config.oauth2Options.tokenGrantOptions, config.oauth2Options.clientAppSettings);
-let tokenVerifier: IAccessTokenVerifier = new TokenVerifier($, config.tokenVerifierOptions, config.oauth2Options.clientAppSettings);
+let authClient: auth_client.AuthClient = new auth_client.AuthClient($, config.authorizeEndpointOptions, config.oauth2Options.clientAppSettings);
 
 function getAuthorizedClientMiddleware(tryToRefreshToken: boolean) {
     return ((req: express.Request, res: express.Response, next: express.NextFunction): void => {
@@ -63,7 +62,7 @@ function getAuthorizedClientMiddleware(tryToRefreshToken: boolean) {
             return;
         }
 
-        tokenVerifier.verify(accessToken, (err: any, user:IAuthorizedUser) => {
+        authClient.verifyAccessToken(accessToken, (err: any, user:auth_client.IAuthorizedUser) => {
             if (err) {  // token verification error
                 if (tryToRefreshToken && access && access.refresh_token) {   // has refresh token in access
                     tokenGrant.refreshAccessToken(access.refresh_token, (err:any, access: oauth2.Access) => {
