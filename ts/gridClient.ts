@@ -259,7 +259,7 @@ class Session extends ApiCallBase implements ISession {
     }
     logout(done?:(err:any) => void) : void {
         let path = "/logout";
-        if (window && window.location)  // browser logout
+        if (global["window"])  // browser logout
             window.location.href = path;
         else    // automation client logout
             this.$J("GET", path, {}, (typeof done=== 'function' ? done : (err:any, ret: any) => {}));
