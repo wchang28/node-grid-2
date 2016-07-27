@@ -19,7 +19,7 @@
      {
         "tokenGrantOptions":
         {
-            "url": "http://127.0.0.1:3382/services/oauth2/token"
+            "url": "http://127.0.0.1:33821/services/oauth2/token"
             ,"rejectUnauthorized": false
         }
         ,"clientAppSettings":
@@ -28,7 +28,7 @@
             ,"client_secret": "0d42a918fabe33f8"
 			,"redirect_uri": "http://127.0.0.1:26355/authcode_callback"
         }
-		,"authorizationRedirectUrl": "http://127.0.0.1:3382/services/oauth2/authorize"
+		,"authorizationRedirectUrl": "http://127.0.0.1:33821/services/oauth2/authorize"
     }
 	,"dbConfig":
 	{
