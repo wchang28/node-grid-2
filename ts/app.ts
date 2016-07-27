@@ -310,8 +310,7 @@ gridDB.on('error', (err: any) => {
     });
 
     clientApp.get('/logout', (req: express.Request, res: express.Response) => {
-        console.log('in /logout');
-        if (req.session && req.session["access"]) {
+        if (req.session && req.session["access"]) { // browser client
             req.session.destroy((err:any) => {
                 // cannot access any more
                 if (!err) {
@@ -323,7 +322,7 @@ gridDB.on('error', (err: any) => {
                     res.redirect('https://www.google.com');
                 }
             });
-        } else {
+        } else {    // automation client
             res.json({});
         }
     });
