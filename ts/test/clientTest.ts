@@ -7,13 +7,13 @@ let config: IGridClientConfig =
      {
         "tokenGrantOptions":
         {
-            "url": 'http://127.0.0.1:3382/services/oauth2/token'
+            "url": 'http://127.0.0.1:33821/services/oauth2/token'
             ,"rejectUnauthorized": false
         }
         ,"clientAppSettings":
         {
-            "client_id": "jfbgrbtgbirutbgibrgtbriwgh9045hgrobv"
-            ,"client_secret": "598ty4ghh0u3ojfvnscUJYRUJfbgrsthrJFJ0J"
+            "client_id": "5OI0egJLTRRoEzcJY20NN3_wJj3CF0q9KpZq4d9gS65wFJxGqhpBls6XTw06jJHpSsmfc-E-Ss6u8pJ6siA2"
+            ,"client_secret": "0d42a918fabe33f8"
         }
     }
     ,"dispatcherConfig":
@@ -24,7 +24,7 @@ let config: IGridClientConfig =
 };
 
 let username = 'wchang';
-let password = '954gowrtj04';
+let password = 's0ndm3!!';
 
 let js:IGridJobSubmit = {
     description: 'this is a test'
