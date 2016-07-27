@@ -213,7 +213,7 @@ export interface ISession {
     setQueueOpened: (open: boolean, done: (err:any, dispControl: IDispControl) => void) => void;
     getConnections: (done: (err:any, connections: any) => void) => void;
     setNodeEnabled: (nodeId:string, enabled: boolean, done: (err:any, nodeItem: INodeItem) => void) => void;
-    logout: (done:(err:any) => void) => void;
+    logout: (done?:(err:any) => void) => void;
 }
 
 class Session extends ApiCallBase implements ISession {
