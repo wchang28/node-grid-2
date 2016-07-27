@@ -77,6 +77,7 @@ function getAuthorizedClientMiddleware(tryToRefreshToken: boolean) {
                 } else  // no refresh token in access
                     res.status(401).json(err);
             } else {   // access token is good
+                //console.log('user=' + JSON.stringify(user));
                 gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
                     if (err)
                         res.status(401).json(errors.not_authorized);

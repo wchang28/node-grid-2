@@ -359,7 +359,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <th>Remote Address</th>
                                             <th>User Id</th>
                                             <th>Username</th>
-                                            <th>Display Name</th>
+                                            <th>Name</th>
                                             <th>Email</th>
                                         </tr>
                                     </thead>
