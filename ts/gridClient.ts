@@ -213,7 +213,7 @@ export interface ISession {
     setQueueOpened: (open: boolean, done: (err:any, dispControl: IDispControl) => void) => void;
     getConnections: (done: (err:any, connections: any) => void) => void;
     setNodeEnabled: (nodeId:string, enabled: boolean, done: (err:any, nodeItem: INodeItem) => void) => void;
-    logout : () => void;
+    logout: (done:(err:any) => void) => void;
 }
 
 class Session extends ApiCallBase implements ISession {
@@ -257,7 +257,10 @@ class Session extends ApiCallBase implements ISession {
         let path = "/services/dispatcher/node/" + nodeId + "/" + (enabled? "enable": "disable");
         this.$J("GET", path, {}, done);
     }
-    logout() : void {}
+    logout(done:(err:any) => void) : void {
+        let path = "/logout";
+        this.$J("GET", path, {}, done);
+    }
 }
 
 export class GridClient {

@@ -309,6 +309,23 @@ gridDB.on('error', (err: any) => {
         }
     });
 
+    clientApp.get('/logout', (req: express.Request, res: express.Response) => {
+        console.log('in /logout');
+        if (req.session) {
+            req.session.destroy((err:any) => {
+                // cannot access session any more
+                if (!err) {
+                    console.log('session destroyed :-)');
+                    console.log("redirecting user's browser to /");
+                    res.redirect('/');
+                } else {
+                    console.log('unable to destroy session');
+                    res.redirect('https://www.google.com');
+                }
+            });
+        }
+    });
+
     nodeApp.use('/node-app', nodeAppRouter);
 
     // evenstream located at:

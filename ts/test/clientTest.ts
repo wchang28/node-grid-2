@@ -65,12 +65,14 @@ client.login(username, password, (err:any, session: ISession) => {
             console.log(JSON.stringify(jp));
         }).on('error', (err:any) => {
             console.error('!!! Error: ' + JSON.stringify(err));
-            session.logout();
-            process.exit(1);
+            session.logout((err:any) => {
+                process.exit(1);
+            });
         }).on('done', (jp: IJobProgress) => {
             console.log('job ' + job.jobId + ' finished with status = ' + jp.status);
-            session.logout();
-            process.exit(0);
+            session.logout((err:any) => {
+                process.exit(0);
+            });
         });
         job.run();
     }

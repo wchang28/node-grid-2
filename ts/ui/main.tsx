@@ -221,7 +221,6 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                         <td>{user.userId}</td>
                         <td>{user.userName}</td>
                         <td>{user.displayName}</td>
-                        <td>{user.email}</td>
                     </tr>
                 );
             });
@@ -229,7 +228,6 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             return (
                 <tr>
                     <td>(None)</td>
-                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -260,6 +258,9 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                 }
             });
         }        
+    }
+    onLogout(e:any) {
+        this.session.logout((err: any) => {});
     }
     render() {
         return (
@@ -338,6 +339,13 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                                 <button disbaled={!this.props.currentUser.profile.canSubmitJob} onClick={this.onSubmitTestJob.bind(this)}>Submit</button>
                                             </td>
                                         </tr>
+                                        <tr>
+                                            <td>Logout</td>
+                                            <td></td>
+                                            <td>
+                                                <button onClick={this.onLogout.bind(this)}>Logout</button>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -360,7 +368,6 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <th>User Id</th>
                                             <th>Username</th>
                                             <th>Name</th>
-                                            <th>Email</th>
                                         </tr>
                                     </thead>
                                     <tbody>{this.getConnectionRows()}</tbody>
