@@ -32,7 +32,7 @@
     }
 	,"authorizeEndpointOptions":
 	{
-		"url": "http://127.0.0.1:52131"
+		"baseUrl": "http://127.0.0.1:52131"
 		,"rejectUnauthorized": false	
 	}
 	,"dbConfig":
