@@ -260,7 +260,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         }        
     }
     onLogout(e:any) {
-        this.session.logout((err: any) => {});
+        window.location.href = '/logout';
     }
     render() {
         return (
