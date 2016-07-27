@@ -311,9 +311,9 @@ gridDB.on('error', (err: any) => {
 
     clientApp.get('/logout', (req: express.Request, res: express.Response) => {
         console.log('in /logout');
-        if (req.session) {
+        if (req.session && req.session["access"]) {
             req.session.destroy((err:any) => {
-                // cannot access session any more
+                // cannot access any more
                 if (!err) {
                     console.log('session destroyed :-)');
                     console.log("redirecting user's browser to /");
