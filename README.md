@@ -1,1 +1,1 @@
-"# node-grid-2" 
+# Node.js-based Grid v2 
