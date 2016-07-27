@@ -30,6 +30,11 @@
         }
 		,"authorizationRedirectUrl": "http://127.0.0.1:33821/services/oauth2/authorize"
     }
+	,"tokenVerifierOptions":
+	{
+		"url": "http://127.0.0.1:33821/services/oauth2/verify_token"
+		,"rejectUnauthorized": false	
+	}
 	,"dbConfig":
 	{
 		"sqlConfig":

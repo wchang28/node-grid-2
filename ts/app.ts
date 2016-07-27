@@ -17,34 +17,15 @@ import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
 import * as events from 'events';
 import * as errors from './errors';
-import {IAuthorizedUser, IAccessTokenVerifier} from './accessTokenVerifier';
 let $ = require('jquery-no-dom');
-
-// TODO: remove test code later
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class TestTokenVerifier implements IAccessTokenVerifier {
-    constructor() {}
-    verify(accessToken: oauth2.AccessToken, done:(err:errors.IError, user: IAuthorizedUser) => void) : void {
-        if (accessToken.token_type === 'Bearer') {
-            let user:IAuthorizedUser = {
-                userId: '6ef1466e903a72203a62fbd9de01c234'
-                ,userName: 'fkh\\wchang'
-                ,displayName: 'Wen Chang'
-                ,email: 'wchang@firstkeylending.com'
-            };
-            done(null, user);
-        } else
-            done(errors.not_authorized, null);
-    }
-}
-
-let tokenVerifier: IAccessTokenVerifier = new TestTokenVerifier();
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+import {IAuthorizedUser, IAccessTokenVerifier} from './accessTokenVerifier';
+import {TokenVerifierOptions, TokenVerifier} from './tokenVerifier';
 
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
     clientWebServerConfig: IWebServerConfig;
     oauth2Options: oauth2.ClientAppOptions;
+    tokenVerifierOptions: TokenVerifierOptions;
     dbConfig: IGridDBConfiguration;
     dispatcherConfig?: IDispatcherConfig;
 }
@@ -54,67 +35,65 @@ let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let tokenGrant = new oauth2.TokenGrant($, config.oauth2Options.tokenGrantOptions, config.oauth2Options.clientAppSettings);
+let tokenVerifier: IAccessTokenVerifier = new TokenVerifier($, config.tokenVerifierOptions, config.oauth2Options.clientAppSettings);
 
-function authorizedClient(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    let access: oauth2.Access = null;
-    let accessToken:oauth2.AccessToken = null;
-    let authHeader = req.headers['authorization'];
-    if (authHeader) {
-        let x = authHeader.indexOf(' ');
-        if (x != -1) {
+function getAuthorizedClientMiddleware(tryToRefreshToken: boolean) {
+    return ((req: express.Request, res: express.Response, next: express.NextFunction): void => {
+        let access: oauth2.Access = null;
+        let accessToken:oauth2.AccessToken = null;
+        let authHeader = req.headers['authorization'];
+        if (authHeader) {
+            let x = authHeader.indexOf(' ');
+            if (x != -1) {
+                accessToken = {
+                    token_type: authHeader.substr(0, x)
+                    ,access_token: authHeader.substr(x+1)
+                }
+            }
+        } else if (req.session["access"]) {
+            access = req.session["access"];
             accessToken = {
-                token_type: authHeader.substr(0, x)
-                ,access_token: authHeader.substr(x+1)
+                token_type: access.token_type
+                ,access_token: access.access_token
             }
         }
-    } else if (req.session["access"]) {
-        access = req.session["access"];
-        accessToken = {
-            token_type: access.token_type
-            ,access_token: access.access_token
+
+        if (!accessToken) {
+            res.status(401).json(errors.not_authorized);
+            return;
         }
-    }
 
-    if (!accessToken) {
-        res.status(401).json(errors.not_authorized);
-        return;
-    }
-
-    tokenVerifier.verify(accessToken, (err: errors.IError, user:IAuthorizedUser) => {
-        if (err) {
-            // TODO: if error is token expired, do
-            ///////////////////////////////////////////////////////////////////////////////////////////////////
-            /*
-            if (access && access.refresh_token) {
-                tokenGrant.refreshAccessToken(access.refresh_token, (err:any, access: oauth2.Access) => {
+        tokenVerifier.verify(accessToken, (err: any, user:IAuthorizedUser) => {
+            if (err) {  // token verification error
+                if (tryToRefreshToken && access && access.refresh_token) {   // has refresh token in access
+                    tokenGrant.refreshAccessToken(access.refresh_token, (err:any, access: oauth2.Access) => {
+                        if (err)
+                            res.status(401).json(err);
+                        else {
+                            req.session["access"] = access; // granted a new access
+                            getAuthorizedClientMiddleware(false)(req, res, next);
+                        }
+                    });
+                } else  // no refresh token in access
+                    res.status(401).json(err);
+            } else {   // access token is good
+                gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
                     if (err)
-                        res.status(401).json(err);
+                        res.status(401).json(errors.not_authorized);
                     else {
-                        req.session["access"] = access;
-                        authorizedClient(req, res, next);
+                        let gridUser:IGridUser = {
+                            userId: user.userId
+                            ,userName: user.userName
+                            ,displayName: user.displayName
+                            ,email: user.email
+                            ,profile: profile
+                        }
+                        req["user"] = gridUser;
+                        next();                    
                     }
                 });
             }
-            ///////////////////////////////////////////////////////////////////////////////////////////////////
-            */
-            res.status(401).json(err);
-        } else {   // no error
-            gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
-                if (err)
-                    res.status(401).json(errors.not_authorized);
-                else {
-                    let gridUser:IGridUser = {
-                        userId: user.userId
-                        ,userName: user.userName
-                        ,displayName: user.displayName
-                        ,email: user.email
-                        ,profile: profile
-                    }
-                    req["user"] = gridUser;
-                    next();                    
-                }
-            });
-        }
+        });
     });
 }
 
@@ -271,8 +250,8 @@ gridDB.on('error', (err: any) => {
     clientApp.set("global", g);
     nodeApp.set("global", g);
 
-    clientApp.use('/services', authorizedClient, clientApiRouter);
-    clientApp.use('/app', authorizedClient, express.static(path.join(__dirname, '../public')));
+    clientApp.use('/services', getAuthorizedClientMiddleware(true), clientApiRouter);
+    clientApp.use('/app', getAuthorizedClientMiddleware(true), express.static(path.join(__dirname, '../public')));
 
     // hitting the /authcode_callback via a browser redirect from the oauth2 server
     clientApp.get('/authcode_callback', (req: express.Request, res: express.Response) => {
