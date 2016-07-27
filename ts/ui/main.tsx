@@ -360,7 +360,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <th>User Id</th>
                                             <th>Username</th>
                                             <th>Display Name</th>
-                                            <th>EMail</th>
+                                            <th>Email</th>
                                         </tr>
                                     </thead>
                                     <tbody>{this.getConnectionRows()}</tbody>
