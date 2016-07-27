@@ -323,6 +323,8 @@ gridDB.on('error', (err: any) => {
                     res.redirect('https://www.google.com');
                 }
             });
+        } else {
+            res.json({});
         }
     });
 
