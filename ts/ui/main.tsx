@@ -324,21 +324,21 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <td>Queue closed</td>
                                             <td>{this.state.dispControl ? this.booleanString(this.state.dispControl.queueClosed) : " "}</td>
                                             <td>
-                                                <button disbaled={!this.props.currentUser.profile.canOpenCloseQueue} onClick={this.onQueueCloseClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.queueClosed ? "Open" : "Close"}</button>
+                                                <button disabled={!this.props.currentUser.profile.canOpenCloseQueue} onClick={this.onQueueCloseClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.queueClosed ? "Open" : "Close"}</button>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td>Task dispatching enabled</td>
                                             <td>{this.state.dispControl ? this.booleanString(this.state.dispControl.dispatchEnabled) : " "}</td>
                                             <td>
-                                                <button disbaled={!this.props.currentUser.profile.canStartStopDispatching} onClick={this.onDispatchingEnableClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.dispatchEnabled ? "Disable" : "Enable"}</button>
+                                                <button disabled={!this.props.currentUser.profile.canStartStopDispatching} onClick={this.onDispatchingEnableClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.dispatchEnabled ? "Disable" : "Enable"}</button>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td>Submit test job</td>
                                             <td></td>
                                             <td>
-                                                <button disbaled={!this.props.currentUser.profile.canSubmitJob} onClick={this.onSubmitTestJob.bind(this)}>Submit</button>
+                                                <button disabled={!this.props.currentUser.profile.canSubmitJob} onClick={this.onSubmitTestJob.bind(this)}>Submit</button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -384,4 +384,5 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     }
 }
 
+console.log('__currentUser='+JSON.stringify(global['__currentUser']));
 ReactDOM.render(<GridAdminApp currentUser={global['__currentUser']}/>, document.getElementById('main'));
