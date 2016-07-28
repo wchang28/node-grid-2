@@ -3,6 +3,7 @@ import {IGridUserProfile, IGridUser, IJobProgress, IJobInfo, ITask, INodeRunning
 import {SimpleMSSQL, Configuration, Options} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
 export {Configuration as SQLConfiguration, Options as DBOptions} from 'mssql-simple';
+import * as errors from './errors';
 
 // will emit the following events
 // 1. connected
@@ -13,18 +14,17 @@ export class GridDB extends SimpleMSSQL {
         super(sqlConfig, options);
     }
     getUserProfile(userId: string, done:(err:any, profile: IGridUserProfile) => void) : void {
-        // TODO:
-        //////////////////////////////////////////////////////////////////////////////////////////
-        let profile:IGridUserProfile = {
-            priority: 5
-            ,canSubmitJob: true
-            ,canKillOtherUsersJob: true
-            ,canStartStopDispatching: true
-            ,canOpenCloseQueue: true
-            ,canEnableDisableNode: true
-        };
-        done(null, profile);
-        //////////////////////////////////////////////////////////////////////////////////////////
+        this.execute('[dbo].[stp_NodeJSGridGetUserProfile]', {userId}, (err:any, recordsets:any[]) => {
+            if (err)
+                done(err, null);
+            else {
+                let dt = recordsets[0];
+                if (dt.length === 0) {
+                    done(errors.bad_user_profile, null);
+                } else
+                    done(null, dt[0]);
+           }
+        });
     }
     registerNewJob(user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
         this.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.profile.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
@@ -69,7 +69,7 @@ export class GridDB extends SimpleMSSQL {
             else {
                 let dt = recordsets[0];
                 if (dt.length === 0)
-                    done('bad job', null);
+                    done(errors.bad_job_id, null);
                 else
                     done(null, dt[0]);
             }
@@ -101,7 +101,7 @@ export class GridDB extends SimpleMSSQL {
             else {
                 let dt = recordsets[0];
                 if (dt.length === 0)
-                    done('bad job', null);
+                    done(errors.bad_job_id, null);
                 else
                     done(null, dt[0]);
             }
@@ -126,7 +126,7 @@ export class GridDB extends SimpleMSSQL {
                 }
                 dt = recordsets[1];
                 if (dt.length === 0)
-                    done('bad job', {}, null);
+                    done(errors.bad_job_id, {}, null);
                 else
                     done(null, runningProcess, dt[0]);
             }

@@ -221,6 +221,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                         <td>{user.userId}</td>
                         <td>{user.userName}</td>
                         <td>{user.displayName}</td>
+                        <td>{user.profile.name}</td>
                     </tr>
                 );
             });
@@ -228,6 +229,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             return (
                 <tr>
                     <td>(None)</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -368,6 +370,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                                             <th>User Id</th>
                                             <th>Username</th>
                                             <th>Name</th>
+                                            <th>Profile</th>
                                         </tr>
                                     </thead>
                                     <tbody>{this.getConnectionRows()}</tbody>

@@ -6,7 +6,7 @@ CREATE TABLE [dbo].[GridJobs](
 	[priority] [int] NOT NULL,
 	[submitTime] [datetime] NOT NULL,
 	[aborted] [bit] NOT NULL,
- CONSTRAINT [PK_grid_jobs] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_GridJobs] PRIMARY KEY CLUSTERED 
 (
 	[jobId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -31,12 +31,46 @@ CREATE TABLE [dbo].[GridJobTasks](
 	[retCode] [int] NULL,
 	[stdout] [text] NULL,
 	[stderr] [text] NULL,
- CONSTRAINT [PK_Table_1] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_GridJobTasks] PRIMARY KEY CLUSTERED 
 (
 	[jobId] ASC,
 	[index] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+
+CREATE TABLE [dbo].[GridProfile](
+	[id] [varchar](100) NOT NULL,
+	[enabled] [bit] NOT NULL,
+	[name] [varchar](250) NOT NULL,
+	[priority] [int] NOT NULL,
+	[canSubmitJob] [bit] NOT NULL,
+	[canKillOtherUsersJob] [bit] NOT NULL,
+	[canStartStopDispatching] [bit] NOT NULL,
+	[canOpenCloseQueue] [bit] NOT NULL,
+	[canEnableDisableNode] [bit] NOT NULL,
+ CONSTRAINT [PK_GridProfile] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+CREATE INDEX [IX_GridProfile] on [dbo].[GridProfile] ([enabled])
+
+GO
+
+CREATE TABLE [dbo].[GridUserProfile](
+	[userId] [varchar](100) NOT NULL,
+	[profileId] [varchar](100) NOT NULL,
+ CONSTRAINT [PK_GridUserProfile] PRIMARY KEY CLUSTERED 
+(
+	[userId] ASC,
+	[profileId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
 
 GO
 
@@ -84,6 +118,22 @@ stat2.[jobId]
 ,[success]=cast(iif(stat2.[status]='ABORTED', 0, iif(stat2.[numTasks]=stat2.[numSuccess],1,0)) as bit)
 ,[completePct]=cast(stat2.[numTasksFinished] as float)/cast(stat2.[numTasks] as float) * 100.0
 from stat2;
+
+GO
+
+CREATE VIEW [dbo].[vActiveGridProfile]
+AS
+select
+ [id]
+,[name]
+,[priority]
+,[canSubmitJob]
+,[canKillOtherUsersJob]
+,[canStartStopDispatching]
+,[canOpenCloseQueue]
+,[canEnableDisableNode]
+FROM [dbo].[GridProfile] (nolock)
+where [enabled]=1
 
 GO
 
@@ -424,5 +474,21 @@ RETURN
 	from jobs j
 	cross apply [dbo].[fnc_NodeJSGridGetJobProgress](j.jobId) p
 )
+
+GO
+
+CREATE PROCEDURE [dbo].[stp_NodeJSGridGetUserProfile]
+	@userId varchar(100)
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	select
+	ap.*
+	from [dbo].[GridUserProfile] up (nolock)
+	inner join [dbo].[vActiveGridProfile] ap (nolock)
+	on up.[userId]=@userId and up.[profileId]=ap.[id]
+
+END
 
 GO
