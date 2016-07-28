@@ -41,7 +41,7 @@ function getAuthorizedClientMiddleware(tryToRefreshToken: boolean) {
         let access: oauth2.Access = null;
         let accessToken:oauth2.AccessToken = null;
         let authHeader = req.headers['authorization'];
-        if (authHeader) {
+        if (authHeader) {   // automation client
             let x = authHeader.indexOf(' ');
             if (x != -1) {
                 accessToken = {
@@ -49,7 +49,7 @@ function getAuthorizedClientMiddleware(tryToRefreshToken: boolean) {
                     ,access_token: authHeader.substr(x+1)
                 }
             }
-        } else if (req.session["access"]) {
+        } else if (req.session["access"]) { // browser client
             access = req.session["access"];
             accessToken = {
                 token_type: access.token_type
@@ -309,8 +309,8 @@ gridDB.on('error', (err: any) => {
         }
     });
 
-    clientApp.get('/logout', (req: express.Request, res: express.Response) => {
-        if (req.session && req.session["access"]) { // browser client
+    clientApp.get('/logout', getAuthorizedClientMiddleware(false), (req: express.Request, res: express.Response) => {
+        if (req.session["access"]) { // browser client
             req.session.destroy((err:any) => {
                 // cannot access any more
                 if (!err) {
@@ -322,9 +322,8 @@ gridDB.on('error', (err: any) => {
                     res.redirect('https://www.google.com');
                 }
             });
-        } else {    // automation client
+        } else    // automation client
             res.json({});
-        }
     });
 
     nodeApp.use('/node-app', nodeAppRouter);
