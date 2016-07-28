@@ -384,5 +384,5 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     }
 }
 
-console.log('__currentUser='+JSON.stringify(global['__currentUser']));
+//console.log('__currentUser='+JSON.stringify(global['__currentUser']));
 ReactDOM.render(<GridAdminApp currentUser={global['__currentUser']}/>, document.getElementById('main'));
