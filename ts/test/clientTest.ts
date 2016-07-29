@@ -23,8 +23,11 @@ let config: IGridClientConfig =
     }
 };
 
-let username = 'harvest';
-let password = 'Reaper56';
+//let username = 'harvest';
+//let password = 'Reaper56';
+
+let username = 'wchang28@hotmail.com';
+let password = 'p0lyp@th!';
 
 let js:IGridJobSubmit = {
     description: 'this is a test'
