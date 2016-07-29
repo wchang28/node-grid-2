@@ -35,14 +35,14 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.state.conn_id = null;
         this.state.connections = null;
     }
-    private getTestJobSubmit() : IGridJobSubmit {
+    private getTestJobSubmit(numTasks:number) : IGridJobSubmit {
         let js:IGridJobSubmit = {
             description: 'this is a test'
             ,cookie: 'test'
             ,tasks: []
         };
 
-        for (let i = 0; i < 1000; i++) {
+        for (let i = 0; i < numTasks; i++) {
             let task: ITaskItem  = {
                 cmd: 'echo Hi everybody'
                 ,cookie: (i+1).toString()
@@ -51,13 +51,16 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         }
         return js;
     }
-    private onSubmitTestJob() {
-        this.session.sumbitJob(this.getTestJobSubmit(), (err:any, jobId:string) => {
-            if (err)
-                console.log('!!! Error submitting job: ' + JSON.stringify(err));
-            else
-                console.log('test job mitted, jobId=' + jobId);
-        });
+    private getOnSubmitTestEchoJob(numTasks:number) {
+        return (event: any) => {
+            event.preventDefault();
+            this.session.sumbitJob(this.getTestJobSubmit(numTasks), (err:any, jobId:string) => {
+                if (err)
+                    console.log('!!! Error submitting job: ' + JSON.stringify(err));
+                else
+                    console.log('test job submitted, jobId=' + jobId);
+            });
+        };
     }
     private getConnections() {
         this.session.getConnections((err: any, connections: ITopicConnection[]) => {
@@ -172,10 +175,10 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                     <li className="w3-dropdown-hover">
                         <a href="javascript:void(0)">Test Jobs</a>
                         <div className="w3-dropdown-content w3-white w3-card-4">
-                            <a href="#">100 Echos</a>
-                            <a href="#">1000 Echos</a>
+                            <a href="#" onClick={this.getOnSubmitTestEchoJob(100)}>100 Echos</a>
+                            <a href="#" onClick={this.getOnSubmitTestEchoJob(1000)}>1000 Echos</a>
                             <a href="#">20 Sleeps(15sec)</a>
-                            <a href="#">10000 Echos</a>
+                            <a href="#" onClick={this.getOnSubmitTestEchoJob(10000)}>10000 Echos</a>
                         </div>
                     </li>
                     <li className="w3-right"><a href="#" onClick={this.onLogout.bind(this)}>{currentUserName}<i className="fa fa-sign-out"></i></a></li>
