@@ -319,7 +319,7 @@ gridDB.on('error', (err: any) => {
                     res.redirect('/');
                 } else {
                     console.log('unable to destroy session');
-                    res.redirect('https://www.google.com');
+                    res.redirect('about:blank');
                 }
             });
         } else    // automation client
