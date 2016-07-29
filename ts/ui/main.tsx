@@ -34,6 +34,7 @@ interface IGridAdminAppState {
 }
 
 export interface IAppContentProps {
+    currConnId: string;
     msgBroker: MsgBroker;
     contentType: ContentType;
 }
@@ -48,15 +49,19 @@ export class AppContent extends React.Component<IAppContentProps, IAppContentSta
         this.state = {};
     }
     getContent() : any {
-        switch(this.props.contentType) {
-            case ContentType.Home:
-                return (<div>Home</div>);
-            case ContentType.Connections:
-                return (<div>Connections</div>);
-            case ContentType.Jobs:
-                return (<div>Jobs</div>);
-            default:
-                return (<div>Unknown content !!!</div>);
+        if (this.props.currConnId === null) {
+            return (<div>Not connected</div>);
+        } else {
+            switch(this.props.contentType) {
+                case ContentType.Home:
+                    return (<div>Home</div>);
+                case ContentType.Connections:
+                    return (<div>Connections</div>);
+                case ContentType.Jobs:
+                    return (<div>Jobs</div>);
+                default:
+                    return (<div>Unknown content !!!</div>);
+            }
         }
     }
     componentDidMount() {
@@ -324,7 +329,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.session.logout();
     }
     getAppContent() : any {
-        return (<AppContent msgBroker={this.msgBroker} contentType={this.state.contentType}/>);
+        return (<AppContent msgBroker={this.msgBroker} contentType={this.state.contentType} currConnId={this.state.conn_id}/>);
     }
     render() {
         let currentUserName = this.props.currentUser.displayName + ' ';
