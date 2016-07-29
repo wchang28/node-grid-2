@@ -18,58 +18,12 @@ interface IGridAdminAppProps {
     currentUser: IGridUser
 }
 
-export enum ContentType {
-    Home = 1
-    ,Connections = 2
-    ,Jobs = 3
-};
-
 interface IGridAdminAppState {
-    contentType?: ContentType;
     conn_id?: string;
     nodes?: INodeItem[];
     queue?:IQueueJSON;
     dispControl?: IDispControl;
     connections?: ITopicConnection[];
-}
-
-export interface IAppContentProps {
-    msgBroker: MsgBroker;
-    contentType: ContentType;
-}
-
-export interface IAppContentState {
-
-}
-
-export class AppContent extends React.Component<IAppContentProps, IAppContentState> {
-    constructor(props:IAppContentProps) {
-        super(props);
-        this.state = {};
-    }
-    getContent() : any {
-        switch(this.props.contentType) {
-            case ContentType.Home:
-                return (<div>Home</div>);
-            case ContentType.Connections:
-                return (<div>Connections</div>);
-            case ContentType.Jobs:
-                return (<div>Jobs</div>);
-            default:
-                return (<div>Unknown content !!!</div>);
-        }
-    }
-    componentDidMount() {
-        console.log('AppContent.componentDidMount()');
-    }
-    componentWillUnmount() {
-        console.log('AppContent.componentWillUnmount()');
-    }
-    render() {
-        return (
-            <div>{this.getContent()}</div>
-        );
-    }
 }
 
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
@@ -78,7 +32,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     constructor(props:IGridAdminAppProps) {
         super(props);
         this.msgBroker = this.session.createMsgBroker(2000);
-        this.state = {contentType: ContentType.Home};
+        this.state = {};
         this.state.conn_id = null;
         this.state.nodes = null;
         this.state.queue = null;
@@ -156,19 +110,6 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         }     
     }
     componentDidMount() {
-		$(window).on('hashchange', () => {
-			//alert('hash change: ' + window.location.hash);
-            let contentType: ContentType = ContentType.Home;
-            if (window.location.hash.length > 0) {
-                let s = window.location.hash.substr(1);
-                if (s === 'Connections')
-                    contentType = ContentType.Connections;
-                else if (s === "Jobs")
-                    contentType = ContentType.Jobs
-            }
-            this.setState({contentType});
-		});
-
         //console.log('componentDidMount():' + JSON.stringify(this.props.currentUser));
         this.msgBroker.on('connect', (conn_id:string) => {
             console.log('connected to the dispatcher: conn_id=' + conn_id);
@@ -323,29 +264,121 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     onLogout(e:any) {
         this.session.logout();
     }
-    getAppContent() : any {
-        return (<AppContent msgBroker={this.msgBroker} contentType={this.state.contentType}/>);
-    }
     render() {
-        let currentUserName = this.props.currentUser.displayName + ' ';
         return (
             <div>
-                <ul className="w3-navbar w3-black">
-                    <li><a href="#"><i className="fa fa-home w3-large"></i></a></li>
-                    <li><a href="#Connections">Connections</a></li>
-                    <li><a href="#Jobs">Jobs</a></li>
-                    <li className="w3-dropdown-hover">
-                        <a href="javascript:void(0)">Test Jobs</a>
-                        <div className="w3-dropdown-content w3-white w3-card-4">
-                            <a href="#">100 Echos</a>
-                            <a href="#">1000 Echos</a>
-                            <a href="#">20 Sleeps(15sec)</a>
-                            <a href="#">10000 Echos</a>
+                <div className="w3-row">
+                    <div className="w3-col m8">
+                        <div className="w3-card-4 w3-margin">
+                            <div className="w3-container w3-pale-green">
+                                <h4>Nodes {this.getGridUtilizationString()}</h4>
+                            </div>
+                            <div className="w3-container w3-white">
+                                <table className="w3-table w3-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Id</th>
+                                            <th>Name</th>
+                                            <th>Enabled</th>
+                                            <th>Usage</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>{this.getNodRows()}</tbody>
+                                </table>
+                            </div>
                         </div>
-                    </li>
-                    <li className="w3-right"><a href="#" onClick={this.onLogout.bind(this)}>{currentUserName}<i className="fa fa-sign-out"></i></a></li>
-                </ul>
-                <div>{this.getAppContent()}</div> 
+                    </div>
+                    <div className="w3-col m4">
+                        <div className="w3-card-4 w3-margin">
+                            <div className="w3-container w3-pale-green">
+                                <h4>Queue</h4>
+                            </div>
+                            <div className="w3-container w3-white">
+                                <table className="w3-table w3-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Value</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Priorities in queue</td>
+                                            <td>{this.state.queue ? this.state.queue.priorities.join(',') : " "}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>No. job(s) in queue</td>
+                                            <td>{this.state.queue ? this.state.queue.numJobs : " "}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>No. task(s) in queue</td>
+                                            <td>{this.state.queue ? this.state.queue.numTasks : " "}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Queue closed</td>
+                                            <td>{this.state.dispControl ? this.booleanString(this.state.dispControl.queueClosed) : " "}</td>
+                                            <td>
+                                                <button disabled={!this.props.currentUser.profile.canOpenCloseQueue} onClick={this.onQueueCloseClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.queueClosed ? "Open" : "Close"}</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Task dispatching enabled</td>
+                                            <td>{this.state.dispControl ? this.booleanString(this.state.dispControl.dispatchEnabled) : " "}</td>
+                                            <td>
+                                                <button disabled={!this.props.currentUser.profile.canStartStopDispatching} onClick={this.onDispatchingEnableClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.dispatchEnabled ? "Disable" : "Enable"}</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Submit test job</td>
+                                            <td></td>
+                                            <td>
+                                                <button disabled={!this.props.currentUser.profile.canSubmitJob} onClick={this.onSubmitTestJob.bind(this)}>Submit</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Logout</td>
+                                            <td></td>
+                                            <td>
+                                                <button onClick={this.onLogout.bind(this)}>Logout</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="w3-row">
+                    <div className="w3-col">
+                        <div className="w3-card-4 w3-margin">
+                            <div className="w3-container w3-pale-green">
+                                <h4>Client Connections</h4>
+                            </div>
+                            <div className="w3-container w3-white">
+                                <table className="w3-table w3-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Conn. Id</th>
+                                            <th>Remote Address</th>
+                                            <th>User Id</th>
+                                            <th>Username</th>
+                                            <th>Name</th>
+                                            <th>Profile</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>{this.getConnectionRows()}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
