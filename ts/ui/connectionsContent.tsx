@@ -108,6 +108,34 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
         }
     }
     render() {
-        return <div>Connections :-)</div>
+        return (
+            <div>
+                <div className="w3-row">
+                    <div className="w3-col">
+                        <div className="w3-card-4 w3-margin">
+                            <div className="w3-container w3-pale-green">
+                                <h4>Client Connections</h4>
+                            </div>
+                            <div className="w3-container w3-white">
+                                <table className="w3-table w3-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Conn. Id</th>
+                                            <th>Remote Address</th>
+                                            <th>User Id</th>
+                                            <th>Username</th>
+                                            <th>Name</th>
+                                            <th>Profile</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>{this.getConnectionRows()}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 }
