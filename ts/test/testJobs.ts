@@ -24,7 +24,7 @@ export class TestJobs {
         };
         for (let i = 0; i < 15; i++) {
             let task: ITaskItem  = {
-                cmd: 'sleep 15'
+                cmd: 'sleep 10'
                 ,cookie: (i+1).toString()
             }
             js.tasks.push(task);
