@@ -24,22 +24,9 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         super(props);
         this.state = {sub_id: null};
     }
-    get msgBroker(): MsgBroker {return this.props.msgBroker;}
-    get session(): ISession {return this.props.session;}
-    private getDispatcherJSON() {
-        this.session.getDispatcherJSON((err: any, dispatcherJSON: IDispatcherJSON) => {
-            if (err)
-                console.error('!!! Error getting dispatcher state');
-            else {
-                this.setState({
-                    nodes: dispatcherJSON.nodes
-                    ,queue: dispatcherJSON.queue
-                    ,dispControl: dispatcherJSON.dispControl
-                });
-            }            
-        });
-    }
-    private handleMessages(gMsg: GridMessage) : void {
+    protected get msgBroker(): MsgBroker {return this.props.msgBroker;}
+    protected get session(): ISession {return this.props.session;}
+    protected handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'ctrl-changed') {
             //console.log('receive <<ctrl-changed>');
             let dispControl: IDispControl = gMsg.content;
@@ -53,6 +40,19 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             let queue: IQueueJSON = gMsg.content;
             this.setState({queue: queue});
         }       
+    }
+    private getDispatcherJSON() : void {
+        this.session.getDispatcherJSON((err: any, dispatcherJSON: IDispatcherJSON) => {
+            if (err)
+                console.error('!!! Error getting dispatcher state');
+            else {
+                this.setState({
+                    nodes: dispatcherJSON.nodes
+                    ,queue: dispatcherJSON.queue
+                    ,dispControl: dispatcherJSON.dispControl
+                });
+            }            
+        });
     }
     componentDidMount() {
         console.log('HomeContent.componentDidMount()');
@@ -84,14 +84,14 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             });
         }
     }
-    booleanString(val: boolean) : string {return (val ? "Yes": "No");}
-    geUtilizationString(used:number, total: number, showPercent:boolean=true) : string {
+    private booleanString(val: boolean) : string {return (val ? "Yes": "No");}
+    private geUtilizationString(used:number, total: number, showPercent:boolean=true) : string {
         if (!total)
             return "0/0" + (showPercent ? "=0.00%" : "");
         else
             return used.toString() + "/" + total.toString() + (showPercent ? "=" + (used/total*100.0).toFixed(2) + "%" : "");
     }
-    getGridUtilizationString() : string {
+    private getGridUtilizationString() : string {
         let numUsed = 0;
         let numTotal = 0;
         if (this.state.nodes && this.state.nodes.length > 0) {
@@ -105,7 +105,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         }
         return " (" + this.geUtilizationString(numUsed, numTotal, true) + ")";
     }
-    getNodeEnableDisableClickHandler(index: number) : (e:any) => void {
+    private getNodeEnableDisableClickHandler(index: number) : (e:any) => void {
         return ((e:any):void => {
             let nodeItem = this.state.nodes[index];
             let nodeId=nodeItem.id;
@@ -116,7 +116,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             });
         });
     }
-    getNodRows() {
+    private getNodRows() {
         if (this.state.nodes && this.state.nodes.length > 0) {
             return this.state.nodes.map((nodeItem: INodeItem, index:number) => {
                 return (
@@ -143,7 +143,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             );
         }
     }
-    onQueueCloseClick(e:any) {
+    private onQueueCloseClick(e:any) {
         if (this.state.dispControl) {
             this.session.setQueueOpened(this.state.dispControl.queueClosed, (err:any, dispControl: IDispControl) => {
                 if (err) {
@@ -154,7 +154,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             });
         }
     }
-    onDispatchingEnableClick(e:any) {
+    private onDispatchingEnableClick(e:any) {
         if (this.state.dispControl) {
             this.session.setDispatchingEnabled(!this.state.dispControl.dispatchEnabled, (err:any, dispControl: IDispControl) => {
                 if (err) {

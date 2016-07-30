@@ -27,16 +27,16 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
         super(props);
         this.state = {sub_id: null, connections:null};
     }
-    get msgBroker(): MsgBroker {return this.props.msgBroker;}
-    get session(): ISession {return this.props.session;}
-    private handleMessages(gMsg: GridMessage) : void {
+    protected get msgBroker(): MsgBroker {return this.props.msgBroker;}
+    protected get session(): ISession {return this.props.session;}
+    protected handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'connections-changed') {
             //console.log('receive <<connections-changed>');
             let connections: ITopicConnection[] = gMsg.content;
             this.setState({connections: connections});
         }     
     }
-    private getConnections() {
+    private getConnections() : void {
         this.session.getConnections((err: any, connections: ITopicConnection[]) => {
             if (err)
                 console.error('!!! Error getting client connections');
@@ -77,7 +77,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
             });
         }
     }
-    getConnectionRows() {
+    private getConnectionRows() {
         if (this.state.connections && this.state.connections.length > 0) {
             return this.state.connections.map((connection: ITopicConnection, index:number) => {
                 let user:IGridUser= connection.cookie;

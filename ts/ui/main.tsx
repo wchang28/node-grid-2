@@ -31,7 +31,6 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             ,cookie: 'test'
             ,tasks: []
         };
-
         for (let i = 0; i < numTasks; i++) {
             let task: ITaskItem  = {
                 cmd: 'echo Hi everybody'

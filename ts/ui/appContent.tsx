@@ -27,7 +27,7 @@ export class AppContent extends React.Component<IAppContentProps, IAppContentSta
         super(props);
         this.state = {};
     }
-    getContent() : any {
+    private getContent() : any {
         if (this.props.currConnId === null) {
             return (<div>Not connected</div>);
         } else {
