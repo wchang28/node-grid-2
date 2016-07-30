@@ -39,7 +39,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             }            
         });
     }
-    private handleDispatcherMessages(gMsg: GridMessage) : void {
+    private handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'ctrl-changed') {
             //console.log('receive <<ctrl-changed>');
             let dispControl: IDispControl = gMsg.content;
@@ -59,7 +59,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         this.getDispatcherJSON();
         let sub_id = this.msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
         ,(msg: IMessage) => {
-            this.handleDispatcherMessages(msg.body);
+            this.handleMessages(msg.body);
         }
         ,{}
         ,(err: any) => {

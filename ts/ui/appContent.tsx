@@ -2,8 +2,9 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {MsgBroker} from 'message-broker';
 import {ISession} from '../gridClient';
-import * as homeContent from "./homeContent";
 import {IGridUser} from '../messaging';
+import * as homeContent from "./homeContent";
+import * as connectionsContent from "./connectionsContent";
 
 export enum ContentType {
     Home = 1
@@ -12,10 +13,10 @@ export enum ContentType {
 };
 
 export interface IAppContentProps {
-    currConnId: string;
     msgBroker: MsgBroker;
     session: ISession;
     contentType: ContentType;
+    currConnId: string;
     currentUser: IGridUser
 }
 
@@ -34,7 +35,7 @@ export class AppContent extends React.Component<IAppContentProps, IAppContentSta
                 case ContentType.Home:
                     return (<homeContent.HomeContent msgBroker={this.props.msgBroker} session={this.props.session} currentUser={this.props.currentUser}/>);
                 case ContentType.Connections:
-                    return (<div>Connections</div>);
+                    return (<connectionsContent.ConnectionsContent msgBroker={this.props.msgBroker} session={this.props.session} currConnId={this.props.currConnId}/>);
                 case ContentType.Jobs:
                     return (<div>Jobs</div>);
                 default:
