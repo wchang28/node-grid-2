@@ -50,7 +50,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
     componentDidMount() {
         console.log('ConnectionsContent.componentDidMount()');
         this.getConnections();
-        let sub_id = this.msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
+        let sub_id = this.msgBroker.subscribe(ClientMessaging.getConnectionsTopic()
         ,(msg: IMessage) => {
             this.handleMessages(msg.body);
         }
