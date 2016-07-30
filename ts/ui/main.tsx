@@ -6,6 +6,7 @@ import {IGridUser} from '../messaging';
 import {GridClient, ISession} from '../gridClient';
 import {IGridJobSubmit, ITaskItem} from '../gridClient';
 import * as appContent from './appContent';
+import {TestJobs} from '../test/testJobs';
 
 interface IGridAdminAppProps {
     currentUser: IGridUser
@@ -22,28 +23,12 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     constructor(props:IGridAdminAppProps) {
         super(props);
         this.msgBroker = this.session.createMsgBroker(2000);
-        this.state = {contentType: appContent.ContentType.Home};
-        this.state.conn_id = null;
-    }
-    private getTestJobSubmit(numTasks:number) : IGridJobSubmit {
-        let js:IGridJobSubmit = {
-            description: 'this is a test'
-            ,cookie: 'test'
-            ,tasks: []
-        };
-        for (let i = 0; i < numTasks; i++) {
-            let task: ITaskItem  = {
-                cmd: 'echo Hi everybody'
-                ,cookie: (i+1).toString()
-            }
-            js.tasks.push(task);
-        }
-        return js;
+        this.state = {contentType: appContent.ContentType.Home, conn_id: null};
     }
     private getOnSubmitTestEchoJobHandler(numTasks:number) {
         return (event: any) => {
             event.preventDefault();
-            this.session.sumbitJob(this.getTestJobSubmit(numTasks), (err:any, jobId:string) => {
+            this.session.sumbitJob(TestJobs.getEchoTestJob(numTasks), (err:any, jobId:string) => {
                 if (err)
                     console.log('!!! Error submitting job: ' + JSON.stringify(err));
                 else

@@ -1,5 +1,6 @@
 let $ = require('jquery-no-dom');
 import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, ITaskItem} from '../gridClient';
+import {TestJobs} from './testJobs';
 
 let config: IGridClientConfig =
 {
@@ -29,29 +30,8 @@ let config: IGridClientConfig =
 let username = 'wchang28@hotmail.com';
 let password = 'p0lyp@th!';
 
-let js:IGridJobSubmit = {
-    description: 'this is a test'
-    ,cookie: 'test'
-    ,tasks: []
-};
-
-for (let i = 0; i < 1000; i++) {
-    let task: ITaskItem  = {
-        cmd: 'echo Hi from Wen'
-        ,cookie: (i+1).toString()
-    }
-    js.tasks.push(task);
-}
-
-/*
-for (let i = 0; i < 15; i++) {
-    let task: ITaskItem  = {
-        cmd: 'sleep 15'
-        ,cookie: (i+1).toString()
-    }
-    js.tasks.push(task);
-}
-*/
+let js = TestJobs.getEchoTestJob(1000);
+//let js = TestJobs.getSleepTestJob();
 
 let client = new GridClient($, config);
 
