@@ -36,6 +36,15 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             });
         };
     }
+    private onSubmitTestSleepJob(event: any) {
+        event.preventDefault();
+        this.session.sumbitJob(TestJobs.getSleepTestJob(), (err:any, jobId:string) => {
+            if (err)
+                console.log('!!! Error submitting job: ' + JSON.stringify(err));
+            else
+                console.log('test job submitted, jobId=' + jobId);
+        });
+    }
     componentDidMount() {
 		$(window).on('hashchange', () => {
 			//alert('hash change: ' + window.location.hash);
@@ -81,7 +90,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                         <div className="w3-dropdown-content w3-white w3-card-4">
                             <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(100)}>100 Echos</a>
                             <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(1000)}>1000 Echos</a>
-                            <a href="#">20 Sleeps(15sec)</a>
+                            <a href="#" onClick={this.onSubmitTestSleepJob.bind(this)}>20 Sleeps (15sec)</a>
                             <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(10000)}>10000 Echos</a>
                         </div>
                     </li>
