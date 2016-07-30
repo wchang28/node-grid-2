@@ -24,11 +24,8 @@ let config: IGridClientConfig =
     }
 };
 
-//let username = 'harvest';
-//let password = 'Reaper56';
-
-let username = 'wchang28@hotmail.com';
-let password = 'p0lyp@th!';
+let username = process.argv[2];
+let password = process.argv[3];
 
 let js = TestJobs.getEchoTestJob(1000);
 //let js = TestJobs.getSleepTestJob();
