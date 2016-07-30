@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as $ from 'jquery';
-import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
+import {MsgBroker} from 'message-broker';
 import {IGridUser} from '../messaging';
 import {GridClient, ISession} from '../gridClient';
 import {IGridJobSubmit, ITaskItem} from '../gridClient';
@@ -41,7 +41,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         }
         return js;
     }
-    private getOnSubmitTestEchoJob(numTasks:number) {
+    private getOnSubmitTestEchoJobHandler(numTasks:number) {
         return (event: any) => {
             event.preventDefault();
             this.session.sumbitJob(this.getTestJobSubmit(numTasks), (err:any, jobId:string) => {
@@ -65,8 +65,6 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             }
             this.setState({contentType});
 		});
-
-        //console.log('componentDidMount():' + JSON.stringify(this.props.currentUser));
         this.msgBroker.on('connect', (conn_id:string) => {
             console.log('connected to the dispatcher: conn_id=' + conn_id);
             this.setState({conn_id: conn_id});
@@ -97,10 +95,10 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                     <li className="w3-dropdown-hover">
                         <a href="javascript:void(0)">Test Jobs</a>
                         <div className="w3-dropdown-content w3-white w3-card-4">
-                            <a href="#" onClick={this.getOnSubmitTestEchoJob(100)}>100 Echos</a>
-                            <a href="#" onClick={this.getOnSubmitTestEchoJob(1000)}>1000 Echos</a>
+                            <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(100)}>100 Echos</a>
+                            <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(1000)}>1000 Echos</a>
                             <a href="#">20 Sleeps(15sec)</a>
-                            <a href="#" onClick={this.getOnSubmitTestEchoJob(10000)}>10000 Echos</a>
+                            <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(10000)}>10000 Echos</a>
                         </div>
                     </li>
                     <li className="w3-right"><a href="#" onClick={this.onLogout.bind(this)}>{currentUserName}<i className="fa fa-sign-out"></i></a></li>
