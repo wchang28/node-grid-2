@@ -22,7 +22,7 @@ export class TestJobs {
             ,cookie: 'sleep test'
             ,tasks: []
         };
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 15; i++) {
             let task: ITaskItem  = {
                 cmd: 'sleep 15'
                 ,cookie: (i+1).toString()

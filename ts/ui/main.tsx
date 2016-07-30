@@ -90,7 +90,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                         <div className="w3-dropdown-content w3-white w3-card-4">
                             <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(100)}>100 Echos</a>
                             <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(1000)}>1000 Echos</a>
-                            <a href="#" onClick={this.onSubmitTestSleepJob.bind(this)}>20 Sleeps (15sec)</a>
+                            <a href="#" onClick={this.onSubmitTestSleepJob.bind(this)}>15 Sleeps (15sec)</a>
                             <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(10000)}>10000 Echos</a>
                         </div>
                     </li>
