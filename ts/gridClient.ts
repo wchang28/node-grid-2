@@ -311,4 +311,4 @@ export class GridClient {
     }
 }
 
-export {MsgBroker, IMessage, GridMessage, IJobProgress, IJobInfo, IJobResult, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON};
+export {MsgBroker, IMessage, GridMessage, ClientMessaging, IJobProgress, IJobInfo, IJobResult, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON};

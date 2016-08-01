@@ -1,7 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {MsgBroker, IMessage, GridMessage, ISession, IGridUser} from '../gridClient';
-import {ClientMessaging} from '../clientMessaging';
+import {MsgBroker, IMessage, GridMessage, ClientMessaging, ISession, IGridUser} from '../gridClient';
 
 export interface IConnectionsContentProps {
     msgBroker: MsgBroker;
