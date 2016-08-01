@@ -1,5 +1,5 @@
 let $ = require('jquery-no-dom');
-import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, ITaskItem} from '../gridClient';
+import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, IJobResult, ITaskItem} from '../gridClient';
 import {TestJobs} from './testJobs';
 
 let config: IGridClientConfig =
@@ -50,8 +50,17 @@ client.login(username, password, (err:any, session: ISession) => {
             });
         }).on('done', (jp: IJobProgress) => {
             console.log('job ' + job.jobId + ' finished with status = ' + jp.status);
-            session.logout((err:any) => {
-                process.exit(0);
+            session.getJobResult(job.jobId, (err:any,jobResult:IJobResult) => {
+                if (err)
+                    console.error('!!! Error: ' + JSON.stringify(err));
+                else {
+                    console.log('============================================================');
+                    console.log(JSON.stringify(jobResult));
+                    console.log('============================================================');
+                }
+                session.logout((err:any) => {
+                    process.exit(0);
+                });
             });
         });
         job.run();

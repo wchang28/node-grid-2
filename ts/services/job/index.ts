@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher} from '../../dispatcher';
-import {IGridUser, IJobInfo} from '../../messaging';
+import {IGridUser, IJobInfo, IJobResult} from '../../messaging';
 import * as errors from '../../errors';
 
 let router = express.Router();
@@ -52,6 +52,7 @@ function canKillJob(req: express.Request, res: express.Response, next: express.N
 
 let jobOperationRouter = express.Router();
 
+// kill job
 jobOperationRouter.get('/kill', canKillJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let jobInfo:IJobInfo = req['jobInfo'];
@@ -63,11 +64,25 @@ jobOperationRouter.get('/kill', canKillJob, (req: express.Request, res: express.
     });
 });
 
+// job info
 jobOperationRouter.get('/info', (req: express.Request, res: express.Response) => {
     let jobInfo:IJobInfo = req['jobInfo'];
     res.json(jobInfo);
 });
 
+// job result
+jobOperationRouter.get('/result', (req: express.Request, res: express.Response) => {
+    let dispatcher = getDispatcher(req);
+    let jobInfo:IJobInfo = req['jobInfo'];
+    dispatcher.getJobResult(jobInfo.jobId, (error:any, jobResult:IJobResult) => {
+         if (error)
+            res.status(400).json({error});
+        else
+            res.json(jobResult);       
+    });
+});
+
+// re-submit job
 // query:
 // 1. failedTasksOnly (optional)
 // 2. nc (optional)

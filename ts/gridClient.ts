@@ -3,9 +3,9 @@ let EventSource = (global['EventSource'] || require('eventsource'));
 import {getAJaxon, IAjaxon, ICompletionHandler} from 'ajaxon'; 
 import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
 import {ClientMessaging} from './clientMessaging';
-import {GridMessage, IJobProgress} from './messaging';
+import {GridMessage, IJobProgress, IJobInfo, IJobResult, IGridUser} from './messaging';
 import {DOMParser, XMLSerializer} from 'xmldom';
-import {IDispatcherJSON, INodeItem, IDispControl} from './dispatcher';
+import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from './dispatcher';
 import * as oauth2 from 'oauth2';
 import * as errors from './errors';
 
@@ -209,6 +209,9 @@ export interface ISession {
     sumbitJob: (jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) => void;
     reRunJob: (oldJobId:string, failedTasksOnly:boolean) => IGridJob;
     reSumbitJob: (oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) => void;
+    killJob: (jobId: string, done: (err:any, ret:any) => void) => void;
+    getJobInfo: (jobId: string, done: (err:any, jobInfo:IJobInfo) => void) => void;
+    getJobResult: (jobId: string, done: (err:any, jobResult:IJobResult) => void) => void;
     getDispatcherJSON: (done: (err:any, dispatcherJSON: IDispatcherJSON) => void) => void;
     setDispatchingEnabled: (enabled: boolean, done: (err:any, dispControl: IDispControl) => void) => void; 
     setQueueOpened: (open: boolean, done: (err:any, dispControl: IDispControl) => void) => void;
@@ -239,6 +242,18 @@ class Session extends ApiCallBase implements ISession {
     reSumbitJob(oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) : void {
         let js = new JobReSubmmit(this.$, this.dispatcherConfig, this.accessToken, oldJobId, failedTasksOnly);
         js.submit(null, done);
+    }
+    killJob(jobId: string, done: (err:any, ret:any) => void) : void {
+        let path = '/services/job/' + jobId + '/kill';
+        this.$J("GET", path, {}, done);
+    }
+    getJobInfo(jobId: string, done: (err:any, jobInfo:IJobInfo) => void) : void {
+        let path = '/services/job/' + jobId + '/info';
+        this.$J("GET", path, {}, done);
+    }
+    getJobResult(jobId: string, done: (err:any, jobResult:IJobResult) => void) : void {
+        let path = '/services/job/' + jobId + '/result';
+        this.$J("GET", path, {}, done);
     }
     getDispatcherJSON(done: (err:any, dispatcherJSON: IDispatcherJSON) => void) : void {
         this.$J("GET", '/services/dispatcher', {}, done);
@@ -288,4 +303,4 @@ export class GridClient {
     }
 }
 
-export {IJobProgress};
+export {MsgBroker, IMessage, GridMessage, IJobProgress, IJobInfo, IJobResult, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON};

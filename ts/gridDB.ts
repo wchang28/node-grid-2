@@ -1,5 +1,5 @@
 import * as events from 'events';
-import {IGridUserProfile, IGridUser, IJobProgress, IJobInfo, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
+import {IGridUserProfile, IGridUser, IJobProgress, IJobInfo, IJobResult, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
 import {SimpleMSSQL, Configuration, Options} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
 export {Configuration as SQLConfiguration, Options as DBOptions} from 'mssql-simple';
@@ -104,6 +104,19 @@ export class GridDB extends SimpleMSSQL {
                     done(errors.bad_job_id, null);
                 else
                     done(null, dt[0]);
+            }
+        });
+    }
+    getJobResult(jobId:string, done:(err:any, jobResult: IJobResult) => void) : void {
+        this.execute('[dbo].[stp_NodeJSGetJobResult]', {'jobId': jobId}, (err: any, recordsets: any) : void => {
+            if (err)
+                done(err, null);
+            else {
+                let dt = recordsets[0];
+                if (dt.length === 0)
+                    done(errors.bad_job_id, null);
+                else
+                    done(null, dt);
             }
         });
     }

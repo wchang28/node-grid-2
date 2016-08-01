@@ -57,6 +57,17 @@ export interface IJobInfo extends IJobProgress {
     completePct: number;
 }
 
+export interface ITaskResult {
+    t: number;
+    cookie?:string;
+    success?:boolean;
+    retCode?:number;
+    stdout?:string;
+    stderr?:string;
+}
+
+export type IJobResult = ITaskResult[];
+
 export interface IJobTrackItem {
     jp: IJobProgress;
     ncks: string[];

@@ -492,3 +492,24 @@ BEGIN
 END
 
 GO
+
+CREATE PROCEDURE [dbo].[stp_NodeJSGetJobResult]
+	@jobId bigint
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	select
+	[t]=[index]
+	,[cookie]
+	,[success]
+	,[retCode]
+	,[stdout]
+	,[stderr]
+	from [dbo].[GridJobTasks] (nolock)
+	where [jobId] = @jobId
+	order by [index] asc
+
+END
+
+GO

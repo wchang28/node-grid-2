@@ -1,8 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {MsgBroker} from 'message-broker';
-import {ISession} from '../gridClient';
-import {IGridUser} from '../messaging';
+import {MsgBroker, ISession, IGridUser} from '../gridClient';
 import * as homeContent from "./homeContent";
 import * as connectionsContent from "./connectionsContent";
 
