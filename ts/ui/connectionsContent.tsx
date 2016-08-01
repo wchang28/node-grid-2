@@ -110,7 +110,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
                 <div className="w3-row">
                     <div className="w3-col">
                         <div className="w3-card-4 w3-margin">
-                            <div className="w3-container w3-light-blue">
+                            <div className="w3-container w3-dark-grey">
                                 <h6>Client Connections</h6>
                             </div>
                             <div className="w3-container w3-white">
