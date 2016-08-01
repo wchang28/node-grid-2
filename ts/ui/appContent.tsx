@@ -37,7 +37,7 @@ export class AppContent extends React.Component<IAppContentProps, IAppContentSta
                 case ContentType.Connections:
                     return (<connectionsContent.ConnectionsContent msgBroker={this.props.msgBroker} session={this.props.session} currConnId={this.props.currConnId}/>);
                 case ContentType.Jobs:
-                    return (<div>Jobs</div>);
+                    return (<div>Under Construction</div>);
                 default:
                     return (<div>Unknown content !!!</div>);
             }
