@@ -20,9 +20,14 @@ import * as errors from './errors';
 let $ = require('jquery-no-dom');
 import * as auth_client from 'polaris-auth-client';
 
+interface ISessionOptions {
+    sessionIdSignSecret: string;
+}
+
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
     clientWebServerConfig: IWebServerConfig;
+    sessionOptions: ISessionOptions;
     oauth2Options: oauth2.ClientAppOptions;
     authorizeEndpointOptions: auth_client.IAuthorizeEndpointOptions;
     dbConfig: IGridDBConfiguration;
@@ -160,7 +165,7 @@ gridDB.on('error', (err: any) => {
     let secureCookie = (config.clientWebServerConfig.https ? true : false);
 
     clientApp.use(session({
-        secret: 'fhgdfgdfgdag05y5wgt',
+        secret: config.sessionOptions.sessionIdSignSecret,
         resave: false,
         saveUninitialized: false,
         cookie: { path: '/', httpOnly: true, secure: secureCookie, maxAge: null }
