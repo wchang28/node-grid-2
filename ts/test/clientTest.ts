@@ -55,7 +55,7 @@ client.login(username, password, (err:any, session: ISession) => {
                     console.error('!!! Error: ' + JSON.stringify(err));
                 else {
                     console.log('============================================================');
-                    console.log(JSON.stringify(jobResult));
+                    //console.log(JSON.stringify(jobResult));
                     console.log('============================================================');
                 }
                 session.logout((err:any) => {
