@@ -9,7 +9,8 @@ import * as appContent from './appContent';
 import {TestJobs} from '../test/testJobs';
 
 interface IGridAdminAppProps {
-    currentUser: IGridUser
+    currentUser: IGridUser;
+    session: ISession;
 }
 
 interface IGridAdminAppState {
@@ -18,13 +19,13 @@ interface IGridAdminAppState {
 }
 
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
-    private session: ISession = GridClient.webSession($);
     private msgBroker: MsgBroker = null;
     constructor(props:IGridAdminAppProps) {
         super(props);
-        this.msgBroker = this.session.createMsgBroker(2000);
+        this.msgBroker = this.props.session.createMsgBroker(2000);
         this.state = {contentType: appContent.ContentType.Home, conn_id: null};
     }
+    protected get session() : ISession {return this.props.session;}
     private getOnSubmitTestEchoJobHandler(numTasks:number) {
         return (event: any) => {
             event.preventDefault();
@@ -103,4 +104,4 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
 }
 
 //console.log('__currentUser='+JSON.stringify(global['__currentUser']));
-ReactDOM.render(<GridAdminApp currentUser={global['__currentUser']}/>, document.getElementById('main'));
+ReactDOM.render(<GridAdminApp currentUser={global['__currentUser']} session={GridClient.webSession($)}/>, document.getElementById('main'));
