@@ -7,6 +7,7 @@ import {GridMessage, IJobProgress} from './messaging';
 import {DOMParser, XMLSerializer} from 'xmldom';
 import {IDispatcherJSON, INodeItem, IDispControl} from './dispatcher';
 import * as oauth2 from 'oauth2';
+import * as errors from './errors';
 
 export interface IGridDispatcherConfig {
     baseUrl?: string;
@@ -73,7 +74,7 @@ class JobSubmmit extends ApiCallBase implements IJobSubmitter {
     }
     private static makeJobXML(jobSubmit:IGridJobSubmit) : string {
         if (!jobSubmit || !jobSubmit.tasks || jobSubmit.tasks.length === 0) {
-            throw "no tasks for job";
+            throw errors.no_task_for_job;
         }
         let doc = new DOMParser().parseFromString('<?xml version="1.0"?>','text/xml');
         let root = doc.createElement('job');
@@ -83,7 +84,7 @@ class JobSubmmit extends ApiCallBase implements IJobSubmitter {
         for (let i in jobSubmit.tasks) {
             let task = jobSubmit.tasks[i];
             let el = doc.createElement('t');
-            if (!task.cmd) throw 'cmd not optional for task';
+            if (!task.cmd) throw errors.bad_task_cmd;
             el.setAttribute('c', task.cmd);
             if (task.cookie) el.setAttribute('k', task.cookie);
             if (task.stdin) el.setAttribute('i', task.stdin);
