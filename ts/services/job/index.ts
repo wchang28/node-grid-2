@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher} from '../../dispatcher';
-import {IGridUser, IJobInfo, IJobResult} from '../../messaging';
+import {IGridUser, IJobProgress, IJobInfo, IJobResult} from '../../messaging';
 import * as errors from '../../errors';
 
 let router = express.Router();
@@ -41,8 +41,15 @@ router.post('/submit', canSubmitJob, (req: express.Request, res: express.Respons
     }, (query['nc'] ? query['nc'] : null));
 });
 
-function canKillJob(req: express.Request, res: express.Response, next: express.NextFunction) {
-    let jobInfo:IJobInfo = req['jobInfo'];
+// job operation/method invoke router
+let jobOperationRouter = express.Router();
+
+let getJobInfo = (req: express.Request): IJobInfo => {
+    return req['jobInfo'];
+}
+
+function canKillJobMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
+    let jobInfo = getJobInfo(req);
     let user = getUser(req);
     if (user.profile.canKillOtherUsersJob || user.userId === jobInfo.userId)
         next();
@@ -50,12 +57,10 @@ function canKillJob(req: express.Request, res: express.Response, next: express.N
         res.status(401).json(errors.not_authorized);
 }
 
-let jobOperationRouter = express.Router();
-
 // kill job
-jobOperationRouter.get('/kill', canKillJob, (req: express.Request, res: express.Response) => {
+jobOperationRouter.get('/kill', canKillJobMiddleware, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
-    let jobInfo:IJobInfo = req['jobInfo'];
+    let jobInfo = getJobInfo(req);
     dispatcher.killJob(jobInfo.jobId, (error: any) => {
         if (error)
             res.status(400).json({error});
@@ -64,16 +69,27 @@ jobOperationRouter.get('/kill', canKillJob, (req: express.Request, res: express.
     });
 });
 
+// job progress
+jobOperationRouter.get('/progress', (req: express.Request, res: express.Response) => {
+    let dispatcher = getDispatcher(req);
+    let jobInfo = getJobInfo(req);
+    dispatcher.getJobProgress(jobInfo.jobId, (error:any, jobProgress:IJobProgress) => {
+         if (error)
+            res.status(400).json({error});
+        else
+            res.json(jobProgress);       
+    });
+});
+
 // job info
 jobOperationRouter.get('/info', (req: express.Request, res: express.Response) => {
-    let jobInfo:IJobInfo = req['jobInfo'];
-    res.json(jobInfo);
+    res.json(getJobInfo(req));
 });
 
 // job result
 jobOperationRouter.get('/result', (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
-    let jobInfo:IJobInfo = req['jobInfo'];
+    let jobInfo = getJobInfo(req);
     dispatcher.getJobResult(jobInfo.jobId, (error:any, jobResult:IJobResult) => {
          if (error)
             res.status(400).json({error});
@@ -89,7 +105,7 @@ jobOperationRouter.get('/result', (req: express.Request, res: express.Response) 
 jobOperationRouter.get('/re_submit', canSubmitJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
-    let jobInfo:IJobInfo = req['jobInfo'];
+    let jobInfo = getJobInfo(req);
     let query = req.query;
     let fto = query['failedTasksOnly'];
     let failedTasksOnly = (fto ? (isNaN(parseInt(fto)) ? false : parseInt(fto) !== 0) : false);
@@ -101,7 +117,7 @@ jobOperationRouter.get('/re_submit', canSubmitJob, (req: express.Request, res: e
     }, (query['nc'] ? query['nc'] : null));
 });
 
-function getJobInfo(req: express.Request, res: express.Response, next: express.NextFunction) {
+function getJobInfoMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
     let jobId:string = req.params['jobId'];
     if (!jobId)
         res.status(400).json(errors.bad_job_id);
@@ -118,6 +134,6 @@ function getJobInfo(req: express.Request, res: express.Response, next: express.N
     }
 }
 
-router.use('/:jobId', getJobInfo, jobOperationRouter);
+router.use('/:jobId', getJobInfoMiddleware, jobOperationRouter);
 
 export {router as Router}; 

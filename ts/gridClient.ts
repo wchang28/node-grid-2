@@ -120,13 +120,16 @@ class JobSubmmit extends ApiCallBase implements IJobSubmitter {
     }
 }
 
+// returns operation path for job
+function getJobOpPath(jobId:string, op:string):string {return '/services/job/' + jobId + '/' + op;}
+
 // job re-submission class
 class JobReSubmmit extends ApiCallBase implements IJobSubmitter {
     constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: oauth2.AccessToken, private __oldJobId:string, private __failedTasksOnly:boolean) {
         super($, dispatcherConfig, accessToken);
     }
     submit(notificationCookie:string, done: (err:any, jobId:string) => void) : void {
-        let path = '/services/job/' + this.__oldJobId + '/re_submit';
+        let path = getJobOpPath(this.__oldJobId, 're_submit');
         let data:any = {
             failedTasksOnly: (this.__failedTasksOnly ? '1' : '0')
         };
@@ -210,6 +213,7 @@ export interface ISession {
     reRunJob: (oldJobId:string, failedTasksOnly:boolean) => IGridJob;
     reSumbitJob: (oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) => void;
     killJob: (jobId: string, done: (err:any, ret:any) => void) => void;
+    getJobProgress: (jobId: string, done: (err:any, jobProgress:IJobProgress) => void) => void;
     getJobInfo: (jobId: string, done: (err:any, jobInfo:IJobInfo) => void) => void;
     getJobResult: (jobId: string, done: (err:any, jobResult:IJobResult) => void) => void;
     getDispatcherJSON: (done: (err:any, dispatcherJSON: IDispatcherJSON) => void) => void;
@@ -244,15 +248,19 @@ class Session extends ApiCallBase implements ISession {
         js.submit(null, done);
     }
     killJob(jobId: string, done: (err:any, ret:any) => void) : void {
-        let path = '/services/job/' + jobId + '/kill';
+        let path = getJobOpPath(jobId, 'kill');
+        this.$J("GET", path, {}, done);
+    }
+    getJobProgress(jobId: string, done: (err:any, jobProgress:IJobProgress) => void) : void {
+        let path = getJobOpPath(jobId, 'progress');
         this.$J("GET", path, {}, done);
     }
     getJobInfo(jobId: string, done: (err:any, jobInfo:IJobInfo) => void) : void {
-        let path = '/services/job/' + jobId + '/info';
+        let path = getJobOpPath(jobId, 'info');
         this.$J("GET", path, {}, done);
     }
     getJobResult(jobId: string, done: (err:any, jobResult:IJobResult) => void) : void {
-        let path = '/services/job/' + jobId + '/result';
+        let path = getJobOpPath(jobId, 'result');
         this.$J("GET", path, {}, done);
     }
     getDispatcherJSON(done: (err:any, dispatcherJSON: IDispatcherJSON) => void) : void {
