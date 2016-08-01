@@ -28,23 +28,23 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     protected get session() : ISession {return this.props.session;}
     private getOnSubmitTestEchoJobHandler(numTasks:number) {
         return (event: any) => {
-            event.preventDefault();
             this.session.sumbitJob(TestJobs.getEchoTestJob(numTasks), (err:any, jobId:string) => {
                 if (err)
                     console.log('!!! Error submitting job: ' + JSON.stringify(err));
                 else
                     console.log('test job submitted, jobId=' + jobId);
             });
+            return false;
         };
     }
     private onSubmitTestSleepJob(event: any) {
-        event.preventDefault();
         this.session.sumbitJob(TestJobs.getSleepTestJob(), (err:any, jobId:string) => {
             if (err)
                 console.log('!!! Error submitting job: ' + JSON.stringify(err));
             else
                 console.log('test job submitted, jobId=' + jobId);
         });
+        return false;
     }
     componentDidMount() {
 		$(window).on('hashchange', () => {
