@@ -513,3 +513,17 @@ BEGIN
 END
 
 GO
+
+CREATE PROCEDURE [dbo].[stp_NodeJSGetMostRecentJobs]
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	select top 20
+	*
+	from [dbo].[GridJobsView]
+	order by [jobId] desc
+
+END
+
+GO
