@@ -167,7 +167,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                 <div className="w3-row">
                     <div className="w3-col m8">
                         <div className="w3-card-4 w3-margin">
-                            <div className="w3-container w3-dark-grey">
+                            <div className="w3-container w3-blue">
                                 <h6>Nodes {this.getGridUtilizationString()}</h6>
                             </div>
                             <div className="w3-container w3-white">
@@ -189,7 +189,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                     </div>
                     <div className="w3-col m4">
                         <div className="w3-card-4 w3-margin">
-                            <div className="w3-container w3-dark-grey">
+                            <div className="w3-container w3-blue">
                                 <h6>Queue</h6>
                             </div>
                             <div className="w3-container w3-white">

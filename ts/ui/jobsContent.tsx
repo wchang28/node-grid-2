@@ -131,7 +131,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
                 <div className="w3-row">
                     <div className="w3-col">
                         <div className="w3-card-4 w3-margin">
-                            <div className="w3-container w3-dark-grey">
+                            <div className="w3-container w3-blue">
                                 <h6>Recent Jobs</h6>
                             </div>
                             <div className="w3-container w3-white">
