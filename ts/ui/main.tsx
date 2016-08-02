@@ -49,7 +49,9 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             let contentType: appContent.ContentType = appContent.ContentType.Home;
             if (window.location.hash.length > 0) {
                 let s = window.location.hash.substr(1);
-                if (s === 'Connections')
+                if (s === 'Current')
+                    contentType = this.state.contentType;
+                else if (s === 'Connections')
                     contentType = appContent.ContentType.Connections;
                 else if (s === "Jobs")
                     contentType = appContent.ContentType.Jobs
@@ -81,18 +83,18 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             <div>
                 <ul className="w3-navbar w3-black">
                     <li><a href="#"><i className="fa fa-home w3-large"></i></a></li>
-                    <li><a href="#Connections">Connections</a></li>
                     <li><a href="#Jobs">Jobs</a></li>
+                    <li><a href="#Connections">Connections</a></li>
                     <li className="w3-dropdown-hover">
                         <a href="javascript:void(0)">Test Jobs</a>
                         <div className="w3-dropdown-content w3-white w3-card-4">
-                            <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(100)}>100 Echos</a>
-                            <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(1000)}>1000 Echos</a>
-                            <a href="#" onClick={this.onSubmitTestSleepJob.bind(this)}>15 Sleeps (10sec)</a>
-                            <a href="#" onClick={this.getOnSubmitTestEchoJobHandler(10000)}>10000 Echos</a>
+                            <a href="#Current" onClick={this.getOnSubmitTestEchoJobHandler(100)}>100 Echos</a>
+                            <a href="#Current" onClick={this.getOnSubmitTestEchoJobHandler(1000)}>1000 Echos</a>
+                            <a href="#Current" onClick={this.onSubmitTestSleepJob.bind(this)}>15 Sleeps (10sec)</a>
+                            <a href="#Current" onClick={this.getOnSubmitTestEchoJobHandler(10000)}>10000 Echos</a>
                         </div>
                     </li>
-                    <li className="w3-right"><a href="#" onClick={this.onLogout.bind(this)}>{currentUserName}<i className="fa fa-sign-out"></i></a></li>
+                    <li className="w3-right"><a href="#Current" onClick={this.onLogout.bind(this)}>{currentUserName}<i className="fa fa-sign-out"></i></a></li>
                 </ul>
                 <div>{this.getAppContent()}</div> 
             </div>

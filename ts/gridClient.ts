@@ -212,6 +212,7 @@ export interface ISession {
     sumbitJob: (jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) => void;
     reRunJob: (oldJobId:string, failedTasksOnly:boolean) => IGridJob;
     reSumbitJob: (oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) => void;
+    getMostRecentJobs: (done: (err:any, jobInfos:IJobInfo[]) => void) => void;
     killJob: (jobId: string, done: (err:any, ret:any) => void) => void;
     getJobProgress: (jobId: string, done: (err:any, jobProgress:IJobProgress) => void) => void;
     getJobInfo: (jobId: string, done: (err:any, jobInfo:IJobInfo) => void) => void;
@@ -246,6 +247,9 @@ class Session extends ApiCallBase implements ISession {
     reSumbitJob(oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) : void {
         let js = new JobReSubmmit(this.$, this.dispatcherConfig, this.accessToken, oldJobId, failedTasksOnly);
         js.submit(null, done);
+    }
+    getMostRecentJobs(done: (err:any, jobInfos:IJobInfo[]) => void) : void {
+        this.$J("GET", '/services/job/most_recent', {}, done);
     }
     killJob(jobId: string, done: (err:any, ret:any) => void) : void {
         let path = getJobOpPath(jobId, 'kill');
