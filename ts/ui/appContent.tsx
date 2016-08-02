@@ -34,7 +34,7 @@ export class AppContent extends React.Component<IAppContentProps, IAppContentSta
                 case ContentType.Home:
                     return (<homeContent.HomeContent msgBroker={this.props.msgBroker} session={this.props.session} currentUser={this.props.currentUser}/>);
                case ContentType.Jobs:
-                    return (<jobsContent.JobsContent msgBroker={this.props.msgBroker} session={this.props.session}/>);
+                    return (<jobsContent.JobsContent msgBroker={this.props.msgBroker} session={this.props.session} currentUser={this.props.currentUser}/>);
                 case ContentType.Connections:
                     return (<connectionsContent.ConnectionsContent msgBroker={this.props.msgBroker} session={this.props.session} currConnId={this.props.currConnId}/>);
                  default:
