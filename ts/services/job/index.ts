@@ -41,6 +41,16 @@ router.post('/submit', canSubmitJob, (req: express.Request, res: express.Respons
     }, (query['nc'] ? query['nc'] : null));
 });
 
+router.get('/most_recent', (req: express.Request, res: express.Response) => {
+    let dispatcher = getDispatcher(req);
+    dispatcher.getMostRecentJobs((error:any, jobInfos:IJobInfo[]) => {
+        if (error)
+            res.status(400).json({error});
+        else
+            res.json(jobInfos);
+    });
+});
+
 // job operation/method invoke router
 let jobOperationRouter = express.Router();
 

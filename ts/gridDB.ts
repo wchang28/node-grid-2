@@ -145,6 +145,14 @@ export class GridDB extends SimpleMSSQL {
             }
         });
     }
+    getMostRecentJobs(done:(err:any, jobInfos: IJobInfo[]) => void) : void {
+        this.execute('[dbo].[stp_NodeJSGetMostRecentJobs]', {}, (err: any, recordsets: any) : void => {
+            if (err)
+                done(err, null);
+            else
+                done(null, recordsets[0]);
+        });
+    }
     getTaskExecParams(task:ITask, nodeId: string, nodeName: string, done:(err:any, taskExecParams: ITaskExecParams) => void) : void {
          let params = {
             'jobId': task.j

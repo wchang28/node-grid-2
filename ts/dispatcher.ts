@@ -41,6 +41,7 @@ export interface IGridDB {
     getJobInfo: (jobId: string, done:(err:any, jobInfo: IJobInfo) => void) => void;
     getJobResult: (jobId: string, done:(err:any, jobResult: IJobResult) => void) => void;
     killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
+    getMostRecentJobs: (done:(err:any, jobInfos: IJobInfo[]) => void) => void;
 }
 
 export interface IDispControl {
@@ -823,6 +824,9 @@ export class Dispatcher extends events.EventEmitter {
                 }
             }
         });
+    }
+    getMostRecentJobs(done:(err:any, jobInfos: IJobInfo[]) => void) : void {
+        this.__gridDB.getMostRecentJobs(done);
     }
     getNode(nodeId:string): INodeItem {return this.__nodes.getNode(nodeId);}
     setNodeEnabled(nodeId: string, enabled: boolean) : void {
