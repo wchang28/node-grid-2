@@ -218,7 +218,11 @@ gridDB.on('error', (err: any) => {
             }
         });
     }).on('jobs-tracking-changed', () => {
-        // TODO:
+        clientMessaging.notifyClientsJobsTrackingChanged((err:any) => {
+            if (err) {
+                console.error('!!! Error notifying client on jobs-tracking-changed: ' + JSON.stringify(err));
+            }
+        });
     }).on('job-status-changed', (trackItem: IJobTrackItem) => {
         clientMessaging.notifyClientsJobStatusChanged(trackItem.ncks, trackItem.jp, (err:any) => {
             if (err) {

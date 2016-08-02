@@ -30,6 +30,17 @@ export class ClientMessaging {
         this.connectionsManager.injectMessage(ClientMessaging.getDispatcherTopic(), {}, msg, done);
     }
 
+    static getJobsTrackingTopic() : string {
+        return '/topic/jobs-tracking';
+    }
+    notifyClientsJobsTrackingChanged(done: (err:any) => void) : void {
+        let msg: GridMessage = {
+            type: 'tracking-changed'
+            ,content: {}
+        };
+        this.connectionsManager.injectMessage(ClientMessaging.getJobsTrackingTopic(), {}, msg, done);
+    }
+
     static getConnectionsTopic() : string {
         return '/topic/connections';
     }
