@@ -73,9 +73,12 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
         else
             return used.toString() + "/" + total.toString() + (showPercent ? "=" + (used/total*100.0).toFixed(2) + "%" : "");
     }
+    private isCompleteStatus(status:string) : boolean {
+        return (status === 'FINISHED' || status === 'ABORTED');
+    }
     private canKillJob(index: number):boolean {
         let jobInfo = this.state.jobs[index];
-        return (jobInfo.userId === this.props.currentUser.userId || this.props.currentUser.profile.canKillOtherUsersJob);
+        return ((jobInfo.userId === this.props.currentUser.userId || this.props.currentUser.profile.canKillOtherUsersJob) && !this.isCompleteStatus(jobInfo.status));
     }
     private getKillJobClickHandler(index: number) : (e:any) => void {
         return ((e:any):void => {
@@ -88,6 +91,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
             });
         });
     }
+
     private getJobsRows() {
         if (this.state.jobs && this.state.jobs.length > 0) {
             return this.state.jobs.map((jobInfo: IJobInfo, index:number) => {
@@ -96,10 +100,11 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
                         <td>{jobInfo.jobId}</td>
                         <td>{jobInfo.cookie}</td>
                         <td>{jobInfo.description}</td>
-                        <td>{jobInfo.success}</td>
+                        <td>{jobInfo.userId}</td>
                         <td>{jobInfo.submitTime}</td>
                         <td>{jobInfo.status}</td>
                         <td>{this.geUtilizationString(jobInfo.numTasksFinished, jobInfo.numTasks, true)}</td>
+                        <td>{(this.isCompleteStatus(jobInfo.status) ? (jobInfo.success ? 'Success': 'Failed') : '')}</td>
                         <td><button disabled={!this.canKillJob(index)} onClick={this.getKillJobClickHandler(index)}>Kill</button></td>
                     </tr>
                 );
@@ -108,6 +113,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
             return (
                 <tr>
                     <td>(None)</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -139,6 +145,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
                                             <th>Submit Time</th>
                                             <th>Status</th>
                                             <th>Completion</th>
+                                            <th>Success</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
