@@ -44,7 +44,7 @@
 		"sqlConfig":
 		{
 			"driver": "msnodesqlv8"
-			,"connectionString": "Driver={SQL Server Native Client 11.0};Server={AWS-TST-SQL01};Database={TestDB};Trusted_Connection={yes};"
+			,"connectionString": "Driver={SQL Server Native Client 11.0};Server={win8-htpc};Database={TestDB};Trusted_Connection={yes};"
 			,"requestTimeout": 120000
 		}
 		,"dbOptions":
