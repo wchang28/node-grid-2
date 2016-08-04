@@ -221,12 +221,12 @@ export class GridDB extends SimpleMSSQL {
             ,'stderr': result.stderr
         };
         let sql = "exec [dbo].[stp_NodeJSGridJobTask]";
-        sql += " @jobId=" + GridDB.sqlEscapeString(task.j);
+        sql += " @jobId=" + GridDB.sqlEscapeString(task.j.toString());
         sql += ",@taskIndex=" + GridDB.sqlEscapeString(task.t.toString());
-        sql += ",@pid=" + GridDB.sqlEscapeString(result.pid.toString());
-        sql += ",@retCode=" + GridDB.sqlEscapeString(result.retCode.toString());
-        sql += ",@stdout='" + GridDB.sqlEscapeString(result.stdout) + "'";
-        sql += ",@stderr='" + GridDB.sqlEscapeString(result.stderr) + "'";
+        sql += ",@pid=" + (typeof result.pid === 'number' ? GridDB.sqlEscapeString(result.pid.toString()) : 'null');
+        sql += ",@retCode=" + (typeof result.retCode === 'number' ? GridDB.sqlEscapeString(result.retCode.toString()) : 'null');
+        sql += ",@stdout=" + (result.stdout ? "'" + GridDB.sqlEscapeString(result.stdout) + "'" : 'null');
+        sql += ",@stderr=" + (result.stderr ? "'" + GridDB.sqlEscapeString(result.stderr) + "'" : 'null');
         this.query(sql, {}, (err: any, recordsets: any) : void => {
             done(err);
         });
