@@ -9,7 +9,7 @@ export class TestJobs {
         };
         for (let i = 0; i < numTasks; i++) {
             let task: ITaskItem  = {
-                cmd: 'echo Hi everybody'
+                cmd: "echo Hi everybody from 'John Doe'"
                 ,cookie: (i+1).toString()
             }
             js.tasks.push(task);
