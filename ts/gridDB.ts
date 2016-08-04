@@ -196,6 +196,7 @@ export class GridDB extends SimpleMSSQL {
             done(err);
         });
     }
+    /*
     markTaskEnd(task:ITask, result: ITaskExecResult, done:(err:any) => void) : void {
         let params = {
             'jobId': task.j
@@ -206,6 +207,27 @@ export class GridDB extends SimpleMSSQL {
             ,'stderr': result.stderr
         };
         this.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any) : void => {
+            done(err);
+        });
+    }
+    */
+    markTaskEnd(task:ITask, result: ITaskExecResult, done:(err:any) => void) : void {
+        let params = {
+            'jobId': task.j
+            ,'taskIndex': task.t
+            ,'pid': result.pid
+            ,'retCode': result.retCode
+            ,'stdout': result.stdout
+            ,'stderr': result.stderr
+        };
+        let sql = "exec [dbo].[stp_NodeJSGridJobTask]";
+        sql += " @jobId=" + GridDB.sqlEscapeString(task.j);
+        sql += ",@taskIndex=" + GridDB.sqlEscapeString(task.t.toString());
+        sql += ",@pid=" + GridDB.sqlEscapeString(result.pid.toString());
+        sql += ",@retCode=" + GridDB.sqlEscapeString(result.retCode.toString());
+        sql += ",@stdout='" + GridDB.sqlEscapeString(result.stdout) + "'";
+        sql += ",@stderr='" + GridDB.sqlEscapeString(result.stderr) + "'";
+        this.query(sql, {}, (err: any, recordsets: any) : void => {
             done(err);
         });
     }
