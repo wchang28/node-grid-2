@@ -13,6 +13,7 @@ export class GridDB extends SimpleMSSQL {
     constructor(sqlConfig: Configuration, options?:Options) {
         super(sqlConfig, options);
     }
+    private static sqlEscapeString(str:string) {return str.replace(new RegExp("'", "gi"), "''");}
     getUserProfile(userId: string, done:(err:any, profile: IGridUserProfile) => void) : void {
         this.execute('[dbo].[stp_NodeJSGridGetUserProfile]', {userId}, (err:any, recordsets:any[]) => {
             if (err)
@@ -26,8 +27,29 @@ export class GridDB extends SimpleMSSQL {
            }
         });
     }
+    /*
     registerNewJob(user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
         this.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.profile.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
+            if (err)
+                done(err, null);
+            else {
+                let ret = recordsets[0][0];
+                if (ret.err != 0) {
+                    done(ret.error, null);
+                } else {
+                    let ret = recordsets[1][0];
+                    done(null, ret);
+                }
+            }
+        });
+    }
+    */
+    registerNewJob(user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
+        let sql = "exec [dbo].[stp_NodeJSGridSubmitJob]";
+        sql += " @userId='" + GridDB.sqlEscapeString(user.userId) + "'";
+        sql += ",@priority=" + GridDB.sqlEscapeString(user.profile.priority.toString());
+        sql += ",@jobXML='" + GridDB.sqlEscapeString(jobXML) + "'";
+        this.query(sql, {}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
             else {
