@@ -2,7 +2,7 @@
 	"reservedCPUs": 1
 	,"dispatcherConfig":
 	{
-		"baseUrl": "http://127.0.0.1:26354"
+		"instance_url": "http://127.0.0.1:26354"
 	}
 	,"dbConfig":
 	{

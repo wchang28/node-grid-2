@@ -19,8 +19,7 @@ let config: IGridClientConfig =
     }
     ,"dispatcherConfig":
     {
-        "baseUrl": "http://127.0.0.1:26355"
-        ,"rejectUnauthorized": false
+        "instance_url": "http://127.0.0.1:26355"
     }
 };
 

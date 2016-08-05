@@ -37,6 +37,7 @@
     "polaris-auth-client": "git+https://github.com/wchang28/polaris-auth-client.git",
     "react": "^15.2.0",
     "react-dom": "^15.2.0",
+    "rest-api-interfaces": "git+https://github.com/wchang28/rest-api-interfaces.git",
     "sse-topic-conn": "git+https://github.com/wchang28/sse-topic-conn.git",
     "sse-topic-router": "git+https://github.com/wchang28/sse-topic-router.git",
     "tree-kill": "^1.1.0",

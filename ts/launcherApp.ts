@@ -9,13 +9,13 @@ let EventSource = require('eventsource');
 let $ = require('jquery-no-dom');
 import treeKill = require('tree-kill');
 import {IGridDBConfiguration} from './gridDBConfig';
-import {IGridDispatcherConfig} from './gridClient';
+import * as resIntf from 'rest-api-interfaces';
 
 interface IConfiguration {
     numCPUs?: number;
     reservedCPUs?: number;
     nodeName?:string;
-    dispatcherConfig: IGridDispatcherConfig;
+    dispatcherConfig: resIntf.ConnectOptions;
     dbConfig: IGridDBConfiguration;
 }
 
@@ -41,7 +41,7 @@ function getDefaultNodeName() : string {
 }
 
 let dispatcherConfig = config.dispatcherConfig;
-let eventSourceUrl = dispatcherConfig.baseUrl + '/node-app/events/event_stream';
+let eventSourceUrl = dispatcherConfig.instance_url + '/node-app/events/event_stream';
 let eventSourceInitDict:any = (typeof dispatcherConfig.rejectUnauthorized === 'boolean' ? {rejectUnauthorized: dispatcherConfig.rejectUnauthorized} : null);
 let cpus = os.cpus();
 let numCPUs:number = (config.numCPUs ? config.numCPUs : cpus.length - (config.reservedCPUs ? config.reservedCPUs : 2));

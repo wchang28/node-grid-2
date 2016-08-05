@@ -8,15 +8,11 @@ import {DOMParser, XMLSerializer} from 'xmldom';
 import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from './dispatcher';
 import * as oauth2 from 'oauth2';
 import * as errors from './errors';
-
-export interface IGridDispatcherConfig {
-    baseUrl?: string;
-    rejectUnauthorized?: boolean;
-}
+import * as resIntf from 'rest-api-interfaces';
 
 export interface IGridClientConfig {
     oauth2Options: oauth2.ClientAppOptions;
-    dispatcherConfig: IGridDispatcherConfig;
+    dispatcherConfig: resIntf.ConnectOptions;
 }
 
 export interface ITaskItem {
@@ -33,14 +29,14 @@ export interface IGridJobSubmit {
 
 class ApiCallBase extends events.EventEmitter {
     protected __$J: IAjaxon = null;
-    constructor(protected $:any, protected __dispatcherConfig: IGridDispatcherConfig, protected __accessToken: oauth2.AccessToken) {
+    constructor(protected $:any, protected __dispatcherConfig: resIntf.ConnectOptions, protected __accessToken: oauth2.AccessToken) {
         super();
         this.__$J = getAJaxon($);
     }
-    get dispatcherConfig() : IGridDispatcherConfig {return this.__dispatcherConfig;}
+    get dispatcherConfig() : resIntf.ConnectOptions {return this.__dispatcherConfig;}
     get accessToken() : oauth2.AccessToken {return this.__accessToken;}
     protected get baseUrl() : string {
-        return (this.__dispatcherConfig && this.__dispatcherConfig.baseUrl ? this.__dispatcherConfig.baseUrl : "");
+        return (this.__dispatcherConfig && this.__dispatcherConfig.instance_url ? this.__dispatcherConfig.instance_url : "");
     }
     protected get authHeaders() : {[field:string]:string} {
         return (this.__accessToken ? {'Authorization': this.__accessToken.token_type + ' ' + this.__accessToken.access_token} : null)
@@ -69,7 +65,7 @@ interface IJobSubmitter {
 
 // job submission class
 class JobSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: oauth2.AccessToken, private __jobSubmit:IGridJobSubmit) {
+    constructor($:any, dispatcherConfig: resIntf.ConnectOptions, accessToken: oauth2.AccessToken, private __jobSubmit:IGridJobSubmit) {
         super($, dispatcherConfig, accessToken);
     }
     private static makeJobXML(jobSubmit:IGridJobSubmit) : string {
@@ -125,7 +121,7 @@ function getJobOpPath(jobId:string, op:string):string {return '/services/job/' +
 
 // job re-submission class
 class JobReSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: oauth2.AccessToken, private __oldJobId:string, private __failedTasksOnly:boolean) {
+    constructor($:any, dispatcherConfig: resIntf.ConnectOptions, accessToken: oauth2.AccessToken, private __oldJobId:string, private __failedTasksOnly:boolean) {
         super($, dispatcherConfig, accessToken);
     }
     submit(notificationCookie:string, done: (err:any, jobId:string) => void) : void {
@@ -154,7 +150,7 @@ export interface IGridJob {
 class GridJob extends ApiCallBase implements IGridJob {
     private __jobId:string = null;
     private __msgBorker: MsgBroker = null;
-    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken:oauth2.AccessToken, private __js:IJobSubmitter) {
+    constructor($:any, dispatcherConfig: resIntf.ConnectOptions, accessToken:oauth2.AccessToken, private __js:IJobSubmitter) {
         super($, dispatcherConfig, accessToken);
         this.__msgBorker = this.$M(2000);
         this.__msgBorker.on('connect', (conn_id:string) : void => {
@@ -226,7 +222,7 @@ export interface ISession {
 }
 
 class Session extends ApiCallBase implements ISession {
-    constructor($:any, dispatcherConfig: IGridDispatcherConfig, accessToken: oauth2.AccessToken) {
+    constructor($:any, dispatcherConfig: resIntf.ConnectOptions, accessToken: oauth2.AccessToken) {
         super($, dispatcherConfig, accessToken);
     }
     createMsgBroker (reconnectIntervalMS?: number) : MsgBroker {
