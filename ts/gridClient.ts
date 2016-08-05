@@ -28,10 +28,11 @@ export interface IGridJobSubmit {
 
 class ApiCallBase extends events.EventEmitter {
     protected __$J: IAjaxon = null;
-    constructor(protected $:any, protected __access: oauth2.Access) {
+    constructor(protected $:any, protected __tokenGrant: oauth2.TokenGrant, protected __access: oauth2.Access) {
         super();
         this.__$J = getAJaxon($);
     }
+    get tokenGrant() : oauth2.TokenGrant {return this.__tokenGrant;}
     get access() : oauth2.Access {return this.__access;}
     protected get instance_url() : string {
         return (this.__access && this.__access.instance_url ? this.__access.instance_url : "");
@@ -45,15 +46,38 @@ class ApiCallBase extends events.EventEmitter {
     protected get rejectUnauthorized() : boolean {
         return (this.__access ? this.__access.rejectUnauthorized : null);
     }
-    protected $J(method:string, path:string, data:any, done: ICompletionHandler) {
-        return this.__$J(method, this.getUrl(path), data, done, this.authHeaders, this.rejectUnauthorized);
+    protected get refresh_token() : string {
+        return (this.__access ? (this.__access.refresh_token ? this.__access.refresh_token : null) : null);
     }
+    protected $J(method:string, path:string, data:any, done: ICompletionHandler) : void {
+        this.__$J(method, this.getUrl(path), data, (err:any, ret: any) => {
+            if (err) {  // error occured
+                if (this.tokenGrant && this.refresh_token) {
+                    this.tokenGrant.refreshAccessToken(this.refresh_token, (err:any, access: oauth2.Access) => {
+                        if (err)
+                            done(err, null);
+                        else {  // got a new access
+                            this.__access = access;
+                            this.__$J(method, this.getUrl(path), data, done, this.authHeaders, this.rejectUnauthorized);
+                        }
+                    });
+                } else {
+                    done(err, null);
+                }
+            } else
+                done(null, ret);
+        }, this.authHeaders, this.rejectUnauthorized);
+    }
+    protected get eventSourceInitDict() : any {
+        let initDict:any = {};
+        if (typeof this.rejectUnauthorized === 'boolean') initDict.rejectUnauthorized = this.rejectUnauthorized;
+        initDict.headers = this.authHeaders; 
+        return initDict;      
+    }
+    // TODO: add token refresh capability
     protected $M(reconnectIntervalMS?: number): MsgBroker {
         let eventSourceUrl = this.getUrl('/services/events/event_stream');
-        let eventSourceInitDict:any = {};
-        if (typeof this.rejectUnauthorized === 'boolean') eventSourceInitDict.rejectUnauthorized = this.rejectUnauthorized;
-        eventSourceInitDict.headers = this.authHeaders;
-        return new MsgBroker(() => new MessageClient(EventSource, this.$, eventSourceUrl, eventSourceInitDict), reconnectIntervalMS);        
+        return new MsgBroker(() => new MessageClient(EventSource, this.$, eventSourceUrl, this.eventSourceInitDict), reconnectIntervalMS);        
     }
 }
 
@@ -63,8 +87,8 @@ interface IJobSubmitter {
 
 // job submission class
 class JobSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, access:oauth2.Access, private __jobSubmit:IGridJobSubmit) {
-        super($, access);
+    constructor($:any, tokenGrant: oauth2.TokenGrant, access:oauth2.Access, private __jobSubmit:IGridJobSubmit) {
+        super($, tokenGrant, access);
     }
     private static makeJobXML(jobSubmit:IGridJobSubmit) : string {
         if (!jobSubmit || !jobSubmit.tasks || jobSubmit.tasks.length === 0) {
@@ -119,8 +143,8 @@ function getJobOpPath(jobId:string, op:string):string {return '/services/job/' +
 
 // job re-submission class
 class JobReSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, access:oauth2.Access, private __oldJobId:string, private __failedTasksOnly:boolean) {
-        super($, access);
+    constructor($:any, tokenGrant: oauth2.TokenGrant, access:oauth2.Access, private __oldJobId:string, private __failedTasksOnly:boolean) {
+        super($, tokenGrant, access);
     }
     submit(notificationCookie:string, done: (err:any, jobId:string) => void) : void {
         let path = getJobOpPath(this.__oldJobId, 're_submit');
@@ -148,8 +172,8 @@ export interface IGridJob {
 class GridJob extends ApiCallBase implements IGridJob {
     private __jobId:string = null;
     private __msgBorker: MsgBroker = null;
-    constructor($:any, access:oauth2.Access, private __js:IJobSubmitter) {
-        super($, access);
+    constructor($:any, tokenGrant: oauth2.TokenGrant, access:oauth2.Access, private __js:IJobSubmitter) {
+        super($, tokenGrant, access);
         this.__msgBorker = this.$M(2000);
         this.__msgBorker.on('connect', (conn_id:string) : void => {
             this.__msgBorker.subscribe(ClientMessaging.getClientJobNotificationTopic(conn_id), (msg: IMessage) => {
@@ -220,26 +244,26 @@ export interface ISession {
 }
 
 class Session extends ApiCallBase implements ISession {
-    constructor($:any, access: oauth2.Access) {
-        super($, access);
+    constructor($:any, tokenGrant: oauth2.TokenGrant, access: oauth2.Access) {
+        super($, tokenGrant, access);
     }
     createMsgBroker (reconnectIntervalMS?: number) : MsgBroker {
         return this.$M(reconnectIntervalMS);
     }
     runJob(jobSubmit:IGridJobSubmit) : IGridJob {
-        let js = new JobSubmmit(this.$, this.access, jobSubmit);
-        return new GridJob(this.$, this.access, js);
+        let js = new JobSubmmit(this.$, this.tokenGrant, this.access, jobSubmit);
+        return new GridJob(this.$, this.tokenGrant, this.access, js);
     }
     sumbitJob(jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) : void {
-        let js = new JobSubmmit(this.$, this.access, jobSubmit);
+        let js = new JobSubmmit(this.$, this.tokenGrant, this.access, jobSubmit);
         js.submit(null, done);
     }
     reRunJob(oldJobId:string, failedTasksOnly:boolean) : IGridJob {
-        let js = new JobReSubmmit(this.$, this.access, oldJobId, failedTasksOnly);
-        return new GridJob(this.$, this.access, js);
+        let js = new JobReSubmmit(this.$, this.tokenGrant, this.access, oldJobId, failedTasksOnly);
+        return new GridJob(this.$, this.tokenGrant, this.access, js);
     }
     reSumbitJob(oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) : void {
-        let js = new JobReSubmmit(this.$, this.access, oldJobId, failedTasksOnly);
+        let js = new JobReSubmmit(this.$, this.tokenGrant, this.access, oldJobId, failedTasksOnly);
         js.submit(null, done);
     }
     getMostRecentJobs(done: (err:any, jobInfos:IJobInfo[]) => void) : void {
@@ -294,14 +318,14 @@ export class GridClient {
         this.tokenGrant = new oauth2.TokenGrant(this.jQuery, __config.oauth2Options.tokenGrantOptions, __config.oauth2Options.clientAppSettings);
     }
     static webSession(jQuery:any) : ISession {
-        return new Session(jQuery, null);
+        return new Session(jQuery, null, null);
     }
     login(username: string, password: string, done:(err:any, session: ISession) => void) {
         this.tokenGrant.getAccessTokenFromPassword(username, password, (err, access: oauth2.Access) => {
             if (err) {
                 done(err, null);
             } else {
-                let session = new Session(this.jQuery, access);
+                let session = new Session(this.jQuery, this.tokenGrant, access);
                 done(null, session);
             }
         });
