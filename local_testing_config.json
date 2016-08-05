@@ -24,7 +24,6 @@
         "tokenGrantOptions":
         {
             "url": "http://127.0.0.1:33821/services/oauth2/token"
-            ,"rejectUnauthorized": false
         }
         ,"clientAppSettings":
         {
