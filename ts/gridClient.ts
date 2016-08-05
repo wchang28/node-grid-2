@@ -12,7 +12,6 @@ import * as resIntf from 'rest-api-interfaces';
 
 export interface IGridClientConfig {
     oauth2Options: oauth2.ClientAppOptions;
-    dispatcherConfig: resIntf.ConnectOptions;
 }
 
 export interface ITaskItem {
@@ -29,23 +28,22 @@ export interface IGridJobSubmit {
 
 class ApiCallBase extends events.EventEmitter {
     protected __$J: IAjaxon = null;
-    constructor(protected $:any, protected __dispatcherConfig: resIntf.ConnectOptions, protected __accessToken: oauth2.AccessToken) {
+    constructor(protected $:any, protected __access: oauth2.Access) {
         super();
         this.__$J = getAJaxon($);
     }
-    get dispatcherConfig() : resIntf.ConnectOptions {return this.__dispatcherConfig;}
-    get accessToken() : oauth2.AccessToken {return this.__accessToken;}
-    protected get baseUrl() : string {
-        return (this.__dispatcherConfig && this.__dispatcherConfig.instance_url ? this.__dispatcherConfig.instance_url : "");
+    get access() : oauth2.Access {return this.__access;}
+    protected get instance_url() : string {
+        return (this.__access && this.__access.instance_url ? this.__access.instance_url : "");
     }
     protected get authHeaders() : {[field:string]:string} {
-        return (this.__accessToken ? {'Authorization': this.__accessToken.token_type + ' ' + this.__accessToken.access_token} : null)
+        return (this.__access ? {'Authorization': this.__access.token_type + ' ' + this.__access.access_token} : null)
     }
     protected getUrl(path:string) : string {
-        return this.baseUrl + path;
+        return this.instance_url + path;
     }
     protected get rejectUnauthorized() : boolean {
-        return (this.__dispatcherConfig ? this.__dispatcherConfig.rejectUnauthorized : null);
+        return (this.__access ? this.__access.rejectUnauthorized : null);
     }
     protected $J(method:string, path:string, data:any, done: ICompletionHandler) {
         return this.__$J(method, this.getUrl(path), data, done, this.authHeaders, this.rejectUnauthorized);
@@ -65,8 +63,8 @@ interface IJobSubmitter {
 
 // job submission class
 class JobSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, dispatcherConfig: resIntf.ConnectOptions, accessToken: oauth2.AccessToken, private __jobSubmit:IGridJobSubmit) {
-        super($, dispatcherConfig, accessToken);
+    constructor($:any, access:oauth2.Access, private __jobSubmit:IGridJobSubmit) {
+        super($, access);
     }
     private static makeJobXML(jobSubmit:IGridJobSubmit) : string {
         if (!jobSubmit || !jobSubmit.tasks || jobSubmit.tasks.length === 0) {
@@ -121,8 +119,8 @@ function getJobOpPath(jobId:string, op:string):string {return '/services/job/' +
 
 // job re-submission class
 class JobReSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, dispatcherConfig: resIntf.ConnectOptions, accessToken: oauth2.AccessToken, private __oldJobId:string, private __failedTasksOnly:boolean) {
-        super($, dispatcherConfig, accessToken);
+    constructor($:any, access:oauth2.Access, private __oldJobId:string, private __failedTasksOnly:boolean) {
+        super($, access);
     }
     submit(notificationCookie:string, done: (err:any, jobId:string) => void) : void {
         let path = getJobOpPath(this.__oldJobId, 're_submit');
@@ -150,8 +148,8 @@ export interface IGridJob {
 class GridJob extends ApiCallBase implements IGridJob {
     private __jobId:string = null;
     private __msgBorker: MsgBroker = null;
-    constructor($:any, dispatcherConfig: resIntf.ConnectOptions, accessToken:oauth2.AccessToken, private __js:IJobSubmitter) {
-        super($, dispatcherConfig, accessToken);
+    constructor($:any, access:oauth2.Access, private __js:IJobSubmitter) {
+        super($, access);
         this.__msgBorker = this.$M(2000);
         this.__msgBorker.on('connect', (conn_id:string) : void => {
             this.__msgBorker.subscribe(ClientMessaging.getClientJobNotificationTopic(conn_id), (msg: IMessage) => {
@@ -222,26 +220,26 @@ export interface ISession {
 }
 
 class Session extends ApiCallBase implements ISession {
-    constructor($:any, dispatcherConfig: resIntf.ConnectOptions, accessToken: oauth2.AccessToken) {
-        super($, dispatcherConfig, accessToken);
+    constructor($:any, access: oauth2.Access) {
+        super($, access);
     }
     createMsgBroker (reconnectIntervalMS?: number) : MsgBroker {
         return this.$M(reconnectIntervalMS);
     }
     runJob(jobSubmit:IGridJobSubmit) : IGridJob {
-        let js = new JobSubmmit(this.$, this.dispatcherConfig, this.accessToken, jobSubmit);
-        return new GridJob(this.$, this.dispatcherConfig, this.accessToken, js);
+        let js = new JobSubmmit(this.$, this.access, jobSubmit);
+        return new GridJob(this.$, this.access, js);
     }
     sumbitJob(jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) : void {
-        let js = new JobSubmmit(this.$, this.dispatcherConfig, this.accessToken, jobSubmit);
+        let js = new JobSubmmit(this.$, this.access, jobSubmit);
         js.submit(null, done);
     }
     reRunJob(oldJobId:string, failedTasksOnly:boolean) : IGridJob {
-        let js = new JobReSubmmit(this.$, this.dispatcherConfig, this.accessToken, oldJobId, failedTasksOnly);
-        return new GridJob(this.$, this.dispatcherConfig, this.accessToken, js);
+        let js = new JobReSubmmit(this.$, this.access, oldJobId, failedTasksOnly);
+        return new GridJob(this.$, this.access, js);
     }
     reSumbitJob(oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) : void {
-        let js = new JobReSubmmit(this.$, this.dispatcherConfig, this.accessToken, oldJobId, failedTasksOnly);
+        let js = new JobReSubmmit(this.$, this.access, oldJobId, failedTasksOnly);
         js.submit(null, done);
     }
     getMostRecentJobs(done: (err:any, jobInfos:IJobInfo[]) => void) : void {
@@ -296,15 +294,14 @@ export class GridClient {
         this.tokenGrant = new oauth2.TokenGrant(this.jQuery, __config.oauth2Options.tokenGrantOptions, __config.oauth2Options.clientAppSettings);
     }
     static webSession(jQuery:any) : ISession {
-        return new Session(jQuery, null, null);
+        return new Session(jQuery, null);
     }
     login(username: string, password: string, done:(err:any, session: ISession) => void) {
         this.tokenGrant.getAccessTokenFromPassword(username, password, (err, access: oauth2.Access) => {
             if (err) {
                 done(err, null);
             } else {
-                let accessToken: oauth2.AccessToken = {token_type: access.token_type, access_token: access.access_token};
-                let session = new Session(this.jQuery, this.__config.dispatcherConfig, accessToken);
+                let session = new Session(this.jQuery, access);
                 done(null, session);
             }
         });
