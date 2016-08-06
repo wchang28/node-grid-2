@@ -80,6 +80,9 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
         let jobInfo = this.state.jobs[index];
         return ((jobInfo.userId === this.props.currentUser.userId || this.props.currentUser.profile.canKillOtherUsersJob) && !this.isCompleteStatus(jobInfo.status));
     }
+    private canSubmitJob():boolean {
+        return this.props.currentUser.profile.canSubmitJob;
+    }
     private getKillJobClickHandler(index: number) : (e:any) => void {
         return ((e:any):void => {
             let jobInfo = this.state.jobs[index];
@@ -91,8 +94,20 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
             });
         });
     }
+    private getReSubmitJobClickHandler(index: number) : (e:any) => void {
+        return ((e:any):void => {
+            let jobInfo = this.state.jobs[index];
+            let jobId=jobInfo.jobId;
+            this.session.reSumbitJob(jobId, false, (err:any) => {
+                if (err) {
+                    console.error('!!! Error re-sumbitJob job: ' + JSON.stringify(err));
+                }
+            });
+        });
+    }
 
     private getJobsRows() {
+        let actionsCellStyle = {whiteSpace: 'nowrap'};
         if (this.state.jobs && this.state.jobs.length > 0) {
             return this.state.jobs.map((jobInfo: IJobInfo, index:number) => {
                 return (
@@ -105,7 +120,10 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
                         <td>{jobInfo.status}</td>
                         <td>{this.geUtilizationString(jobInfo.numTasksFinished, jobInfo.numTasks, true)}</td>
                         <td>{(this.isCompleteStatus(jobInfo.status) ? (jobInfo.success ? 'Success': 'Failed') : '')}</td>
-                        <td><button disabled={!this.canKillJob(index)} onClick={this.getKillJobClickHandler(index)}>Kill</button></td>
+                        <td style={actionsCellStyle}>
+                            <button disabled={!this.canKillJob(index)} onClick={this.getKillJobClickHandler(index)}>Kill</button>
+                            <button disabled={!this.canSubmitJob()} onClick={this.getReSubmitJobClickHandler(index)}>Re-submit</button>
+                        </td>
                     </tr>
                 );
             });
