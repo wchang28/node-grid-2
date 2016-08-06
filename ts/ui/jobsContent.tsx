@@ -108,6 +108,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
 
     private getJobsRows() {
         let actionsCellStyle = {whiteSpace: 'nowrap'};
+        let reSubmitButtonStyle = {marginLeft: '2px'};
         if (this.state.jobs && this.state.jobs.length > 0) {
             return this.state.jobs.map((jobInfo: IJobInfo, index:number) => {
                 return (
@@ -122,7 +123,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
                         <td>{(this.isCompleteStatus(jobInfo.status) ? (jobInfo.success ? 'Success': 'Failed') : '')}</td>
                         <td style={actionsCellStyle}>
                             <button disabled={!this.canKillJob(index)} onClick={this.getKillJobClickHandler(index)}>Kill</button>
-                            <button disabled={!this.canSubmitJob()} onClick={this.getReSubmitJobClickHandler(index)}>Re-submit</button>
+                            <button style={reSubmitButtonStyle} disabled={!this.canSubmitJob()} onClick={this.getReSubmitJobClickHandler(index)}>Re-submit</button>
                         </td>
                     </tr>
                 );
