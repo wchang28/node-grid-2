@@ -19,6 +19,7 @@ import * as events from 'events';
 import * as errors from './errors';
 let $ = require('jquery-no-dom');
 import * as auth_client from 'polaris-auth-client';
+import * as httpProxy from 'rcf-http-proxy'
 
 interface ISessionOptions {
     sessionIdSignSecret: string;
@@ -27,6 +28,7 @@ interface ISessionOptions {
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
     clientWebServerConfig: IWebServerConfig;
+    adminWebServerConfig: IWebServerConfig;
     sessionOptions: ISessionOptions;
     oauth2Options: oauth2.ClientAppOptions;
     authorizeEndpointOptions: auth_client.IAuthorizeEndpointOptions;
@@ -41,50 +43,34 @@ let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let tokenGrant = new oauth2.TokenGrant($, config.oauth2Options.tokenGrantOptions, config.oauth2Options.clientAppSettings);
 let authClient: auth_client.AuthClient = new auth_client.AuthClient($, config.authorizeEndpointOptions, config.oauth2Options.clientAppSettings);
 
-function getAuthorizedClientMiddleware(tryToRefreshToken: boolean) {
-    return ((req: express.Request, res: express.Response, next: express.NextFunction): void => {
-        let access: oauth2.Access = null;
-        let accessToken:oauth2.AccessToken = null;
-        let authHeader = req.headers['authorization'];
-        if (authHeader) {   // automation client
-            let x = authHeader.indexOf(' ');
-            if (x != -1) {
-                accessToken = {
-                    token_type: authHeader.substr(0, x)
-                    ,access_token: authHeader.substr(x+1)
-                }
-            }
-        } else if (req.session["access"]) { // browser client
-            access = req.session["access"];
-            accessToken = {
-                token_type: access.token_type
-                ,access_token: access.access_token
-            }
-        }
-
-        if (!accessToken) {
+function authorizedClientMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
+    let errorReturn = () => {
+        req.on('end', () => {
             res.status(401).json(errors.not_authorized);
-            return;
+        });
+    };
+    let accessToken:oauth2.AccessToken = null;
+    let authHeader = req.headers['authorization'];
+    if (authHeader) {   // automation client
+        let x = authHeader.indexOf(' ');
+        if (x != -1) {
+            accessToken = {
+                token_type: authHeader.substr(0, x)
+                ,access_token: authHeader.substr(x+1)
+            }
         }
-
+    }
+    if (!accessToken)
+        errorReturn();
+    else {
         authClient.verifyAccessToken(accessToken, (err: any, user:auth_client.IAuthorizedUser) => {
             if (err) {  // token verification error
-                if (tryToRefreshToken && access && access.refresh_token) {   // has refresh token in access
-                    tokenGrant.refreshAccessToken(access.refresh_token, (err:any, access: oauth2.Access) => {
-                        if (err)
-                            res.status(401).json(err);
-                        else {
-                            req.session["access"] = access; // granted a new access
-                            getAuthorizedClientMiddleware(false)(req, res, next);
-                        }
-                    });
-                } else  // no refresh token in access
-                    res.status(401).json(err);
+                errorReturn();
             } else {   // access token is good
                 //console.log('user=' + JSON.stringify(user));
                 gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
                     if (err)
-                        res.status(401).json(errors.not_authorized);
+                        errorReturn();
                     else {
                         let gridUser:IGridUser = {
                             userId: user.userId
@@ -99,7 +85,53 @@ function getAuthorizedClientMiddleware(tryToRefreshToken: boolean) {
                 });
             }
         });
-    });
+    }
+}
+
+interface AccessStore {
+    access: oauth2.Access;
+    grantTime: Date;
+}
+
+function hasAccessMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
+    let errorReturn = () => {
+        req.on('end', () => {
+            res.status(401).json(errors.not_authorized);
+        });
+    };
+    let accessStore: AccessStore = req.session["access"];
+    if (!accessStore || !accessStore.access)
+        errorReturn();
+    else
+        next();
+}
+
+function autoRefreshTokenMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
+    let accessStore: AccessStore = req.session["access"];
+    let access = accessStore.access;
+    let now = new Date();
+    let tokenAutoRefreshIntervalHours = 4;
+    let refreshIntervalMS = tokenAutoRefreshIntervalHours * 60 * 60 * 1000;
+    if (access.refresh_token && now.getTime() - accessStore.grantTime.getTime() > refreshIntervalMS) {
+        tokenGrant.refreshAccessToken(access.refresh_token, (err:any, access: oauth2.Access) => {
+            if (err)
+                next();
+            else {
+                accessStore.access = access;
+                accessStore.grantTime = new Date();
+                next();
+            }
+        });
+    } else {
+        next();
+    }
+}
+
+function makeAuthorizationHeaderMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
+    let accessStore: AccessStore = req.session["access"];
+    let access = accessStore.access;
+    req.headers['authorization'] = access.token_type + ' ' + access.access_token;
+    next();
 }
 
 class ClientMessagingCoalescing extends events.EventEmitter {
@@ -139,9 +171,11 @@ gridDB.on('error', (err: any) => {
 
     let clientApp = express();  // client facing app
     let nodeApp = express();   // node facing app
+    let adminApp = express();  // admin facing app
     
     clientApp.use(noCache);
     nodeApp.use(noCache);
+    adminApp.use(noCache);
 
     let bpj = bodyParser.json({"limit":"999mb"});   // json body middleware
     clientApp.use(bpj);
@@ -164,7 +198,7 @@ gridDB.on('error', (err: any) => {
 
     let secureCookie = (config.clientWebServerConfig.https ? true : false);
 
-    clientApp.use(session({
+    adminApp.use(session({
         secret: config.sessionOptions.sessionIdSignSecret,
         resave: false,
         saveUninitialized: false,
@@ -259,11 +293,28 @@ gridDB.on('error', (err: any) => {
     clientApp.set("global", g);
     nodeApp.set("global", g);
 
-    clientApp.use('/services', getAuthorizedClientMiddleware(true), clientApiRouter);
-    clientApp.use('/app', getAuthorizedClientMiddleware(true), express.static(path.join(__dirname, '../public')));
+    clientApp.use('/services', authorizedClientMiddleware, clientApiRouter);
+    clientApp.get('/logout', authorizedClientMiddleware, (req: express.Request, res: express.Response) => {res.json({});});
+
+    adminApp.use('/app', hasAccessMiddleware, express.static(path.join(__dirname, '../public')));
+    adminApp.use('/bower_components', hasAccessMiddleware, express.static(path.join(__dirname, '../bower_components')));
+
+    let targetAcquisition: httpProxy.TargetAcquisition = (req:express.Request, done: httpProxy.TargetAcquisitionCompletionHandler) => {
+        let accessStore: AccessStore = req.session["access"];
+        let access = accessStore.access;
+        let targetSesstings: httpProxy.TargetSettings = {
+            targetUrl: access.instance_url + '/services'
+        }
+        if (typeof access.rejectUnauthorized === 'boolean') targetSesstings.rejectUnauthorized = access.rejectUnauthorized;
+        done(null, targetSesstings);
+    };
+    let proxyOptions: httpProxy.Options = {
+        targetAcquisition: targetAcquisition
+    };
+    adminApp.use('/services', hasAccessMiddleware, autoRefreshTokenMiddleware, makeAuthorizationHeaderMiddleware, httpProxy.get(proxyOptions));
 
     // hitting the /authcode_callback via a browser redirect from the oauth2 server
-    clientApp.get('/authcode_callback', (req: express.Request, res: express.Response) => {
+    adminApp.get('/authcode_callback', (req: express.Request, res: express.Response) => {
         let query:oauth2.AuthCodeWorkflowQueryParams = req.query;
         if (JSON.stringify(query) != '{}') {
             console.log('auth_code='+query.code);
@@ -284,7 +335,7 @@ gridDB.on('error', (err: any) => {
                             if (ar.length > 0) redirectUrl += '?' + ar.join('&');
                         } catch(e) {}
                     }
-                    req.session["access"] = access;	// store the access token in session
+                    req.session["access"] = {access, grantTime: new Date()};	// store the access token in session
                     res.redirect(redirectUrl);
                 }
             });
@@ -294,7 +345,7 @@ gridDB.on('error', (err: any) => {
     });
 
     // hitting the root of admin app
-    clientApp.get('/', (req: express.Request, res: express.Response) => {
+    adminApp.get('/', (req: express.Request, res: express.Response) => {
         let sess = req.session;
         let stateObj = req.query;	// query fields/state object might have marketing campaign code and application object short-cut link in it
         let state = JSON.stringify(stateObj);
@@ -318,7 +369,7 @@ gridDB.on('error', (err: any) => {
         }
     });
 
-    clientApp.get('/logout', getAuthorizedClientMiddleware(false), (req: express.Request, res: express.Response) => {
+    adminApp.get('/logout', (req: express.Request, res: express.Response) => {
         if (req.session["access"]) { // browser client
             req.session.destroy((err:any) => {
                 // cannot access any more
@@ -331,8 +382,7 @@ gridDB.on('error', (err: any) => {
                     res.redirect('about:blank');
                 }
             });
-        } else    // automation client
-            res.json({});
+        }
     });
 
     nodeApp.use('/node-app', nodeAppRouter);
@@ -340,13 +390,15 @@ gridDB.on('error', (err: any) => {
     // evenstream located at:
     // node: /node-app/events/event_stream
     // client: /services/events/event_stream
-
-    clientApp.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
+    // admin: /services/events/event_stream
 
     startServer(config.nodeWebServerConfig, nodeApp, (secure:boolean, host:string, port:number) => {
         console.log('node app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
         startServer(config.clientWebServerConfig, clientApp, (secure:boolean, host:string, port:number) => {
             console.log('client app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
+            startServer(config.adminWebServerConfig, adminApp, (secure:boolean, host:string, port:number) => {
+                console.log('admin app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
+            });
         });
     });
 });

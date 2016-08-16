@@ -3,8 +3,8 @@ import * as core from 'express-serve-static-core';
 import {Router as dispatcherRouter} from './dispatcher';
 import {Router as jobRouter} from './job';
 import {Router as userRouter} from './user';
-import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'sse-topic-router';
-import {getConnectionFactory} from 'sse-topic-conn';
+import * as tr from 'rcf-msg-router';
+import * as tc from 'rcf-topic-conn';
 import * as events from 'events';
 import {IGridUser} from '../messaging';
 
@@ -19,20 +19,22 @@ router.use('/user', userRouter);
 router.use('/job', jobRouter);
 router.use('/dispatcher', dispatcherRouter);
 
-let topicRouter = getTopicRouter('/event_stream', getConnectionFactory(10000, (req: express.Request) => {
-    let user = getUser(req);
-    return user;
-}));
+let options: tc.Options = {
+    pingIntervalMS: 10000
+    ,cookieSetter: (req: express.Request) => {return getUser(req);}
+}
+let topicRouter = tr.getRouter('/event_stream', tc.getConnectionFactory(options));
+
 router.use('/events', topicRouter); // topic subscription endpoint is available at /events/event_stream from this route
 
 let routerEventEmitter = topicRouter.eventEmitter;
 let connectionsManager = topicRouter.connectionsManager;
 
-routerEventEmitter.on('client_connect', (params: ConnectedEventParams) : void => {
+routerEventEmitter.on('client_connect', (params: tr.ConnectedEventParams) : void => {
     console.log('client ' + params.conn_id + ' @ ' + params.remoteAddress + ' connected to the SSE topic endpoint');
 });
 
-routerEventEmitter.on('client_disconnect', (params: ConnectedEventParams) : void => {
+routerEventEmitter.on('client_disconnect', (params: tr.ConnectedEventParams) : void => {
     console.log('client ' + params.conn_id + ' @ ' + params.remoteAddress +  ' disconnected from the SSE topic endpoint');
 });
 

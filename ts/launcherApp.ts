@@ -1,21 +1,20 @@
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
-import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
+import * as rcf from 'rcf';
+import * as $node from 'rest-node';
 import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult} from './messaging';
 import {GridDB} from './gridDB';
 import {TaskRunner} from './taskRunner';
-let EventSource = require('eventsource');
-let $ = require('jquery-no-dom');
 import treeKill = require('tree-kill');
 import {IGridDBConfiguration} from './gridDBConfig';
-import * as resIntf from 'rest-api-interfaces';
+//import * as resIntf from 'rest-api-interfaces';
 
 interface IConfiguration {
     numCPUs?: number;
     reservedCPUs?: number;
     nodeName?:string;
-    dispatcherConfig: resIntf.ConnectOptions;
+    dispatcherConfig: rcf.ApiInstanceConnectOptions;
     dbConfig: IGridDBConfiguration;
 }
 
@@ -41,8 +40,11 @@ function getDefaultNodeName() : string {
 }
 
 let dispatcherConfig = config.dispatcherConfig;
-let eventSourceUrl = dispatcherConfig.instance_url + '/node-app/events/event_stream';
-let eventSourceInitDict:any = (typeof dispatcherConfig.rejectUnauthorized === 'boolean' ? {rejectUnauthorized: dispatcherConfig.rejectUnauthorized} : null);
+
+let pathname = '/node-app/events/event_stream';
+let api = new rcf.AuthorizedRestApi($node.get(), rcf.AuthorizedRestApi.connectOptionsToAccess(dispatcherConfig));
+let clientOptions: rcf.IMessageClientOptions = {reconnetIntervalMS: 10000};
+
 let cpus = os.cpus();
 let numCPUs:number = (config.numCPUs ? config.numCPUs : cpus.length - (config.reservedCPUs ? config.reservedCPUs : 2));
 numCPUs = Math.max(numCPUs, 1);
@@ -55,7 +57,7 @@ gridDB.on('error', (err:any) => {
 }).on('connected', () => {
     console.error('connected to the database :-)');
 
-    let msgBorker = new MsgBroker(() => new MessageClient(EventSource, $, eventSourceUrl, eventSourceInitDict) , 10000);
+    let client = api.$M(pathname, clientOptions);
 
     function sendDispatcherNodeReady(done: (err: any) => void) {
         console.log('sending a node-ready message...');
@@ -67,7 +69,7 @@ gridDB.on('error', (err:any) => {
             type: 'node-ready'
             ,content: nodeReady
         };
-        msgBorker.send('/topic/dispatcher', {}, msg, done);
+        client.send('/topic/dispatcher', {}, msg, done);
     }
 
     function sendDispatcherTaskComplete(task: ITask, done: (err: any) => void) {
@@ -75,7 +77,7 @@ gridDB.on('error', (err:any) => {
             type: 'task-complete'
             ,content: task
         };
-        msgBorker.send('/topic/dispatcher', {}, msg, done);
+        client.send('/topic/dispatcher', {}, msg, done);
     }
 
     function nodeRunTask(nodeId:string, task: ITask, done: (err: any) => void) {
@@ -102,10 +104,10 @@ gridDB.on('error', (err:any) => {
         }
     }
 
-    msgBorker.on('connect', (nodeId:string) : void => {
+    client.on('connect', (nodeId:string) : void => {
         console.log('connected to the dispatcher: nodeId=' + nodeId);
-        let sub_id = msgBorker.subscribe('/topic/node/' + nodeId
-        ,(msg: IMessage): void => {
+        let sub_id = client.subscribe('/topic/node/' + nodeId
+        ,(msg: rcf.IMessage): void => {
             console.log('msg-rcvd: ' + JSON.stringify(msg));
             let gMsg: GridMessage = msg.body;
             if (gMsg.type === 'launch-task') {
@@ -140,11 +142,9 @@ gridDB.on('error', (err:any) => {
         });
     });
 
-    msgBorker.on('error', (err: any) : void => {
+    client.on('error', (err: any) : void => {
         console.error('!!! Error:' + JSON.stringify(err));
     });
-
-    msgBorker.connect();  // connect to the dispatcher
 });
 
 gridDB.connect();  // connect to the grid database

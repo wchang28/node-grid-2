@@ -1,4 +1,4 @@
-import {ConnectionsManager} from 'sse-topic-router';
+import {ConnectionsManager} from 'rcf-msg-router';
 import {GridMessage, IJobProgress} from './messaging';
 import {IQueueJSON, INodeItem, IDispControl} from './dispatcher';
 

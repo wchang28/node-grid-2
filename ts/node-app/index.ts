@@ -1,14 +1,14 @@
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
-import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'sse-topic-router';
-import {getConnectionFactory} from 'sse-topic-conn';
+import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'rcf-msg-router';
+import {getConnectionFactory} from 'rcf-topic-conn';
 import {IGlobal} from '../global';
 import {Dispatcher} from '../dispatcher'; 
 import {GridMessage, INode, INodeReady, ITask} from '../messaging';
 
 let router = express.Router();
 
-let topicRouter = getTopicRouter('/event_stream', getConnectionFactory(10000));
+let topicRouter = getTopicRouter('/event_stream', getConnectionFactory({pingIntervalMS: 10000}));
 router.use('/events', topicRouter); // topic subscription endpoint is available at /events/event_stream from this route
 
 let routerEventEmitter = topicRouter.eventEmitter;

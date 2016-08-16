@@ -1,4 +1,4 @@
-import {ConnectionsManager} from 'sse-topic-router';
+import {ConnectionsManager} from 'rcf-msg-router';
 import {GridMessage, ITask} from './messaging';
 
 export class NodeMessaging {
