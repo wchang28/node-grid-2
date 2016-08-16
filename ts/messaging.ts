@@ -93,3 +93,15 @@ export interface ITaskExecResult {
     stdout: string;
     stderr: string;
 }
+
+export interface ITaskItem {
+    cmd: string;
+    cookie?: string;
+    stdin?: string;
+}
+
+export interface IGridJobSubmit {
+    description?: string;
+    cookie?: string;
+    tasks: ITaskItem[];
+}

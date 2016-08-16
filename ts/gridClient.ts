@@ -1,139 +1,31 @@
 import * as events from 'events';
-let EventSource = (global['EventSource'] || require('eventsource'));
-import {getAJaxon, IAjaxon, ICompletionHandler} from 'ajaxon'; 
-import {MsgBroker, MsgBrokerStates, MessageClient, IMessage} from 'message-broker';
+import * as rcf from 'rcf';
 import {ClientMessaging} from './clientMessaging';
-import {GridMessage, IJobProgress, IJobInfo, IJobResult, IGridUser} from './messaging';
+import {GridMessage, IJobProgress, IJobInfo, IJobResult, IGridUser, IGridJobSubmit} from './messaging';
 import {DOMParser, XMLSerializer} from 'xmldom';
 import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from './dispatcher';
 import * as oauth2 from 'oauth2';
 import * as errors from './errors';
-import * as resIntf from 'rest-api-interfaces';
 
 export interface IGridClientConfig {
     oauth2Options: oauth2.ClientAppOptions;
 }
 
-export interface ITaskItem {
-    cmd: string;
-    cookie?: string;
-    stdin?: string;
-}
-
-export interface IGridJobSubmit {
-    description?: string;
-    cookie?: string;
-    tasks: ITaskItem[];
-}
-
-class ApiCallBase extends events.EventEmitter {
-    protected __$J: IAjaxon = null;
-    constructor(protected $:any, protected __tokenGrant: oauth2.TokenGrant, protected __access: oauth2.Access) {
-        super();
-        this.__$J = getAJaxon($);
-    }
-    get tokenGrant() : oauth2.TokenGrant {return this.__tokenGrant;}
-    get access() : oauth2.Access {return this.__access;}
-    protected get instance_url() : string {
-        return (this.__access && this.__access.instance_url ? this.__access.instance_url : "");
-    }
-    protected get authHeaders() : {[field:string]:string} {
-        return (this.__access ? {'Authorization': this.__access.token_type + ' ' + this.__access.access_token} : null)
-    }
-    protected getUrl(path:string) : string {
-        return this.instance_url + path;
-    }
-    protected get rejectUnauthorized() : boolean {
-        return (this.__access ? this.__access.rejectUnauthorized : null);
-    }
-    protected get refresh_token() : string {
-        return (this.__access ? (this.__access.refresh_token ? this.__access.refresh_token : null) : null);
-    }
-    protected $J(method:string, path:string, data:any, done: ICompletionHandler) : void {
-        this.__$J(method, this.getUrl(path), data, (err:any, ret: any) => {
-            if (err) {  // error occured
-                if (this.tokenGrant && this.refresh_token) {
-                    this.tokenGrant.refreshAccessToken(this.refresh_token, (err:any, access: oauth2.Access) => {
-                        if (err)
-                            done(err, null);
-                        else {  // got a new access
-                            this.__access = access;
-                            this.__$J(method, this.getUrl(path), data, done, this.authHeaders, this.rejectUnauthorized);
-                        }
-                    });
-                } else {
-                    done(err, null);
-                }
-            } else
-                done(null, ret);
-        }, this.authHeaders, this.rejectUnauthorized);
-    }
-    protected get eventSourceInitDict() : any {
-        let initDict:any = {};
-        if (typeof this.rejectUnauthorized === 'boolean') initDict.rejectUnauthorized = this.rejectUnauthorized;
-        initDict.headers = this.authHeaders; 
-        return initDict;      
-    }
-    // TODO: add token refresh capability
-    protected $M(reconnectIntervalMS?: number): MsgBroker {
-        let eventSourceUrl = this.getUrl('/services/events/event_stream');
-        return new MsgBroker(() => new MessageClient(EventSource, this.$, eventSourceUrl, this.eventSourceInitDict), reconnectIntervalMS);        
-    }
-}
-
 interface IJobSubmitter {
-    submit: (notificationCookie:string, done: (err:any, jobId:string) => void) => void;
+    submit: (done: (err:any, jobId:string) => void) => void;
 }
+
+let eventStreamPathname = '/services/events/event_stream';
+let clientOptions: rcf.IMessageClientOptions = {reconnetIntervalMS: 10000};
 
 // job submission class
-class JobSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, tokenGrant: oauth2.TokenGrant, access:oauth2.Access, private __jobSubmit:IGridJobSubmit) {
-        super($, tokenGrant, access);
+class JobSubmmit extends rcf.AuthorizedRestApi implements IJobSubmitter {
+    constructor($drver: rcf.$Driver, tokenGrant: oauth2.ITokenGrant, access:oauth2.Access, private __jobSubmit:IGridJobSubmit) {
+        super($drver, access, tokenGrant);
     }
-    private static makeJobXML(jobSubmit:IGridJobSubmit) : string {
-        if (!jobSubmit || !jobSubmit.tasks || jobSubmit.tasks.length === 0) {
-            throw errors.no_task_for_job;
-        }
-        let doc = new DOMParser().parseFromString('<?xml version="1.0"?>','text/xml');
-        let root = doc.createElement('job');
-        if (jobSubmit.description) root.setAttribute('description', jobSubmit.description);
-        if (jobSubmit.cookie) root.setAttribute('cookie', jobSubmit.cookie);
-        doc.appendChild(root);
-        for (let i in jobSubmit.tasks) {
-            let task = jobSubmit.tasks[i];
-            let el = doc.createElement('t');
-            if (!task.cmd) throw errors.bad_task_cmd;
-            el.setAttribute('c', task.cmd);
-            if (task.cookie) el.setAttribute('k', task.cookie);
-            if (task.stdin) el.setAttribute('i', task.stdin);
-            root.appendChild(el);
-        }
-        let serializer = new XMLSerializer();
-        return serializer.serializeToString(doc);
-    }
-    submit(notificationCookie:string, done: (err:any, jobId:string) => void) : void {
-        let xml = null;
-        try {
-            xml = JobSubmmit.makeJobXML(this.__jobSubmit);
-        } catch(e) {
-            done(e, null);
-            return;
-        }
-        if (typeof this.rejectUnauthorized === 'boolean') this.$.ajax.defaults({rejectUnauthorized: this.rejectUnauthorized});
-        let url = this.getUrl('/services/job/submit' + (notificationCookie ? '?nc=' +  notificationCookie : ''));
-        let settings:any = {
-            type: "POST"
-            ,url: url
-            ,contentType: 'text/xml'
-            ,data: xml
-            ,dataType: 'json'
-        };
-        settings.headers = this.authHeaders;
-        let p = this.$.ajax(settings);
-        p.done((data: any) => {
-            done(null, data['jobId']);
-        }).fail((err: any) => {
-            done(err, null);
+    submit(done: (err:any, jobId:string) => void) : void {
+        this.$J('POST', '/services/job/submit', this.__jobSubmit, (err:any, ret:any) => {
+            done(err, (err ? null: ret['jobId']));
         });
     }
 }
@@ -142,16 +34,15 @@ class JobSubmmit extends ApiCallBase implements IJobSubmitter {
 function getJobOpPath(jobId:string, op:string):string {return '/services/job/' + jobId + '/' + op;}
 
 // job re-submission class
-class JobReSubmmit extends ApiCallBase implements IJobSubmitter {
-    constructor($:any, tokenGrant: oauth2.TokenGrant, access:oauth2.Access, private __oldJobId:string, private __failedTasksOnly:boolean) {
-        super($, tokenGrant, access);
+class JobReSubmmit extends rcf.AuthorizedRestApi implements IJobSubmitter {
+    constructor($drver: rcf.$Driver, tokenGrant: oauth2.ITokenGrant, access:oauth2.Access, private __oldJobId:string, private __failedTasksOnly:boolean) {
+        super($drver, access, tokenGrant);
     }
-    submit(notificationCookie:string, done: (err:any, jobId:string) => void) : void {
+    submit(done: (err:any, jobId:string) => void) : void {
         let path = getJobOpPath(this.__oldJobId, 're_submit');
         let data:any = {
             failedTasksOnly: (this.__failedTasksOnly ? '1' : '0')
         };
-        if (notificationCookie) data.nc = notificationCookie;
         this.$J('GET', path, data, (err: any, ret: any) => {
             done(err, (err ? null: ret['jobId']));
         });
@@ -160,7 +51,7 @@ class JobReSubmmit extends ApiCallBase implements IJobSubmitter {
 
 export interface IGridJob {
     jobId?:string;
-    run: () => void;
+    run() : void;
     on: (event: string, listener: Function) => this;
 };
 
@@ -169,63 +60,61 @@ export interface IGridJob {
 // 2. status-changed
 // 3. done
 // 4. error
-class GridJob extends ApiCallBase implements IGridJob {
+class GridJob extends rcf.AuthorizedRestApi implements IGridJob {
     private __jobId:string = null;
-    private __msgBorker: MsgBroker = null;
-    constructor($:any, tokenGrant: oauth2.TokenGrant, access:oauth2.Access, private __js:IJobSubmitter) {
-        super($, tokenGrant, access);
-        this.__msgBorker = this.$M(2000);
-        this.__msgBorker.on('connect', (conn_id:string) : void => {
-            this.__msgBorker.subscribe(ClientMessaging.getClientJobNotificationTopic(conn_id), (msg: IMessage) => {
-                //console.log('msg-rcvd: ' + JSON.stringify(msg));
-                let gMsg: GridMessage = msg.body;
-                if (gMsg.type === 'status-changed') {
-                    let jp: IJobProgress = gMsg.content;
-                    if (!this.__jobId) {
-                        this.__jobId = jp.jobId;
-                        this.emit('submitted', this.__jobId);
+    constructor($drver: rcf.$Driver, tokenGrant: oauth2.ITokenGrant, access:oauth2.Access, private __js:IJobSubmitter) {
+        super($drver, access, tokenGrant);
+    }
+    private onJobProgress(msgClient: rcf.IMessageClient, jp: IJobProgress) {
+        this.emit('status-changed', jp);
+        if (jp.status === 'FINISHED' || jp.status === 'ABORTED') {
+            msgClient.disconnect();
+            this.emit('done', jp);
+        }
+    }
+    run(): void {
+        // submit the job
+        this.__js.submit((err:any, jobId:string) => {
+            if (err) {  // submit failed
+                this.emit('error', err);
+            } else {    // submit successful
+                this.__jobId = jobId;
+                this.emit('submitted', this.__jobId);
+                let msgClient = this.$M(eventStreamPathname, clientOptions);
+                msgClient.on('connect', (conn_id:string) : void => {
+                    msgClient.subscribe('/topic...', (msg: rcf.IMessage) => {   // TODO:
+                        //console.log('msg-rcvd: ' + JSON.stringify(msg));
+                        let gMsg: GridMessage = msg.body;
+                        if (gMsg.type === 'status-changed') {
+                            let jp: IJobProgress = gMsg.content;
+                            this.onJobProgress(msgClient, jp);
+                        }
                     }
-                    this.emit('status-changed', jp);
-                    if (jp.status === 'FINISHED' || jp.status === 'ABORTED') {
-                        this.__msgBorker.disconnect();
-                        this.emit('done', jp);
-                    }
-                }
-            }
-            ,{}
-            ,(err: any) => {
-                if (err) {  // topic subscription failed
-                    this.__msgBorker.disconnect();
-                    this.emit('error', err);
-                } else {    // topic subscription successful
-                    // submit the job
-                    this.__js.submit(conn_id, (err:any, jobId:string) => {
-                        if (err) {  // submit failed
-                            this.__msgBorker.disconnect();
+                    ,{}
+                    ,(err: any) => {
+                        if (err) {  // topic subscription failed
+                            msgClient.disconnect();
                             this.emit('error', err);
-                        } else {    // submit successful
-                            if (!this.__jobId) {
-                                this.__jobId = jobId;
-                                this.emit('submitted', this.__jobId);
-                            }
+                        } else {  // topic subscription successful
+                            // TODO: do a job progress poll
+                            //this.onJobProgress(msgClient, jp);
                         }
                     });
-                }
-            });
-        });
-        this.__msgBorker.on('error', (err: any) : void => {
-            this.__msgBorker.disconnect();
-            this.emit('error', err);
+                });
+
+                msgClient.on('error', (err: any) : void => {
+                    msgClient.disconnect();
+                    this.emit('error', err);
+                });
+            }
         });
     }
 
     get jobId() : string {return this.__jobId;}
-
-    run() : void {this.__msgBorker.connect();}
 }
 
 export interface ISession {
-    createMsgBroker: (reconnectIntervalMS?: number) => MsgBroker;
+    createMsgClient: () => rcf.IMessageClient;
     runJob: (jobSubmit:IGridJobSubmit) => IGridJob;
     sumbitJob: (jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) => void;
     reRunJob: (oldJobId:string, failedTasksOnly:boolean) => IGridJob;
@@ -243,28 +132,28 @@ export interface ISession {
     logout: (done?:(err:any) => void) => void;
 }
 
-class Session extends ApiCallBase implements ISession {
-    constructor($:any, tokenGrant: oauth2.TokenGrant, access: oauth2.Access) {
-        super($, tokenGrant, access);
+class Session extends rcf.AuthorizedRestApi {
+    constructor($drver: rcf.$Driver, tokenGrant: oauth2.ITokenGrant, access: oauth2.Access) {
+        super($drver, access, tokenGrant);
     }
-    createMsgBroker (reconnectIntervalMS?: number) : MsgBroker {
-        return this.$M(reconnectIntervalMS);
+    createMsgClient() : rcf.IMessageClient {
+        return this.$M(eventStreamPathname, clientOptions);
     }
     runJob(jobSubmit:IGridJobSubmit) : IGridJob {
-        let js = new JobSubmmit(this.$, this.tokenGrant, this.access, jobSubmit);
-        return new GridJob(this.$, this.tokenGrant, this.access, js);
+        let js = new JobSubmmit(this.$driver, this.tokenGrant, this.access, jobSubmit);
+        return new GridJob(this.$driver, this.tokenGrant, this.access, js);
     }
     sumbitJob(jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) : void {
-        let js = new JobSubmmit(this.$, this.tokenGrant, this.access, jobSubmit);
-        js.submit(null, done);
+        let js = new JobSubmmit(this.$driver, this.tokenGrant, this.access, jobSubmit);
+        js.submit(done);
     }
     reRunJob(oldJobId:string, failedTasksOnly:boolean) : IGridJob {
-        let js = new JobReSubmmit(this.$, this.tokenGrant, this.access, oldJobId, failedTasksOnly);
-        return new GridJob(this.$, this.tokenGrant, this.access, js);
+        let js = new JobReSubmmit(this.$driver, this.tokenGrant, this.access, oldJobId, failedTasksOnly);
+        return new GridJob(this.$driver, this.tokenGrant, this.access, js);
     }
     reSumbitJob(oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) : void {
-        let js = new JobReSubmmit(this.$, this.tokenGrant, this.access, oldJobId, failedTasksOnly);
-        js.submit(null, done);
+        let js = new JobReSubmmit(this.$driver, this.tokenGrant, this.access, oldJobId, failedTasksOnly);
+        js.submit(done);
     }
     getMostRecentJobs(done: (err:any, jobInfos:IJobInfo[]) => void) : void {
         this.$J("GET", '/services/job/most_recent', {}, done);
@@ -303,33 +192,55 @@ class Session extends ApiCallBase implements ISession {
         let path = "/services/dispatcher/node/" + nodeId + "/" + (enabled? "enable": "disable");
         this.$J("GET", path, {}, done);
     }
+}
+
+import * as $browser from 'rest-browser';
+
+class GridBrowserSession extends Session implements ISession {
+    constructor() {
+        super($browser.get({EventSource: global['EventSource']}), null, null);
+    }
     logout(done?:(err:any) => void) : void {
         let path = "/logout";
-        if (global["window"])  // browser logout
-            window.location.href = path;
-        else    // automation client logout
-            this.$J("GET", path, {}, (typeof done=== 'function' ? done : (err:any, ret: any) => {}));
+        window.location.href = path;
     }
 }
 
-export class GridClient {
+export class GridBrowserClient {
+    static getSession() : ISession {
+        return new GridBrowserSession();
+    }
+}
+
+import * as $node from 'rest-node';
+
+class GridNodeSession extends Session implements ISession {
+    constructor(access: oauth2.Access, tokenGrant: oauth2.ITokenGrant) {
+        super($node.get(), tokenGrant, access);   // TODO:
+    }
+    logout(done?:(err:any) => void) : void {
+        let path = "/logout";
+        this.$J("GET", path, {}, (typeof done=== 'function' ? done : (err:any, ret: any) => {}));
+    }
+}
+
+/*
+export class GridNodeClient {
     private tokenGrant: oauth2.TokenGrant = null;
     constructor(private jQuery:any, private __config: IGridClientConfig) {
         this.tokenGrant = new oauth2.TokenGrant(this.jQuery, __config.oauth2Options.tokenGrantOptions, __config.oauth2Options.clientAppSettings);
-    }
-    static webSession(jQuery:any) : ISession {
-        return new Session(jQuery, null, null);
     }
     login(username: string, password: string, done:(err:any, session: ISession) => void) {
         this.tokenGrant.getAccessTokenFromPassword(username, password, (err, access: oauth2.Access) => {
             if (err) {
                 done(err, null);
             } else {
-                let session = new Session(this.jQuery, this.tokenGrant, access);
+                let session = new GridNodeSession(this.tokenGrant, access);
                 done(null, session);
             }
         });
     }
 }
+*/
 
-export {MsgBroker, IMessage, GridMessage, ClientMessaging, IJobProgress, IJobInfo, IJobResult, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON};
+export {GridMessage, ClientMessaging, IJobProgress, IJobInfo, IJobResult, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON};

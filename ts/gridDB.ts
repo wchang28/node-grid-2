@@ -1,5 +1,5 @@
 import * as events from 'events';
-import {IGridUserProfile, IGridUser, IJobProgress, IJobInfo, IJobResult, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
+import {IGridUserProfile, IGridUser, IGridJobSubmit, IJobProgress, IJobInfo, IJobResult, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from './messaging';
 import {SimpleMSSQL, Configuration, Options} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
 export {Configuration as SQLConfiguration, Options as DBOptions} from 'mssql-simple';
@@ -44,11 +44,33 @@ export class GridDB extends SimpleMSSQL {
         });
     }
     */
-    registerNewJob(user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
+    private static makeJobXML(jobSubmit:IGridJobSubmit) : string {
+        if (!jobSubmit || !jobSubmit.tasks || jobSubmit.tasks.length === 0) {
+            throw errors.no_task_for_job;
+        }
+        let doc = new DOMParser().parseFromString('<?xml version="1.0"?>','text/xml');
+        let root = doc.createElement('job');
+        if (jobSubmit.description) root.setAttribute('description', jobSubmit.description);
+        if (jobSubmit.cookie) root.setAttribute('cookie', jobSubmit.cookie);
+        doc.appendChild(root);
+        for (let i in jobSubmit.tasks) {
+            let task = jobSubmit.tasks[i];
+            let el = doc.createElement('t');
+            if (!task.cmd) throw errors.bad_task_cmd;
+            el.setAttribute('c', task.cmd);
+            if (task.cookie) el.setAttribute('k', task.cookie);
+            if (task.stdin) el.setAttribute('i', task.stdin);
+            root.appendChild(el);
+        }
+        let serializer = new XMLSerializer();
+        return serializer.serializeToString(doc);
+    }
+    registerNewJob(user: IGridUser, jobSubmit:IGridJobSubmit, done:(err:any, jobProgress: IJobProgress) => void) : void {
         let sql = "exec [dbo].[stp_NodeJSGridSubmitJob]";
         sql += " @userId='" + GridDB.sqlEscapeString(user.userId) + "'";
         sql += ",@priority=" + GridDB.sqlEscapeString(user.profile.priority.toString());
-        sql += ",@jobXML='" + GridDB.sqlEscapeString(jobXML) + "'";
+        let xml = GridDB.makeJobXML(jobSubmit);
+        sql += ",@jobXML='" + GridDB.sqlEscapeString(xml) + "'";
         this.query(sql, {}, (err: any, recordsets: any) : void => {
             if (err)
                 done(err, null);
