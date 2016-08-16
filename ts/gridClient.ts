@@ -20,7 +20,7 @@ let clientOptions: rcf.IMessageClientOptions = {reconnetIntervalMS: 10000};
 
 // job submission class
 class JobSubmmit extends rcf.AuthorizedRestApi implements IJobSubmitter {
-    constructor($drver: rcf.$Driver, tokenGrant: oauth2.ITokenGrant, access:oauth2.Access, private __jobSubmit:IGridJobSubmit) {
+    constructor($drver: rcf.$Driver, access:oauth2.Access, tokenGrant: oauth2.ITokenGrant, private __jobSubmit:IGridJobSubmit) {
         super($drver, access, tokenGrant);
     }
     submit(done: (err:any, jobId:string) => void) : void {
@@ -35,7 +35,7 @@ function getJobOpPath(jobId:string, op:string):string {return '/services/job/' +
 
 // job re-submission class
 class JobReSubmmit extends rcf.AuthorizedRestApi implements IJobSubmitter {
-    constructor($drver: rcf.$Driver, tokenGrant: oauth2.ITokenGrant, access:oauth2.Access, private __oldJobId:string, private __failedTasksOnly:boolean) {
+    constructor($drver: rcf.$Driver, access:oauth2.Access, tokenGrant: oauth2.ITokenGrant, private __oldJobId:string, private __failedTasksOnly:boolean) {
         super($drver, access, tokenGrant);
     }
     submit(done: (err:any, jobId:string) => void) : void {
@@ -62,7 +62,7 @@ export interface IGridJob {
 // 4. error
 class GridJob extends rcf.AuthorizedRestApi implements IGridJob {
     private __jobId:string = null;
-    constructor($drver: rcf.$Driver, tokenGrant: oauth2.ITokenGrant, access:oauth2.Access, private __js:IJobSubmitter) {
+    constructor($drver: rcf.$Driver, access:oauth2.Access, tokenGrant: oauth2.ITokenGrant, private __js:IJobSubmitter) {
         super($drver, access, tokenGrant);
     }
     private onJobProgress(msgClient: rcf.IMessageClient, jp: IJobProgress) {
@@ -86,8 +86,8 @@ class GridJob extends rcf.AuthorizedRestApi implements IGridJob {
                         //console.log('msg-rcvd: ' + JSON.stringify(msg));
                         let gMsg: GridMessage = msg.body;
                         if (gMsg.type === 'status-changed') {
-                            let jp: IJobProgress = gMsg.content;
-                            this.onJobProgress(msgClient, jp);
+                            let jobProgress: IJobProgress = gMsg.content;
+                            this.onJobProgress(msgClient, jobProgress);
                         }
                     }
                     ,{}
@@ -96,8 +96,10 @@ class GridJob extends rcf.AuthorizedRestApi implements IGridJob {
                             msgClient.disconnect();
                             this.emit('error', err);
                         } else {  // topic subscription successful
-                            // TODO: do a job progress poll
-                            //this.onJobProgress(msgClient, jp);
+                            let path = getJobOpPath(jobId, 'progress');
+                            this.$J("GET", path, {}, (err:any, jobProgress:IJobProgress) => {
+                                this.onJobProgress(msgClient, jobProgress);
+                            });
                         }
                     });
                 });
@@ -132,27 +134,27 @@ export interface ISession {
     logout: (done?:(err:any) => void) => void;
 }
 
-class Session extends rcf.AuthorizedRestApi {
-    constructor($drver: rcf.$Driver, tokenGrant: oauth2.ITokenGrant, access: oauth2.Access) {
+export class Session extends rcf.AuthorizedRestApi {
+    constructor($drver: rcf.$Driver, access: oauth2.Access, tokenGrant: oauth2.ITokenGrant) {
         super($drver, access, tokenGrant);
     }
     createMsgClient() : rcf.IMessageClient {
         return this.$M(eventStreamPathname, clientOptions);
     }
     runJob(jobSubmit:IGridJobSubmit) : IGridJob {
-        let js = new JobSubmmit(this.$driver, this.tokenGrant, this.access, jobSubmit);
-        return new GridJob(this.$driver, this.tokenGrant, this.access, js);
+        let js = new JobSubmmit(this.$driver, this.access, this.tokenGrant, jobSubmit);
+        return new GridJob(this.$driver, this.access, this.tokenGrant, js);
     }
     sumbitJob(jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) : void {
-        let js = new JobSubmmit(this.$driver, this.tokenGrant, this.access, jobSubmit);
+        let js = new JobSubmmit(this.$driver, this.access, this.tokenGrant, jobSubmit);
         js.submit(done);
     }
     reRunJob(oldJobId:string, failedTasksOnly:boolean) : IGridJob {
-        let js = new JobReSubmmit(this.$driver, this.tokenGrant, this.access, oldJobId, failedTasksOnly);
-        return new GridJob(this.$driver, this.tokenGrant, this.access, js);
+        let js = new JobReSubmmit(this.$driver, this.access, this.tokenGrant, oldJobId, failedTasksOnly);
+        return new GridJob(this.$driver, this.access, this.tokenGrant, js);
     }
     reSumbitJob(oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) : void {
-        let js = new JobReSubmmit(this.$driver, this.tokenGrant, this.access, oldJobId, failedTasksOnly);
+        let js = new JobReSubmmit(this.$driver, this.access, this.tokenGrant, oldJobId, failedTasksOnly);
         js.submit(done);
     }
     getMostRecentJobs(done: (err:any, jobInfos:IJobInfo[]) => void) : void {
@@ -194,29 +196,11 @@ class Session extends rcf.AuthorizedRestApi {
     }
 }
 
-import * as $browser from 'rest-browser';
-
-class GridBrowserSession extends Session implements ISession {
-    constructor() {
-        super($browser.get({EventSource: global['EventSource']}), null, null);
-    }
-    logout(done?:(err:any) => void) : void {
-        let path = "/logout";
-        window.location.href = path;
-    }
-}
-
-export class GridBrowserClient {
-    static getSession() : ISession {
-        return new GridBrowserSession();
-    }
-}
-
 import * as $node from 'rest-node';
 
 class GridNodeSession extends Session implements ISession {
     constructor(access: oauth2.Access, tokenGrant: oauth2.ITokenGrant) {
-        super($node.get(), tokenGrant, access);   // TODO:
+        super($node.get(), access, tokenGrant);   // TODO:
     }
     logout(done?:(err:any) => void) : void {
         let path = "/logout";
