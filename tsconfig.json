@@ -12,6 +12,7 @@
   "files": [
     "./typings/index.d.ts",
     "./ts/app.ts",
+    "./ts/adminApp.ts",
     "./ts/launcherApp.ts",
     "./ts/test/clientTest.ts" ,
     "./ts/ui/main.tsx"

@@ -15,32 +15,12 @@
 			,"port": 26355
 		}
 	}
-	,"adminWebServerConfig":
+    ,"clientAppSettings":
 	{
-		"http":
-		{
-			"host": "0.0.0.0"
-			,"port": 26356
-		}
+		"client_id": "5OI0egJLTRRoEzcJY20NN3_wJj3CF0q9KpZq4d9gS65wFJxGqhpBls6XTw06jJHpSsmfc-E-Ss6u8pJ6siA2"
+		,"client_secret": "0d42a918fabe33f8"
+		,"redirect_uri": "http://127.0.0.1:26356/authcode_callback"
 	}
-	,"sessionOptions":
-	{
-		"sessionIdSignSecret": "949t3hq4t3jgqgqnd6906"
-	}
-    ,"oauth2Options":
-     {
-        "tokenGrantOptions":
-        {
-            "url": "http://127.0.0.1:33821/services/oauth2/token"
-        }
-        ,"clientAppSettings":
-        {
-            "client_id": "5OI0egJLTRRoEzcJY20NN3_wJj3CF0q9KpZq4d9gS65wFJxGqhpBls6XTw06jJHpSsmfc-E-Ss6u8pJ6siA2"
-            ,"client_secret": "0d42a918fabe33f8"
-			,"redirect_uri": "http://127.0.0.1:26356/authcode_callback"
-        }
-		,"authorizationRedirectUrl": "http://127.0.0.1:33821/services/oauth2/authorize"
-    }
 	,"authorizeEndpointOptions":
 	{
 		"instance_url": "http://127.0.0.1:52131"
