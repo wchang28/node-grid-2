@@ -226,7 +226,6 @@ gridDB.on('error', (err: any) => {
     // evenstream located at:
     // node: /node-app/events/event_stream
     // client: /services/events/event_stream
-    // admin: /services/events/event_stream
 
     startServer(config.nodeWebServerConfig, nodeApp, (secure:boolean, host:string, port:number) => {
         console.log('node app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
