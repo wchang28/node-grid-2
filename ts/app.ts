@@ -91,7 +91,7 @@ function authorizedClientMiddleware(req: express.Request, res: express.Response,
 
 interface AccessStore {
     access: oauth2.Access;
-    grantTime: Date;
+    grantTime: number;
 }
 
 function hasAccessMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
@@ -113,13 +113,13 @@ function autoRefreshTokenMiddleware(req: express.Request, res: express.Response,
     let now = new Date();
     let tokenAutoRefreshIntervalHours = 4;
     let refreshIntervalMS = tokenAutoRefreshIntervalHours * 60 * 60 * 1000;
-    if (access.refresh_token && now.getTime() - accessStore.grantTime.getTime() > refreshIntervalMS) {
+    if (access.refresh_token && now.getTime() - accessStore.grantTime > refreshIntervalMS) {
         tokenGrant.refreshAccessToken(access.refresh_token, (err:any, access: oauth2.Access) => {
             if (err)
                 next();
             else {
                 accessStore.access = access;
-                accessStore.grantTime = new Date();
+                accessStore.grantTime = new Date().getTime();
                 next();
             }
         });
@@ -336,7 +336,7 @@ gridDB.on('error', (err: any) => {
                             if (ar.length > 0) redirectUrl += '?' + ar.join('&');
                         } catch(e) {}
                     }
-                    req.session["access"] = {access, grantTime: new Date()};	// store the access token in session
+                    req.session["access"] = {access, grantTime: new Date().getTime()};	// store the access token in session
                     res.redirect(redirectUrl);
                 }
             });
