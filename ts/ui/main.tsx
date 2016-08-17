@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, GridClient, ISession, IGridJobSubmit, ITaskItem, IGridUser, IJobProgress, jQuery as $} from '../gridBrowserClient';
+import * as $ from 'jquery';
+import {IMessageClient, GridClient, ISession, IGridJobSubmit, ITaskItem, IGridUser, IJobProgress} from '../gridBrowserClient';
 import * as appContent from './appContent';
 import {TestJobs} from '../test/testJobs';
 

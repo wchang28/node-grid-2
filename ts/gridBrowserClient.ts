@@ -17,8 +17,6 @@ export class GridClient {
     }
 }
 
-export {jQuery} from 'rest-browser';
-
 export {Utils} from  './utils';
 export {ISession} from './gridClient';
 export * from './messaging';
