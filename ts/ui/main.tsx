@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as $ from 'jquery';
-import {MsgBroker, GridClient, ISession, IGridJobSubmit, ITaskItem, IGridUser} from '../gridClient';
+import {IMessageClient, GridClient, ISession, IGridJobSubmit, ITaskItem, IGridUser, IJobProgress} from '../gridBrowserClient';
 import * as appContent from './appContent';
 import {TestJobs} from '../test/testJobs';
 
@@ -16,34 +16,34 @@ interface IGridAdminAppState {
 }
 
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
-    private msgBroker: MsgBroker = null;
+    private msgClient: IMessageClient = null;
     constructor(props:IGridAdminAppProps) {
         super(props);
-        this.msgBroker = this.props.session.createMsgBroker(2000);
         this.state = {contentType: appContent.ContentType.Home, conn_id: null};
     }
     protected get session() : ISession {return this.props.session;}
     private getOnSubmitTestEchoJobHandler(numTasks:number) {
         return (event: any) => {
-            this.session.sumbitJob(TestJobs.getEchoTestJob(numTasks), (err:any, jobId:string) => {
+            this.session.sumbitJob(TestJobs.getEchoTestJob(numTasks), (err:any, jp:IJobProgress) => {
                 if (err)
                     console.log('!!! Error submitting job: ' + JSON.stringify(err));
                 else
-                    console.log('test job submitted, jobId=' + jobId);
+                    console.log('test job submitted, jobId=' + jp.jobId);
             });
             return false;
         };
     }
     private onSubmitTestSleepJob(event: any) {
-        this.session.sumbitJob(TestJobs.getSleepTestJob(), (err:any, jobId:string) => {
+        this.session.sumbitJob(TestJobs.getSleepTestJob(), (err:any, jp:IJobProgress) => {
             if (err)
                 console.log('!!! Error submitting job: ' + JSON.stringify(err));
             else
-                console.log('test job submitted, jobId=' + jobId);
+                console.log('test job submitted, jobId=' + jp.jobId);
         });
         return false;
     }
     componentDidMount() {
+        this.msgClient = this.props.session.createMsgClient();
 		$(window).on('hashchange', () => {
 			//alert('hash change: ' + window.location.hash);
             let contentType: appContent.ContentType = appContent.ContentType.Home;
@@ -58,24 +58,23 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
             }
             this.setState({contentType});
 		});
-        this.msgBroker.on('connect', (conn_id:string) => {
+        this.msgClient.on('connect', (conn_id:string) => {
             console.log('connected to the dispatcher: conn_id=' + conn_id);
             this.setState({conn_id: conn_id});
         }).on('error', (err: any) => {
             console.error('!!! Error:' + JSON.stringify(err));
             this.setState({conn_id: null});
         });
-        this.msgBroker.connect();
     }
     componentWillUnmount() {
         //console.log('componentWillUnmount()')
-        this.msgBroker.disconnect();
+        this.msgClient.disconnect();
     }
     onLogout(e:any) {
         this.session.logout();
     }
     getAppContent() : any {
-        return (<appContent.AppContent msgBroker={this.msgBroker} contentType={this.state.contentType} currConnId={this.state.conn_id} session={this.session} currentUser={this.props.currentUser}/>);
+        return (<appContent.AppContent msgClient={this.msgClient} contentType={this.state.contentType} currConnId={this.state.conn_id} session={this.session} currentUser={this.props.currentUser}/>);
     }
     render() {
         let currentUserName = this.props.currentUser.displayName + ' ';
@@ -103,4 +102,4 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
 }
 
 //console.log('__currentUser='+JSON.stringify(global['__currentUser']));
-ReactDOM.render(<GridAdminApp currentUser={global['__currentUser']} session={GridClient.webSession($)}/>, document.getElementById('main'));
+ReactDOM.render(<GridAdminApp currentUser={global['__currentUser']} session={GridClient.getSession()}/>, document.getElementById('main'));

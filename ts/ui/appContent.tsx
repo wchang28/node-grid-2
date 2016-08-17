@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {MsgBroker, ISession, IGridUser} from '../gridClient';
+import {IMessageClient, ISession, IGridUser} from '../gridBrowserClient';
 import * as homeContent from "./homeContent";
 import * as jobsContent from "./jobsContent";
 import * as connectionsContent from "./connectionsContent";
@@ -12,7 +12,7 @@ export enum ContentType {
 };
 
 export interface IAppContentProps {
-    msgBroker: MsgBroker;
+    msgClient: IMessageClient;
     session: ISession;
     contentType: ContentType;
     currConnId: string;
@@ -32,11 +32,11 @@ export class AppContent extends React.Component<IAppContentProps, IAppContentSta
         } else {
             switch(this.props.contentType) {
                 case ContentType.Home:
-                    return (<homeContent.HomeContent msgBroker={this.props.msgBroker} session={this.props.session} currentUser={this.props.currentUser}/>);
+                    return (<homeContent.HomeContent msgClient={this.props.msgClient} session={this.props.session} currentUser={this.props.currentUser}/>);
                case ContentType.Jobs:
-                    return (<jobsContent.JobsContent msgBroker={this.props.msgBroker} session={this.props.session} currentUser={this.props.currentUser}/>);
+                    return (<jobsContent.JobsContent msgClient={this.props.msgClient} session={this.props.session} currentUser={this.props.currentUser}/>);
                 case ContentType.Connections:
-                    return (<connectionsContent.ConnectionsContent msgBroker={this.props.msgBroker} session={this.props.session} currConnId={this.props.currConnId}/>);
+                    return (<connectionsContent.ConnectionsContent msgClient={this.props.msgClient} session={this.props.session} currConnId={this.props.currConnId}/>);
                  default:
                     return (<div>Unknown content !!!</div>);
             }

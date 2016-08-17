@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {MsgBroker, IMessage, GridMessage, ClientMessaging, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON} from '../gridClient';
+import {IMessageClient, IMessage, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON} from '../gridBrowserClient';
 
 export interface IHomeContentProps {
-    msgBroker: MsgBroker;
+    msgClient: IMessageClient;
     session: ISession;
     currentUser: IGridUser;
 }
@@ -20,7 +20,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         super(props);
         this.state = {sub_id: null};
     }
-    protected get msgBroker(): MsgBroker {return this.props.msgBroker;}
+    protected get msgClient(): IMessageClient {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
     protected handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'ctrl-changed') {
@@ -53,7 +53,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
     componentDidMount() {
         console.log('HomeContent.componentDidMount()');
         this.getDispatcherJSON();
-        let sub_id = this.msgBroker.subscribe(ClientMessaging.getDispatcherTopic()
+        let sub_id = this.msgClient.subscribe(Utils.getDispatcherTopic()
         ,(msg: IMessage) => {
             this.handleMessages(msg.body);
         }
@@ -72,7 +72,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         console.log('HomeContent.componentWillUnmount()');
         if (this.state.sub_id) {
             let sub_id = this.state.sub_id;
-            this.msgBroker.unsubscribe(sub_id, (err:any) => {
+            this.msgClient.unsubscribe(sub_id, (err:any) => {
                 if (err)
                     console.error('!!! Error unsubscribing subscription ' + sub_id);
                 else

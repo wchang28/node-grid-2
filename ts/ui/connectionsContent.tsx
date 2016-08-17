@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {MsgBroker, IMessage, GridMessage, ClientMessaging, ISession, IGridUser} from '../gridClient';
+import {IMessageClient, IMessage, GridMessage, Utils, ISession, IGridUser} from '../gridBrowserClient';
 
 export interface IConnectionsContentProps {
-    msgBroker: MsgBroker;
+    msgClient: IMessageClient;
     session: ISession;
     currConnId: string;
 }
@@ -24,7 +24,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
         super(props);
         this.state = {sub_id: null, connections:null};
     }
-    protected get msgBroker(): MsgBroker {return this.props.msgBroker;}
+    protected get msgClient(): IMessageClient {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
     protected handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'connections-changed') {
@@ -47,7 +47,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
     componentDidMount() {
         console.log('ConnectionsContent.componentDidMount()');
         this.getConnections();
-        let sub_id = this.msgBroker.subscribe(ClientMessaging.getConnectionsTopic()
+        let sub_id = this.msgClient.subscribe(Utils.getConnectionsTopic()
         ,(msg: IMessage) => {
             this.handleMessages(msg.body);
         }
@@ -66,7 +66,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
         console.log('ConnectionsContent.componentWillUnmount()');
         if (this.state.sub_id) {
             let sub_id = this.state.sub_id;
-            this.msgBroker.unsubscribe(sub_id, (err:any) => {
+            this.msgClient.unsubscribe(sub_id, (err:any) => {
                 if (err)
                     console.error('!!! Error unsubscribing subscription ' + sub_id);
                 else

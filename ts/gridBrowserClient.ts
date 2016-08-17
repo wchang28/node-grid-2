@@ -1,7 +1,7 @@
 import * as $browser from 'rest-browser';
-import {ISession, Session} from './gridClient';
+import {ISession, SessionBase} from './gridClient';
 
-class GridSession extends Session implements ISession {
+class GridSession extends SessionBase implements ISession {
     constructor() {
         super($browser.get({EventSource: global['EventSource']}), null, null);
     }
@@ -17,4 +17,7 @@ export class GridClient {
     }
 }
 
+export {Utils} from  './utils';
+export {ISession} from './gridClient';
 export * from './messaging';
+export {IMessageClient, IMessage} from 'rcf';

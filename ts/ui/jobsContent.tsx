@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {MsgBroker, IMessage, GridMessage, ClientMessaging, ISession, IGridUser, IJobInfo} from '../gridClient';
+import {IMessageClient, IMessage, GridMessage, Utils, ISession, IGridUser, IJobInfo} from '../gridBrowserClient';
 
 export interface IJobsContentProps {
-    msgBroker: MsgBroker;
+    msgClient: IMessageClient;
     session: ISession;
     currentUser: IGridUser;
 }
@@ -18,7 +18,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
         super(props);
         this.state = {sub_id: null, jobs:null};
     }
-    protected get msgBroker(): MsgBroker {return this.props.msgBroker;}
+    protected get msgClient(): IMessageClient {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
     protected handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'tracking-changed') {
@@ -40,7 +40,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
     componentDidMount() {
         console.log('JobsContent.componentDidMount()');
         this.getMostRecentJobs();
-        let sub_id = this.msgBroker.subscribe(ClientMessaging.getJobsTrackingTopic()
+        let sub_id = this.msgClient.subscribe(Utils.getJobsTrackingTopic()
         ,(msg: IMessage) => {
             this.handleMessages(msg.body);
         }
@@ -59,7 +59,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
         console.log('JobsContent.componentWillUnmount()');
         if (this.state.sub_id) {
             let sub_id = this.state.sub_id;
-            this.msgBroker.unsubscribe(sub_id, (err:any) => {
+            this.msgClient.unsubscribe(sub_id, (err:any) => {
                 if (err)
                     console.error('!!! Error unsubscribing subscription ' + sub_id);
                 else
