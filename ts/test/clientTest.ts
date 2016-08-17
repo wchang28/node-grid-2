@@ -1,5 +1,5 @@
 let $ = require('jquery-no-dom');
-import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, IJobResult, ITaskItem} from '../gridClient';
+import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, IJobResult, ITaskItem} from '../gridNodeClient';
 import {TestJobs} from './testJobs';
 
 let config: IGridClientConfig =
