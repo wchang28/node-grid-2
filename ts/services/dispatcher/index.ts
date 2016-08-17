@@ -1,8 +1,8 @@
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
-import {Dispatcher, INodeItem} from '../../dispatcher';
-import {IGridUser} from '../../messaging';
+import {Dispatcher} from '../../dispatcher';
+import {IGridUser, INodeItem} from '../../messaging';
 import * as errors from '../../errors';
 
 let router = express.Router();

@@ -1,9 +1,8 @@
 import * as events from 'events';
 import * as rcf from 'rcf';
 import {ClientMessaging} from './clientMessaging';
-import {GridMessage, IJobProgress, IJobInfo, IJobResult, IGridUser, IGridJobSubmit} from './messaging';
+import {GridMessage, IJobProgress, IJobInfo, IJobResult, IGridUser, IGridJobSubmit, IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from './messaging';
 import {DOMParser, XMLSerializer} from 'xmldom';
-import {IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from './dispatcher';
 import * as oauth2 from 'oauth2';
 import * as errors from './errors';
 
@@ -12,7 +11,7 @@ export interface IGridClientConfig {
 }
 
 interface IJobSubmitter {
-    submit: (done: (err:any, jobId:string) => void) => void;
+    submit: (done: (err:any, jobProgress:IJobProgress) => void) => void;
 }
 
 let eventStreamPathname = '/services/events/event_stream';
@@ -23,9 +22,9 @@ class JobSubmmit extends rcf.AuthorizedRestApi implements IJobSubmitter {
     constructor($drver: rcf.$Driver, access:oauth2.Access, tokenGrant: oauth2.ITokenGrant, private __jobSubmit:IGridJobSubmit) {
         super($drver, access, tokenGrant);
     }
-    submit(done: (err:any, jobId:string) => void) : void {
+    submit(done: (err:any, jobProgress:IJobProgress) => void) : void {
         this.$J('POST', '/services/job/submit', this.__jobSubmit, (err:any, ret:any) => {
-            done(err, (err ? null: ret['jobId']));
+            done(err, (err ? null: ret));
         });
     }
 }
@@ -38,13 +37,13 @@ class JobReSubmmit extends rcf.AuthorizedRestApi implements IJobSubmitter {
     constructor($drver: rcf.$Driver, access:oauth2.Access, tokenGrant: oauth2.ITokenGrant, private __oldJobId:string, private __failedTasksOnly:boolean) {
         super($drver, access, tokenGrant);
     }
-    submit(done: (err:any, jobId:string) => void) : void {
+    submit(done: (err:any, jobProgress:IJobProgress) => void) : void {
         let path = getJobOpPath(this.__oldJobId, 're_submit');
         let data:any = {
             failedTasksOnly: (this.__failedTasksOnly ? '1' : '0')
         };
         this.$J('GET', path, data, (err: any, ret: any) => {
-            done(err, (err ? null: ret['jobId']));
+            done(err, (err ? null: ret));
         });
     }
 }
@@ -56,58 +55,69 @@ export interface IGridJob {
 };
 
 // will emit the follwoing events:
-// 1. submitted
-// 2. status-changed
-// 3. done
+// 1. submitted (jobId)
+// 2. status-changed (jobProgress)
+// 3. done (jobProgress)
 // 4. error
 class GridJob extends rcf.AuthorizedRestApi implements IGridJob {
     private __jobId:string = null;
     constructor($drver: rcf.$Driver, access:oauth2.Access, tokenGrant: oauth2.ITokenGrant, private __js:IJobSubmitter) {
         super($drver, access, tokenGrant);
     }
-    private onJobProgress(msgClient: rcf.IMessageClient, jp: IJobProgress) {
+    private static jobDone(jobProgress: IJobProgress) : boolean {
+        return (jobProgress.status === 'FINISHED' || jobProgress.status === 'ABORTED');
+    }
+    private onError(msgClient: rcf.IMessageClient, err:any) : void {
+        this.emit('error', err);
+        if (msgClient) msgClient.disconnect();
+    }
+    // returns true if job is still running, false otherwise
+    private onJobProgress(msgClient: rcf.IMessageClient, jp: IJobProgress) : boolean {
         this.emit('status-changed', jp);
-        if (jp.status === 'FINISHED' || jp.status === 'ABORTED') {
-            msgClient.disconnect();
+        if (GridJob.jobDone(jp)) {
+            if (msgClient) msgClient.disconnect();
             this.emit('done', jp);
-        }
+            return false;
+        } else
+            return true;
     }
     run(): void {
         // submit the job
-        this.__js.submit((err:any, jobId:string) => {
+        this.__js.submit((err:any, jobProgress: IJobProgress) => {
             if (err) {  // submit failed
-                this.emit('error', err);
+                this.onError(null, err);
             } else {    // submit successful
-                this.__jobId = jobId;
+                this.__jobId = jobProgress.jobId;
                 this.emit('submitted', this.__jobId);
-                let msgClient = this.$M(eventStreamPathname, clientOptions);
-                msgClient.on('connect', (conn_id:string) : void => {
-                    msgClient.subscribe('/topic...', (msg: rcf.IMessage) => {   // TODO:
-                        //console.log('msg-rcvd: ' + JSON.stringify(msg));
-                        let gMsg: GridMessage = msg.body;
-                        if (gMsg.type === 'status-changed') {
-                            let jobProgress: IJobProgress = gMsg.content;
-                            this.onJobProgress(msgClient, jobProgress);
-                        }
-                    }
-                    ,{}
-                    ,(err: any) => {
-                        if (err) {  // topic subscription failed
-                            msgClient.disconnect();
-                            this.emit('error', err);
-                        } else {  // topic subscription successful
-                            let path = getJobOpPath(jobId, 'progress');
-                            this.$J("GET", path, {}, (err:any, jobProgress:IJobProgress) => {
-                                this.onJobProgress(msgClient, jobProgress);
-                            });
-                        }
-                    });
-                });
+                if (this.onJobProgress(null, jobProgress)) {
+                    let msgClient = this.$M(eventStreamPathname, clientOptions);
 
-                msgClient.on('error', (err: any) : void => {
-                    msgClient.disconnect();
-                    this.emit('error', err);
-                });
+                    msgClient.on('connect', (conn_id:string) : void => {
+                        msgClient.subscribe(ClientMessaging.getJobNotificationTopic(this.jobId), (msg: rcf.IMessage) => {   // TODO:
+                            //console.log('msg-rcvd: ' + JSON.stringify(msg));
+                            let gMsg: GridMessage = msg.body;
+                            if (gMsg.type === 'status-changed') {
+                                let jobProgress: IJobProgress = gMsg.content;
+                                this.onJobProgress(msgClient, jobProgress);
+                            }
+                        }
+                        ,{}
+                        ,(err: any) => {
+                            if (err) {  // topic subscription failed
+                                this.onError(msgClient, err);
+                            } else {  // topic subscription successful
+                                let path = getJobOpPath(this.jobId, 'progress');
+                                this.$J("GET", path, {}, (err:any, jobProgress:IJobProgress) => {
+                                    this.onJobProgress(msgClient, jobProgress);
+                                });
+                            }
+                        });
+                    });
+
+                    msgClient.on('error', (err: any) : void => {
+                        this.onError(msgClient, err);
+                    });
+                }
             }
         });
     }
@@ -118,9 +128,9 @@ class GridJob extends rcf.AuthorizedRestApi implements IGridJob {
 export interface ISession {
     createMsgClient: () => rcf.IMessageClient;
     runJob: (jobSubmit:IGridJobSubmit) => IGridJob;
-    sumbitJob: (jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) => void;
+    sumbitJob: (jobSubmit:IGridJobSubmit, done: (err:any, jobProgress:IJobProgress) => void) => void;
     reRunJob: (oldJobId:string, failedTasksOnly:boolean) => IGridJob;
-    reSumbitJob: (oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) => void;
+    reSumbitJob: (oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobProgress:IJobProgress) => void) => void;
     getMostRecentJobs: (done: (err:any, jobInfos:IJobInfo[]) => void) => void;
     killJob: (jobId: string, done: (err:any, ret:any) => void) => void;
     getJobProgress: (jobId: string, done: (err:any, jobProgress:IJobProgress) => void) => void;
@@ -145,7 +155,7 @@ export class Session extends rcf.AuthorizedRestApi {
         let js = new JobSubmmit(this.$driver, this.access, this.tokenGrant, jobSubmit);
         return new GridJob(this.$driver, this.access, this.tokenGrant, js);
     }
-    sumbitJob(jobSubmit:IGridJobSubmit, done: (err:any, jobId:string) => void) : void {
+    sumbitJob(jobSubmit:IGridJobSubmit, done: (err:any, jobProgress:IJobProgress) => void) : void {
         let js = new JobSubmmit(this.$driver, this.access, this.tokenGrant, jobSubmit);
         js.submit(done);
     }
@@ -153,7 +163,7 @@ export class Session extends rcf.AuthorizedRestApi {
         let js = new JobReSubmmit(this.$driver, this.access, this.tokenGrant, oldJobId, failedTasksOnly);
         return new GridJob(this.$driver, this.access, this.tokenGrant, js);
     }
-    reSumbitJob(oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobId:string) => void) : void {
+    reSumbitJob(oldJobId:string, failedTasksOnly:boolean, done: (err:any, jobProgress:IJobProgress) => void) : void {
         let js = new JobReSubmmit(this.$driver, this.access, this.tokenGrant, oldJobId, failedTasksOnly);
         js.submit(done);
     }
@@ -200,7 +210,7 @@ import * as $node from 'rest-node';
 
 class GridNodeSession extends Session implements ISession {
     constructor(access: oauth2.Access, tokenGrant: oauth2.ITokenGrant) {
-        super($node.get(), access, tokenGrant);   // TODO:
+        super($node.get(), access, tokenGrant);
     }
     logout(done?:(err:any) => void) : void {
         let path = "/logout";
@@ -227,4 +237,3 @@ export class GridNodeClient {
 }
 */
 
-export {GridMessage, ClientMessaging, IJobProgress, IJobInfo, IJobResult, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON};

@@ -8,7 +8,6 @@ import {GridDB} from './gridDB';
 import {TaskRunner} from './taskRunner';
 import treeKill = require('tree-kill');
 import {IGridDBConfiguration} from './gridDBConfig';
-//import * as resIntf from 'rest-api-interfaces';
 
 interface IConfiguration {
     numCPUs?: number;

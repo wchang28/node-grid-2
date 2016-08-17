@@ -2,16 +2,10 @@
 import * as events from 'events';
 import * as _ from 'lodash';
 
-import {INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IJobTrackItem, IRunningProcessByNode} from './messaging';
+import {INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON} from './messaging';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
-}
-
-export interface INodeItem extends INode {
-    enabled: boolean;
-    numCPUs: number;
-    cpusUsed: number;
 }
 
 interface ICPUItem {
@@ -22,19 +16,13 @@ interface ITaskItemDispatch extends ITaskItem {
     priority: number;  // priority
 }
 
-export interface IQueueJSON {
-    priorities: number[];
-    numJobs: number;
-    numTasks: number;
-}
-
 export interface INodeMessaging {
     dispatchTaskToNode: (nodeId: string, task: ITask, done: (err: any) => void) => void;
     killProcessesTree: (nodeId: string, pids:number[], done: (err: any) => void) => void;
 }
 
 export interface IGridDB {
-    registerNewJob: (user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
+    registerNewJob: (user: IGridUser, jobSubmit: IGridJobSubmit, done:(err:any, jobProgress: IJobProgress) => void) => void;
     reSubmitJob: (user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getJobProgress: (jobId: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
     getMultiJobsProgress: (jobIds:string[], done:(err:any, jobsProgress: IJobProgress[]) => void) => void;
@@ -43,29 +31,6 @@ export interface IGridDB {
     killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
     getMostRecentJobs: (done:(err:any, jobInfos: IJobInfo[]) => void) => void;
 }
-
-export interface IDispControl {
-    queueClosed: boolean;
-    dispatchEnabled: boolean;
-}
-
-export interface IDispStates {
-    dispatching: boolean;
-    numOutstandingAcks: number;
-}
-
-export interface IJobsStatusPollingJSON {
-    numJobs: number;
-    started: boolean; 
-}
-
-export interface IDispatcherJSON {
-    nodes: INodeItem[];
-    queue: IQueueJSON;
-    dispControl: IDispControl;
-    states: IDispStates
-    jobsPolling: IJobsStatusPollingJSON;
-} 
 
 interface IInterval {
     lbound: number;
@@ -351,7 +316,7 @@ class Queue extends events.EventEmitter {
 // 3. job-removed
 // 4. job-status-changed
 class JobsTracker extends events.EventEmitter {
-    private __trackItems: {[jobId: string]: IJobTrackItem} = {};
+    private __trackItems: {[jobId: string]: IJobProgress} = {};
     private __numJobs: number = 0;
     private __statusSeqNumbers: {[status:string]: number} = {
         'SUBMITTED': 0
@@ -362,24 +327,13 @@ class JobsTracker extends events.EventEmitter {
     constructor() {
         super();
     }
-    addJob(jobProgress: IJobProgress, notificationCookie:string = null) : void {
+    addJob(jobProgress: IJobProgress) : void {
         if (!this.__trackItems[jobProgress.jobId]) {
-            let trackItem:IJobTrackItem = {
-                jp: jobProgress
-                ,ncks: (notificationCookie ? [notificationCookie] : null)
-            };
-            this.__trackItems[jobProgress.jobId] = trackItem;
+            this.__trackItems[jobProgress.jobId] = jobProgress;
             this.__numJobs++;
             this.emit('job-added', jobProgress.jobId);
             this.emit('changed');
-            this.emit('job-status-changed', trackItem);
-        }
-    }
-    addNotificationToJob(jobId:number, notificationCookie:string) : void {
-        if (this.__trackItems[jobId]) {
-            if (!this.__trackItems[jobId].ncks) this.__trackItems[jobId].ncks = [];
-            this.__trackItems[jobId].ncks.push(notificationCookie);
-            this.emit('changed');
+            this.emit('job-status-changed', jobProgress);
         }
     }
     private jobTransition(oldJP: IJobProgress, newJP: IJobProgress) : IJobProgress {
@@ -401,18 +355,17 @@ class JobsTracker extends events.EventEmitter {
     // returns the job status has been changed
     private feedJobProgressImpl(jobProgress: IJobProgress) : boolean {
         let jobId = jobProgress.jobId;
-        let trackItem = this.__trackItems[jobId];
-        if (trackItem) {
-            let oldJP = trackItem.jp;
+        let oldJP = this.__trackItems[jobId];
+        if (oldJP) {
             let newJP = this.jobTransition(oldJP, jobProgress);
             if (newJP != oldJP) {  // status changed
-                trackItem.jp = newJP;
+                this.__trackItems[jobId] = newJP;
                 if (newJP.status === 'FINISHED' || newJP.status === 'ABORTED') {
                     delete this.__trackItems[jobId];
                     this.__numJobs--;
                     this.emit('job-removed', jobId);
                 }
-                this.emit('job-status-changed', trackItem);
+                this.emit('job-status-changed', newJP);
                 return true;
             } else
                 return false;
@@ -443,7 +396,7 @@ class JobsTracker extends events.EventEmitter {
     toJSON(): IJobProgress[] {
         let ret: IJobProgress[] = [];
         for (let jobId in this.__trackItems)
-            ret.push(this.__trackItems[jobId].jp);
+            ret.push(this.__trackItems[jobId]);
         return ret;
     }
 }
@@ -596,8 +549,8 @@ export class Dispatcher extends events.EventEmitter {
 
         this.__jobsTacker.on('changed', () => {
             this.emit('jobs-tracking-changed');
-        }).on('job-status-changed', (jobTrackItem: IJobTrackItem) => {
-            this.emit('job-status-changed', jobTrackItem);
+        }).on('job-status-changed', (jobProgress: IJobProgress) => {
+            this.emit('job-status-changed', jobProgress);
         }).on('job-added', (jobId: string) => {
             this.emit('job-submitted', jobId);
         }).on('job-removed', (jobId: string) => {
@@ -729,36 +682,36 @@ export class Dispatcher extends events.EventEmitter {
             }
         }
     }
-    submitJob(user: IGridUser, jobXML: string, done:(err:any, jobId: string) => void, notificationCookie:string = null): void {
+    submitJob(user: IGridUser, jobSubmit: IGridJobSubmit, done:(err:any, jobProgress: IJobProgress) => void): void {
         if (this.queueClosed) {
             done('queue is currently closed', null);
         } else {
-            this.__gridDB.registerNewJob(user, jobXML, (err:any, jobProgress: IJobProgress) => {
+            this.__gridDB.registerNewJob(user, jobSubmit, (err:any, jobProgress: IJobProgress) => {
                 if (!err) {
-                    this.__jobsTacker.addJob(jobProgress, notificationCookie);
+                    this.__jobsTacker.addJob(jobProgress);
                     let tasks: ITaskItem[] = [];
                     for (let i:number = 0; i < jobProgress.numTasks; i++)
                         tasks.push({j: jobProgress.jobId, t: i});
                     this.__queue.enqueue(user.profile.priority, tasks);
-                    done(null, jobProgress.jobId);
+                    done(null, jobProgress);
                 } else {
                     done(err, null);
                 }
             });
         }
     }
-    reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobId: string) => void, notificationCookie:string = null) : void {
+    reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) : void {
         if (this.queueClosed) {
             done('queue is currently closed', null);
         } else {
             this.__gridDB.reSubmitJob(user, oldJobId, failedTasksOnly, (err:any, jobProgress: IJobProgress) => {
                 if (!err) {
-                    this.__jobsTacker.addJob(jobProgress, notificationCookie);
+                    this.__jobsTacker.addJob(jobProgress);
                     let tasks: ITaskItem[] = [];
                     for (let i:number = 0; i < jobProgress.numTasks; i++)
                         tasks.push({j: jobProgress.jobId, t: i});
                     this.__queue.enqueue(user.profile.priority, tasks);
-                    done(null, jobProgress.jobId);
+                    done(null, jobProgress);
                 } else {
                     done(err, null);
                 }

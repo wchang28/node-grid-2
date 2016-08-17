@@ -27,6 +27,12 @@ export interface INode {
     name: string;
 }
 
+export interface INodeItem extends INode {
+    enabled: boolean;
+    numCPUs: number;
+    cpusUsed: number;
+}
+
 export interface INodeReady {
     numCPUs: number;
     name?: string;
@@ -36,6 +42,35 @@ export interface ITask {
     j: string;
     t: number;
 }
+
+export interface IQueueJSON {
+    priorities: number[];
+    numJobs: number;
+    numTasks: number;
+}
+
+export interface IDispControl {
+    queueClosed: boolean;
+    dispatchEnabled: boolean;
+}
+
+export interface IDispStates {
+    dispatching: boolean;
+    numOutstandingAcks: number;
+}
+
+export interface IJobsStatusPollingJSON {
+    numJobs: number;
+    started: boolean; 
+}
+
+export interface IDispatcherJSON {
+    nodes: INodeItem[];
+    queue: IQueueJSON;
+    dispControl: IDispControl;
+    states: IDispStates
+    jobsPolling: IJobsStatusPollingJSON;
+} 
 
 export interface IJobProgress {
     jobId: string;
@@ -67,11 +102,6 @@ export interface ITaskResult {
 }
 
 export type IJobResult = ITaskResult[];
-
-export interface IJobTrackItem {
-    jp: IJobProgress;
-    ncks: string[];
-}
 
 export interface INodeRunningProcess {
     nodeId: string;

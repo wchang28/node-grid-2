@@ -6,7 +6,7 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import noCache = require('no-cache-express');
 import {IGlobal} from "./global";
-import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobTrackItem} from "./messaging";
+import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobProgress} from "./messaging";
 import {Dispatcher, INodeMessaging, IDispatcherConfig} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
@@ -257,8 +257,8 @@ gridDB.on('error', (err: any) => {
                 console.error('!!! Error notifying client on jobs-tracking-changed: ' + JSON.stringify(err));
             }
         });
-    }).on('job-status-changed', (trackItem: IJobTrackItem) => {
-        clientMessaging.notifyClientsJobStatusChanged(trackItem.ncks, trackItem.jp, (err:any) => {
+    }).on('job-status-changed', (jobProgress: IJobProgress) => {
+        clientMessaging.notifyClientsJobStatusChanged(jobProgress, (err:any) => {
             if (err) {
                 console.error('!!! Error notifying client on jobs-status-changed: ' + JSON.stringify(err));
             }

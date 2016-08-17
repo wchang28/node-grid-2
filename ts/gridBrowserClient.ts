@@ -16,3 +16,5 @@ export class GridClient {
         return new GridSession();
     }
 }
+
+export * from './messaging';

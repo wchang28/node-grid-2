@@ -1,6 +1,5 @@
 import {ConnectionsManager} from 'rcf-msg-router';
-import {GridMessage, IJobProgress} from './messaging';
-import {IQueueJSON, INodeItem, IDispControl} from './dispatcher';
+import {GridMessage, IJobProgress, IQueueJSON, INodeItem, IDispControl} from './messaging';
 
 export class ClientMessaging {
     constructor(private connectionsManager: ConnectionsManager) {}
@@ -52,26 +51,14 @@ export class ClientMessaging {
         this.connectionsManager.injectMessage(ClientMessaging.getConnectionsTopic(), {}, msg, done);
     }
 
-    static getClientJobNotificationTopic(notificationCookie: string) : string {
-        return '/topic/job/' + notificationCookie;
+    static getJobNotificationTopic(jobId:string) : string {
+        return '/topic/job/' + jobId;
     }
-    notifyClientsJobStatusChanged(notificationCookies:string[], jobProgress: IJobProgress, done: (err:any) => void) : void {
-        if (notificationCookies && notificationCookies.length > 0) {
-            let msg: GridMessage = {
-                type: 'status-changed'
-                ,content: jobProgress
-            };
-            let errors = [];
-            function getHandler(i: number) : (err: any) => void  {
-                return (err: any): void => {
-                    if (err) errors.push(err);
-                    if (i < notificationCookies.length-1)
-                        this.connectionsManager.injectMessage(ClientMessaging.getClientJobNotificationTopic(notificationCookies[i+1]), {}, msg, getHandler(i+1));
-                    else
-                        done(errors.length > 0 ? errors : null);
-                }
-            }
-            this.connectionsManager.injectMessage(ClientMessaging.getClientJobNotificationTopic(notificationCookies[0]), {}, msg, getHandler(0));
-        }
+    notifyClientsJobStatusChanged(jobProgress: IJobProgress, done: (err:any) => void) : void {
+        let msg: GridMessage = {
+            type: 'status-changed'
+            ,content: jobProgress
+        };
+        this.connectionsManager.injectMessage(ClientMessaging.getJobNotificationTopic(jobProgress.jobId), {}, msg, done);
     }
 }

@@ -26,19 +26,16 @@ function canSubmitJob(req: express.Request, res: express.Response, next: express
         res.status(401).json(errors.not_authorized);
 }
 
-// body: job in xml
-// query:
-// 1. nc (optional)
+// body: IJobSubmit
 router.post('/submit', canSubmitJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
-    let query = req.query;
-    dispatcher.submitJob(user, req.body, (error: any, jobId:string) => {
+    dispatcher.submitJob(user, req.body, (error: any, jobProgress:IJobProgress) => {
         if (error)
             res.status(400).json({error});
         else
-            res.json({jobId});
-    }, (query['nc'] ? query['nc'] : null));
+            res.json(jobProgress);
+    });
 });
 
 router.get('/most_recent', (req: express.Request, res: express.Response) => {
@@ -111,7 +108,6 @@ jobOperationRouter.get('/result', (req: express.Request, res: express.Response) 
 // re-submit job
 // query:
 // 1. failedTasksOnly (optional)
-// 2. nc (optional)
 jobOperationRouter.get('/re_submit', canSubmitJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
@@ -119,12 +115,12 @@ jobOperationRouter.get('/re_submit', canSubmitJob, (req: express.Request, res: e
     let query = req.query;
     let fto = query['failedTasksOnly'];
     let failedTasksOnly = (fto ? (isNaN(parseInt(fto)) ? false : parseInt(fto) !== 0) : false);
-    dispatcher.reSubmitJob(user, jobInfo.jobId, failedTasksOnly, (error: any, jobId:string) => {
+    dispatcher.reSubmitJob(user, jobInfo.jobId, failedTasksOnly, (error:any, jobProgress:IJobProgress) => {
         if (error)
             res.status(400).json({error});
         else
-            res.json({jobId});
-    }, (query['nc'] ? query['nc'] : null));
+            res.json(jobProgress);
+    });
 });
 
 function getJobInfoMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
