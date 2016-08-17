@@ -19,7 +19,7 @@ export interface IGridClientConfig {
 
 export class GridClient {
     private tokenGrant: oauth2.ITokenGrant = null;
-    constructor(private jQuery:any, private __config: IGridClientConfig) {
+    constructor(private __config: IGridClientConfig) {
         this.tokenGrant = new OAuth2TokenGrant(__config.oauth2Options.tokenGrantOptions, __config.oauth2Options.clientAppSettings);
     }
     login(username: string, password: string, done:(err:any, session: ISession) => void) {

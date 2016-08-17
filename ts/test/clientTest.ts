@@ -1,4 +1,3 @@
-let $ = require('jquery-no-dom');
 import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, IJobResult, ITaskItem} from '../gridNodeClient';
 import {TestJobs} from './testJobs';
 
@@ -32,7 +31,7 @@ if (!password) {
 let js = TestJobs.getEchoTestJob(1000);
 //let js = TestJobs.getSleepTestJob();
 
-let client = new GridClient($, config);
+let client = new GridClient(config);
 
 client.login(username, password, (err:any, session: ISession) => {
     if (err) {
