@@ -2,9 +2,9 @@ import * as events from 'events';
 import * as rcf from 'rcf';
 import {ClientMessaging} from './clientMessaging';
 import {GridMessage, IJobProgress, IJobInfo, IJobResult, IGridUser, IGridJobSubmit, IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from './messaging';
-import {DOMParser, XMLSerializer} from 'xmldom';
 import * as oauth2 from 'oauth2';
 import * as errors from './errors';
+import {Utils} from './utils';
 
 export interface IGridClientConfig {
     oauth2Options: oauth2.ClientAppOptions;
@@ -29,16 +29,13 @@ class JobSubmmit extends rcf.AuthorizedRestApi implements IJobSubmitter {
     }
 }
 
-// returns operation path for job
-function getJobOpPath(jobId:string, op:string):string {return '/services/job/' + jobId + '/' + op;}
-
 // job re-submission class
 class JobReSubmmit extends rcf.AuthorizedRestApi implements IJobSubmitter {
     constructor($drver: rcf.$Driver, access:oauth2.Access, tokenGrant: oauth2.ITokenGrant, private __oldJobId:string, private __failedTasksOnly:boolean) {
         super($drver, access, tokenGrant);
     }
     submit(done: (err:any, jobProgress:IJobProgress) => void) : void {
-        let path = getJobOpPath(this.__oldJobId, 're_submit');
+        let path = Utils.getJobOpPath(this.__oldJobId, 're_submit');
         let data:any = {
             failedTasksOnly: (this.__failedTasksOnly ? '1' : '0')
         };
@@ -74,7 +71,7 @@ class GridJob extends rcf.AuthorizedRestApi implements IGridJob {
     // returns true if job is still running, false otherwise
     private onJobProgress(msgClient: rcf.IMessageClient, jp: IJobProgress) : boolean {
         this.emit('status-changed', jp);
-        if (GridJob.jobDone(jp)) {
+        if (Utils.jobDone(jp)) {
             if (msgClient) msgClient.disconnect();
             this.emit('done', jp);
             return false;
@@ -93,7 +90,7 @@ class GridJob extends rcf.AuthorizedRestApi implements IGridJob {
                     let msgClient = this.$M(eventStreamPathname, clientOptions);
 
                     msgClient.on('connect', (conn_id:string) : void => {
-                        msgClient.subscribe(ClientMessaging.getJobNotificationTopic(this.jobId), (msg: rcf.IMessage) => {   // TODO:
+                        msgClient.subscribe(Utils.getJobNotificationTopic(this.jobId), (msg: rcf.IMessage) => {   // TODO:
                             //console.log('msg-rcvd: ' + JSON.stringify(msg));
                             let gMsg: GridMessage = msg.body;
                             if (gMsg.type === 'status-changed') {
@@ -106,7 +103,7 @@ class GridJob extends rcf.AuthorizedRestApi implements IGridJob {
                             if (err) {  // topic subscription failed
                                 this.onError(msgClient, err);
                             } else {  // topic subscription successful
-                                let path = getJobOpPath(this.jobId, 'progress');
+                                let path = Utils.getJobOpPath(this.jobId, 'progress');
                                 this.$J("GET", path, {}, (err:any, jobProgress:IJobProgress) => {
                                     this.onJobProgress(msgClient, jobProgress);
                                 });
@@ -171,19 +168,19 @@ export class Session extends rcf.AuthorizedRestApi {
         this.$J("GET", '/services/job/most_recent', {}, done);
     }
     killJob(jobId: string, done: (err:any, ret:any) => void) : void {
-        let path = getJobOpPath(jobId, 'kill');
+        let path = Utils.getJobOpPath(jobId, 'kill');
         this.$J("GET", path, {}, done);
     }
     getJobProgress(jobId: string, done: (err:any, jobProgress:IJobProgress) => void) : void {
-        let path = getJobOpPath(jobId, 'progress');
+        let path = Utils.getJobOpPath(jobId, 'progress');
         this.$J("GET", path, {}, done);
     }
     getJobInfo(jobId: string, done: (err:any, jobInfo:IJobInfo) => void) : void {
-        let path = getJobOpPath(jobId, 'info');
+        let path = Utils.getJobOpPath(jobId, 'info');
         this.$J("GET", path, {}, done);
     }
     getJobResult(jobId: string, done: (err:any, jobResult:IJobResult) => void) : void {
-        let path = getJobOpPath(jobId, 'result');
+        let path = Utils.getJobOpPath(jobId, 'result');
         this.$J("GET", path, {}, done);
     }
     getDispatcherJSON(done: (err:any, dispatcherJSON: IDispatcherJSON) => void) : void {
@@ -201,7 +198,7 @@ export class Session extends rcf.AuthorizedRestApi {
         this.$J("GET", '/services/connections', {}, done);
     }
     setNodeEnabled(nodeId:string, enabled: boolean, done: (err:any, nodeItem: INodeItem) => void): void {
-        let path = "/services/dispatcher/node/" + nodeId + "/" + (enabled? "enable": "disable");
+        let path = Utils.getNodePath(nodeId, (enabled ? "enable": "disable"));
         this.$J("GET", path, {}, done);
     }
 }

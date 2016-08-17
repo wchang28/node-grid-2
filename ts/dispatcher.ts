@@ -1,7 +1,7 @@
 
 import * as events from 'events';
 import * as _ from 'lodash';
-
+import {Utils} from './utils';
 import {INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON} from './messaging';
 
 interface ITaskItem extends ITask {
@@ -360,7 +360,7 @@ class JobsTracker extends events.EventEmitter {
             let newJP = this.jobTransition(oldJP, jobProgress);
             if (newJP != oldJP) {  // status changed
                 this.__trackItems[jobId] = newJP;
-                if (newJP.status === 'FINISHED' || newJP.status === 'ABORTED') {
+                if (Utils.jobDone(newJP)) {
                     delete this.__trackItems[jobId];
                     this.__numJobs--;
                     this.emit('job-removed', jobId);
