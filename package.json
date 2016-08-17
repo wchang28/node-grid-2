@@ -32,6 +32,7 @@
     "mssql-simple": "git+https://github.com/wchang28/mssql-simple.git",
     "no-cache-express": "git+https://github.com/wchang28/no-cache-express.git",
     "oauth2": "git+https://github.com/wchang28/oauth2.git",
+    "oauth2-token-grant": "git+https://github.com/wchang28/oauth2-token-grant.git",
     "polaris-auth-client": "git+https://github.com/wchang28/polaris-auth-client.git",
     "rcf": "git+https://github.com/wchang28/rcf.git",
     "rcf-http-proxy": "https://github.com/wchang28/rcf-http-proxy.git",

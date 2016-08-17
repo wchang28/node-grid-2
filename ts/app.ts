@@ -13,6 +13,7 @@ import {ClientMessaging} from './clientMessaging';
 import {GridDB} from './gridDB';
 import {IGridDBConfiguration} from './gridDBConfig';
 import * as oauth2 from 'oauth2';
+import {TokenGrant as OAuth2TokenGrant} from 'oauth2-token-grant';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
 import * as events from 'events';
@@ -40,7 +41,7 @@ let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testi
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
-let tokenGrant = new oauth2.TokenGrant($, config.oauth2Options.tokenGrantOptions, config.oauth2Options.clientAppSettings);
+let tokenGrant = new OAuth2TokenGrant(config.oauth2Options.tokenGrantOptions, config.oauth2Options.clientAppSettings);
 let authClient: auth_client.AuthClient = new auth_client.AuthClient($, config.authorizeEndpointOptions, config.oauth2Options.clientAppSettings);
 
 function authorizedClientMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {

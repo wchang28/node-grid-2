@@ -196,5 +196,3 @@ export class SessionBase extends rcf.AuthorizedRestApi {
         this.$J("GET", path, {}, done);
     }
 }
-
-

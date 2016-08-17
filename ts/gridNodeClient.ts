@@ -1,6 +1,7 @@
 import * as $node from 'rest-node';
 import {ISession, SessionBase} from './gridClient';
 import * as oauth2 from 'oauth2';
+import {TokenGrant as OAuth2TokenGrant} from 'oauth2-token-grant';
 
 class GridSession extends SessionBase implements ISession {
     constructor(access: oauth2.Access, tokenGrant: oauth2.ITokenGrant) {
@@ -19,7 +20,7 @@ export interface IGridClientConfig {
 export class GridClient {
     private tokenGrant: oauth2.ITokenGrant = null;
     constructor(private jQuery:any, private __config: IGridClientConfig) {
-        this.tokenGrant = new oauth2.TokenGrant(this.jQuery, __config.oauth2Options.tokenGrantOptions, __config.oauth2Options.clientAppSettings);
+        this.tokenGrant = new OAuth2TokenGrant(__config.oauth2Options.tokenGrantOptions, __config.oauth2Options.clientAppSettings);
     }
     login(username: string, password: string, done:(err:any, session: ISession) => void) {
         this.tokenGrant.getAccessTokenFromPassword(username, password, (err, access: oauth2.Access) => {
