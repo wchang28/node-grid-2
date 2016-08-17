@@ -18,7 +18,6 @@ import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
 import * as events from 'events';
 import * as errors from './errors';
-let $ = require('jquery-no-dom');
 import * as auth_client from 'polaris-auth-client';
 import * as httpProxy from 'rcf-http-proxy'
 
@@ -42,7 +41,7 @@ let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let tokenGrant = new OAuth2TokenGrant(config.oauth2Options.tokenGrantOptions, config.oauth2Options.clientAppSettings);
-let authClient: auth_client.AuthClient = new auth_client.AuthClient($, config.authorizeEndpointOptions, config.oauth2Options.clientAppSettings);
+let authClient: auth_client.AuthClient = new auth_client.AuthClient(config.authorizeEndpointOptions, config.oauth2Options.clientAppSettings);
 
 function authorizedClientMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
     let errorReturn = () => {
