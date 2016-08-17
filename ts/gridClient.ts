@@ -1,14 +1,8 @@
-import * as events from 'events';
 import * as rcf from 'rcf';
-import {ClientMessaging} from './clientMessaging';
 import {GridMessage, IJobProgress, IJobInfo, IJobResult, IGridUser, IGridJobSubmit, IDispatcherJSON, INodeItem, IQueueJSON, IDispControl} from './messaging';
 import * as oauth2 from 'oauth2';
 import * as errors from './errors';
 import {Utils} from './utils';
-
-export interface IGridClientConfig {
-    oauth2Options: oauth2.ClientAppOptions;
-}
 
 interface IJobSubmitter {
     submit: (done: (err:any, jobProgress:IJobProgress) => void) => void;
@@ -203,6 +197,7 @@ export class Session extends rcf.AuthorizedRestApi {
     }
 }
 
+
 import * as $node from 'rest-node';
 
 class GridNodeSession extends Session implements ISession {
@@ -213,6 +208,10 @@ class GridNodeSession extends Session implements ISession {
         let path = "/logout";
         this.$J("GET", path, {}, (typeof done=== 'function' ? done : (err:any, ret: any) => {}));
     }
+}
+
+export interface IGridClientConfig {
+    oauth2Options: oauth2.ClientAppOptions;
 }
 
 /*
