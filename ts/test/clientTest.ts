@@ -19,7 +19,15 @@ let config: IGridClientConfig =
 };
 
 let username = process.argv[2];
+if (!username) {
+    console.error('!!! musr enter username');
+    process.exit(1);
+}
 let password = process.argv[3];
+if (!password) {
+    console.error('!!! musr enter password');
+    process.exit(1);
+}
 
 let js = TestJobs.getEchoTestJob(1000);
 //let js = TestJobs.getSleepTestJob();
