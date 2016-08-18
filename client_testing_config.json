@@ -1,0 +1,14 @@
+{
+    "oauth2Options":
+     {
+        "tokenGrantOptions":
+        {
+            "url": "http://127.0.0.1:33821/services/oauth2/token"
+        }
+        ,"clientAppSettings":
+        {
+            "client_id": "5OI0egJLTRRoEzcJY20NN3_wJj3CF0q9KpZq4d9gS65wFJxGqhpBls6XTw06jJHpSsmfc-E-Ss6u8pJ6siA2"
+            ,"client_secret": "0d42a918fabe33f8"
+        }
+    }
+}

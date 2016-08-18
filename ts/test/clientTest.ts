@@ -1,21 +1,7 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import {IGridClientConfig, IGridJobSubmit, GridClient, ISession, IJobProgress, IJobResult, ITaskItem} from '../gridNodeClient';
 import {TestJobs} from './testJobs';
-
-let config: IGridClientConfig =
-{
-    "oauth2Options":
-     {
-        "tokenGrantOptions":
-        {
-            "url": 'http://127.0.0.1:33821/services/oauth2/token'
-        }
-        ,"clientAppSettings":
-        {
-            "client_id": "5OI0egJLTRRoEzcJY20NN3_wJj3CF0q9KpZq4d9gS65wFJxGqhpBls6XTw06jJHpSsmfc-E-Ss6u8pJ6siA2"
-            ,"client_secret": "0d42a918fabe33f8"
-        }
-    }
-};
 
 let username = process.argv[2];
 if (!username) {
@@ -27,6 +13,9 @@ if (!password) {
     console.error('!!! musr enter password');
     process.exit(1);
 }
+
+let configFile = (process.argv.length < 5 ? path.join(__dirname, '../../client_testing_config.json') : process.argv[4]);
+let config: IGridClientConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let js = TestJobs.getEchoTestJob(1000);
 //let js = TestJobs.getSleepTestJob();
