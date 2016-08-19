@@ -30,7 +30,7 @@ client.login(username, password, (err:any, session: ISession) => {
         let job = session.runJob(js);
         //let job = session.reRunJob('24', true)
         job.on('submitted', (jobId: string) => {
-            console.log('job summitted, joId=' + jobId);
+            console.log('job submitted, joId=' + jobId);
         }).on('status-changed', (jp: IJobProgress) => {
             console.log(JSON.stringify(jp));
         }).on('error', (err:any) => {
