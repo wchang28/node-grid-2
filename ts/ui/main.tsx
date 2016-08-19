@@ -43,7 +43,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         });
         return false;
     }
-    private onRunsomeTestJob(event: any) {
+    private onRunSomeTestJob(event: any) {
         runSomeTestJob(this.session, (err: any) => {
             if (err)
                 console.log('!!! Error running job: ' + JSON.stringify(err));
@@ -99,7 +99,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                             <a href="#Current" onClick={this.getOnSubmitTestEchoJobHandler(1000)}>1000 Echos</a>
                             <a href="#Current" onClick={this.onSubmitTestSleepJob.bind(this)}>15 Sleeps (10sec)</a>
                             <a href="#Current" onClick={this.getOnSubmitTestEchoJobHandler(10000)}>10000 Echos</a>
-                            <a href="#Current" onClick={this.onRunsomeTestJob(10000)}>Run Some Test Job</a>
+                            <a href="#Current" onClick={this.onRunSomeTestJob.bind(this)}>Run Some Test Job</a>
                         </div>
                     </li>
                     <li className="w3-right"><a href="#Current" onClick={this.onLogout.bind(this)}>{currentUserName}<i className="fa fa-sign-out"></i></a></li>
