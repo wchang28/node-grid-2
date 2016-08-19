@@ -7,7 +7,6 @@ export function run(session: ISession, done: (err:any) => void) {
     //let js = TestJobs.getSleepTestJob();
 
     let job = session.runJob(js);
-    //let job = session.reRunJob('24', true)
     job.on('submitted', (jobId: string) => {
         console.log('job submitted, joId=' + jobId);
     }).on('status-changed', (jp: IJobProgress) => {
