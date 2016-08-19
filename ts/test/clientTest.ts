@@ -17,9 +17,6 @@ if (!password) {
 let configFile = (process.argv.length < 5 ? path.join(__dirname, '../../client_testing_config.json') : process.argv[4]);
 let config: IGridClientConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
-let js = TestJobs.getEchoTestJob(1000);
-//let js = TestJobs.getSleepTestJob();
-
 let client = new GridClient(config);
 
 client.login(username, password, (err:any, session: ISession) => {
@@ -27,6 +24,9 @@ client.login(username, password, (err:any, session: ISession) => {
         console.error('!!! Login error: ' + JSON.stringify(err));
         process.exit(1);
     } else {
+        let js = TestJobs.getEchoTestJob(1000);
+        //let js = TestJobs.getSleepTestJob();
+
         let job = session.runJob(js);
         //let job = session.reRunJob('24', true)
         job.on('submitted', (jobId: string) => {
