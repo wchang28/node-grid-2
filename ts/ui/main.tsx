@@ -4,6 +4,7 @@ import * as $ from 'jquery';
 import {IMessageClient, GridClient, ISession, IGridJobSubmit, ITaskItem, IGridUser, IJobProgress} from '../gridBrowserClient';
 import * as appContent from './appContent';
 import {TestJobs} from '../test/testJobs';
+import {run as runSomeTestJob} from '../test/runSomeTestJob';
 
 interface IGridAdminAppProps {
     currentUser: IGridUser;
@@ -39,6 +40,13 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                 console.log('!!! Error submitting job: ' + JSON.stringify(err));
             else
                 console.log('test job submitted, jobId=' + jp.jobId);
+        });
+        return false;
+    }
+    private onRunsomeTestJob(event: any) {
+        runSomeTestJob(this.session, (err: any) => {
+            if (err)
+                console.log('!!! Error running job: ' + JSON.stringify(err));
         });
         return false;
     }
@@ -91,6 +99,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
                             <a href="#Current" onClick={this.getOnSubmitTestEchoJobHandler(1000)}>1000 Echos</a>
                             <a href="#Current" onClick={this.onSubmitTestSleepJob.bind(this)}>15 Sleeps (10sec)</a>
                             <a href="#Current" onClick={this.getOnSubmitTestEchoJobHandler(10000)}>10000 Echos</a>
+                            <a href="#Current" onClick={this.onRunsomeTestJob(10000)}>Run Some Test Job</a>
                         </div>
                     </li>
                     <li className="w3-right"><a href="#Current" onClick={this.onLogout.bind(this)}>{currentUserName}<i className="fa fa-sign-out"></i></a></li>
