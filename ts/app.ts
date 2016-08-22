@@ -1,5 +1,4 @@
 import {IWebServerConfig, startServer} from 'express-web-server';
-import * as session from 'express-session';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as express from 'express';
@@ -18,10 +17,6 @@ import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManage
 import * as events from 'events';
 import * as errors from './errors';
 import * as auth_client from 'polaris-auth-client';
-
-interface ISessionOptions {
-    sessionIdSignSecret: string;
-}
 
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
