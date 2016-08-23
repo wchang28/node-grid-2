@@ -35,9 +35,7 @@ let authClient: auth_client.AuthClient = new auth_client.AuthClient(config.autho
 
 function authorizedClientMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
     let errorReturn = () => {
-        req.on('end', () => {
-            res.status(401).json(errors.not_authorized);
-        });
+        res.status(401).json(errors.not_authorized);
     };
     let accessToken:oauth2.AccessToken = null;
     let authHeader = req.headers['authorization'];
