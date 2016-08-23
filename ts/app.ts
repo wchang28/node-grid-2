@@ -34,9 +34,6 @@ let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let authClient: auth_client.AuthClient = new auth_client.AuthClient(config.authorizeEndpointOptions, config.clientAppSettings);
 
 function authorizedClientMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
-    let errorReturn = () => {
-        res.status(401).json(errors.not_authorized);
-    };
     let accessToken:oauth2.AccessToken = null;
     let authHeader = req.headers['authorization'];
     if (authHeader) {   // automation client
@@ -49,16 +46,16 @@ function authorizedClientMiddleware(req: express.Request, res: express.Response,
         }
     }
     if (!accessToken)
-        errorReturn();
+        res.status(401).json(oauth2.errors.bad_credential);
     else {
         authClient.verifyAccessToken(accessToken, (err: any, user:auth_client.IAuthorizedUser) => {
             if (err) {  // token verification error
-                errorReturn();
+                res.status(401).json(oauth2.errors.bad_credential);
             } else {   // access token is good
                 //console.log('user=' + JSON.stringify(user));
                 gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
                     if (err)
-                        errorReturn();
+                        res.status(401).json(errors.not_authorized);
                     else {
                         let gridUser:IGridUser = {
                             userId: user.userId
