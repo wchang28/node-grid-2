@@ -66,10 +66,9 @@ CREATE TABLE [dbo].[GridUserProfile](
 	[userId] [varchar](100) NOT NULL,
 	[enabled] [bit] NOT NULL,
 	[profileId] [varchar](100) NOT NULL,
- CONSTRAINT [PK_GridUserProfile] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_GridUserProfile_1] PRIMARY KEY CLUSTERED 
 (
-	[userId] ASC,
-	[profileId] ASC
+	[userId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 
