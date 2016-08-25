@@ -64,6 +64,7 @@ GO
 
 CREATE TABLE [dbo].[GridUserProfile](
 	[userId] [varchar](100) NOT NULL,
+	[enabled] [bit] NOT NULL,
 	[profileId] [varchar](100) NOT NULL,
  CONSTRAINT [PK_GridUserProfile] PRIMARY KEY CLUSTERED 
 (
@@ -134,6 +135,23 @@ select
 ,[canEnableDisableNode]
 FROM [dbo].[GridProfile] (nolock)
 where [enabled]=1
+
+GO
+
+CREATE FUNCTION [dbo].[func_GridIsUserSignedUpForApp]
+(
+	@userId varchar(100)
+)
+RETURNS bit
+AS
+BEGIN
+	declare @ret bit
+	if exists (select [userId] from [dbo].[GridUserProfile] (nolock) where [userId]=@userId and [enabled]=1)
+		set @ret=1
+	else
+		set @ret=0
+	return @ret
+END
 
 GO
 
