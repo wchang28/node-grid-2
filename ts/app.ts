@@ -34,17 +34,7 @@ let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let authClient: auth_client.AuthClient = new auth_client.AuthClient(config.authorizeEndpointOptions, config.clientAppSettings);
 
 function authorizedClientMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
-    let accessToken:oauth2.AccessToken = null;
-    let authHeader = req.headers['authorization'];
-    if (authHeader) {   // automation client
-        let x = authHeader.indexOf(' ');
-        if (x != -1) {
-            accessToken = {
-                token_type: authHeader.substr(0, x)
-                ,access_token: authHeader.substr(x+1)
-            }
-        }
-    }
+    let accessToken:oauth2.AccessToken = oauth2.Utils.getAccessTokenFromAuthorizationHeader(req.headers['authorization']);
     if (!accessToken)
         res.status(401).json(oauth2.errors.bad_credential);
     else {

@@ -37,7 +37,7 @@ function hasAccessMiddleware(req: express.Request, res: express.Response, next: 
         });
     };
     let accessStore: AccessStore = req.session["access"];
-    if (!accessStore || !accessStore.access)
+    if (!accessStore || !accessStore.access || !accessStore.access.token_type || !accessStore.access.access_token)
         errorReturn();
     else
         next();
@@ -67,7 +67,7 @@ function autoRefreshTokenMiddleware(req: express.Request, res: express.Response,
 function makeAuthorizationHeaderMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
     let accessStore: AccessStore = req.session["access"];
     let access = accessStore.access;
-    req.headers['authorization'] = access.token_type + ' ' + access.access_token;
+    req.headers['authorization'] = oauth2.Utils.getAuthorizationHeaderFormAccessToken(access);
     next();
 }
 
