@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, IMessage, GridMessage, Utils, ISession, IGridUser} from '../gridBrowserClient';
+import {IMessageClient, GridMessage, Utils, ISession, IGridUser} from '../gridBrowserClient';
 
 export interface IConnectionsContentProps {
     msgClient: IMessageClient;
@@ -48,9 +48,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
         console.log('ConnectionsContent.componentDidMount()');
         this.getConnections();
         let sub_id = this.msgClient.subscribe(Utils.getConnectionsTopic()
-        ,(msg: IMessage) => {
-            this.handleMessages(msg.body);
-        }
+        ,this.handleMessages.bind(this)
         ,{}
         ,(err: any) => {
             if (err) {

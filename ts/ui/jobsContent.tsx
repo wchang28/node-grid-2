@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, IMessage, GridMessage, Utils, ISession, IGridUser, IJobInfo} from '../gridBrowserClient';
+import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IJobInfo} from '../gridBrowserClient';
 
 export interface IJobsContentProps {
     msgClient: IMessageClient;
@@ -41,9 +41,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
         console.log('JobsContent.componentDidMount()');
         this.getMostRecentJobs();
         let sub_id = this.msgClient.subscribe(Utils.getJobsTrackingTopic()
-        ,(msg: IMessage) => {
-            this.handleMessages(msg.body);
-        }
+        ,this.handleMessages.bind(this)
         ,{}
         ,(err: any) => {
             if (err) {

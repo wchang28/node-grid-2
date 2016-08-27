@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, IMessage, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON} from '../gridBrowserClient';
+import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON} from '../gridBrowserClient';
 
 export interface IHomeContentProps {
     msgClient: IMessageClient;
@@ -54,9 +54,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         console.log('HomeContent.componentDidMount()');
         this.getDispatcherJSON();
         let sub_id = this.msgClient.subscribe(Utils.getDispatcherTopic()
-        ,(msg: IMessage) => {
-            this.handleMessages(msg.body);
-        }
+        ,this.handleMessages.bind(this)
         ,{}
         ,(err: any) => {
             if (err) {
