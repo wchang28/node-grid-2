@@ -1,8 +1,7 @@
 
 import * as events from 'events';
 import * as _ from 'lodash';
-import {Utils} from './utils';
-import {INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON} from './messaging';
+import {Utils, INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON} from 'grid-client-core';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries

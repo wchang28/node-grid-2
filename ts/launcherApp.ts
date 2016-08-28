@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as rcf from 'rcf';
 import * as $node from 'rest-node';
-import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult} from './messaging';
+import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult} from 'grid-client-core';
 import {GridDB} from './gridDB';
 import {TaskRunner} from './taskRunner';
 import treeKill = require('tree-kill');

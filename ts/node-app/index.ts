@@ -4,7 +4,7 @@ import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, C
 import {getConnectionFactory} from 'rcf-topic-conn';
 import {IGlobal} from '../global';
 import {Dispatcher} from '../dispatcher'; 
-import {GridMessage, INode, INodeReady, ITask} from '../messaging';
+import {GridMessage, INode, INodeReady, ITask} from 'grid-client-core';
 
 let router = express.Router();
 

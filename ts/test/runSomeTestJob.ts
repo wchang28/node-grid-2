@@ -1,5 +1,4 @@
-import {ISession} from '../gridClient';
-import {IJobProgress, IJobResult} from '../messaging';
+import {ISession, IJobProgress, IJobResult} from 'grid-client-core';
 import {TestJobs} from './testJobs';
 
 export function run(session: ISession, done: (err:any) => void) {

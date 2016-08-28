@@ -6,7 +6,7 @@ import {Router as userRouter} from './user';
 import * as tr from 'rcf-msg-router';
 import * as tc from 'rcf-topic-conn';
 import * as events from 'events';
-import {IGridUser} from '../messaging';
+import {IGridUser} from 'grid-client-core';
 
 let router = express.Router();
 

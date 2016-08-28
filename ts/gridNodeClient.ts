@@ -1,5 +1,5 @@
 import * as $node from 'rest-node';
-import {ISession, SessionBase, OAuth2Access, IOAuth2TokenGrant} from './gridClient';
+import {ISession, SessionBase, OAuth2Access, IOAuth2TokenGrant} from 'grid-client-core';
 import * as oauth2 from 'oauth2';
 import {TokenGrant as OAuth2TokenGrant} from 'oauth2-token-grant';
 
@@ -34,4 +34,4 @@ export class GridClient {
     }
 }
 
-export * from './gridClient';
+export * from 'grid-client-core';

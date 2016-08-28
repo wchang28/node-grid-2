@@ -1,6 +1,5 @@
 import {ConnectionsManager} from 'rcf-msg-router';
-import {GridMessage, IJobProgress, IQueueJSON, INodeItem, IDispControl} from './messaging';
-import {Utils} from './utils';
+import {GridMessage, IJobProgress, IQueueJSON, INodeItem, IDispControl, Utils} from 'grid-client-core';
 
 export class ClientMessaging {
     constructor(private connectionsManager: ConnectionsManager) {}

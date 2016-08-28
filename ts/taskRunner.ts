@@ -2,7 +2,7 @@ import * as events from 'events';
 import * as fs from 'fs';
 import * as stream from 'stream';
 import {exec} from 'child_process';
-import {ITaskExecParams, ITaskExecResult} from './messaging';
+import {ITaskExecParams, ITaskExecResult} from 'grid-client-core';
 
 export class TaskRunner extends events.EventEmitter {
     constructor(private taskExecParams: ITaskExecParams) {

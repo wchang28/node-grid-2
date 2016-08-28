@@ -5,7 +5,7 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import noCache = require('no-cache-express');
 import {IGlobal} from "./global";
-import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobProgress} from "./messaging";
+import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobProgress} from "grid-client-core";
 import {Dispatcher, INodeMessaging, IDispatcherConfig} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';

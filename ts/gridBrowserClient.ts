@@ -1,5 +1,5 @@
 import * as $browser from 'rest-browser';
-import {ISession, SessionBase} from './gridClient';
+import {ISession, SessionBase} from 'grid-client-core';
 
 class GridSession extends SessionBase implements ISession {
     constructor() {
@@ -17,4 +17,4 @@ export class GridClient {
     }
 }
 
-export * from './gridClient';
+export * from 'grid-client-core';

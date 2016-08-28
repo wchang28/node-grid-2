@@ -1,4 +1,4 @@
-import {IGridJobSubmit, ITaskItem} from '../messaging';
+import {IGridJobSubmit, ITaskItem} from 'grid-client-core';
 
 export class TestJobs {
     static getEchoTestJob(numTasks:number) : IGridJobSubmit {

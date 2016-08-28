@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher} from '../../dispatcher';
-import {IGridUser, IJobProgress, IJobInfo, IJobResult} from '../../messaging';
+import {IGridUser, IJobProgress, IJobInfo, IJobResult} from 'grid-client-core';
 import * as errors from '../../errors';
 
 let router = express.Router();

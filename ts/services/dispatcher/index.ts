@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher} from '../../dispatcher';
-import {IGridUser, INodeItem} from '../../messaging';
+import {IGridUser, INodeItem} from 'grid-client-core';
 import * as errors from '../../errors';
 
 let router = express.Router();

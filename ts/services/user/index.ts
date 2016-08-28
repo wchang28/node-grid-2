@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
-import {IGridUser} from '../../messaging';
+import {IGridUser} from 'grid-client-core';
 
 let router = express.Router();
 
