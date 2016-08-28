@@ -17,6 +17,4 @@ export class GridClient {
     }
 }
 
-export {Utils} from  './utils';
-export {ISession, MessageCallback, IMessageClient} from './gridClient';
-export * from './messaging';
+export * from './gridClient';
