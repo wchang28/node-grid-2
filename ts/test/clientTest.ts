@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import {IGridClientConfig, GridClient, ISession} from '../gridNodeClient';
+import {IGridClientConfig, GridClient, ISession} from 'grid-client-node';
 import {run as runSomeTestJob} from './runSomeTestJob';
 
 let username = process.argv[2];
