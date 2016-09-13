@@ -17,6 +17,7 @@ import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManage
 import * as events from 'events';
 import * as errors from './errors';
 import * as auth_client from 'polaris-auth-client';
+import * as prettyPrinter from 'express-pretty-print';
 
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
@@ -107,6 +108,8 @@ gridDB.on('error', (err: any) => {
     let bpj = bodyParser.json({"limit":"999mb"});   // json body middleware
     clientApp.use(bpj);
     nodeApp.use(bpj);
+
+    clientApp.use(prettyPrinter.get());
 
     clientApp.set('jsonp callback name', 'cb');
 

@@ -22,6 +22,7 @@
     "eventsource": "^0.2.1",
     "eventsource-typings": "git+https://github.com/wchang28/eventsource-typings.git",
     "express": "^4.14.0",
+    "express-pretty-print": "git+https://github.com/wchang28/express-pretty-print.git",
     "express-session": "^1.14.0",
     "express-web-seerver": "git+https://github.com/wchang28/express-web-server.git",
     "grid-client-core": "git+https://github.com/wchang28/grid-client-core.git",
