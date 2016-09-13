@@ -12,6 +12,7 @@ import * as httpProxy from 'rcf-http-proxy'
 
 interface ISessionOptions {
     sessionIdSignSecret: string;
+    cookieName:string;
 }
 
 interface IAppConfig {
@@ -81,7 +82,8 @@ adminApp.use(session({
     secret: config.sessionOptions.sessionIdSignSecret,
     resave: false,
     saveUninitialized: false,
-    cookie: { path: '/', httpOnly: true, secure: secureCookie, maxAge: null }
+    cookie: { path: '/', httpOnly: true, secure: secureCookie, maxAge: null },
+    name: config.sessionOptions.cookieName
 }));
 
 adminApp.use('/app', hasAccessMiddleware, express.static(path.join(__dirname, '../public')));

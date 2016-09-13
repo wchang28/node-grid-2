@@ -10,6 +10,7 @@
 	,"sessionOptions":
 	{
 		"sessionIdSignSecret": "949t3hq4t3jgqgqnd6906"
+		,"cookieName": "NodeGridAdmin"
 	}
     ,"oauth2Options":
      {
