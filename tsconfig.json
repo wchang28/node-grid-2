@@ -9,7 +9,6 @@
       "watch": true
   },
   "files": [
-    "./typings/index.d.ts",
     "./ts/app.ts",
     "./ts/adminApp.ts",
     "./ts/launcherApp.ts",

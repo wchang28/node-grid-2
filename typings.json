@@ -1,6 +1,0 @@
-{
-  "name": "node-grid-2",
-  "dependencies": {
-    "tree-kill": "registry:npm/tree-kill#1.1.0+20160610190428"
-  }
-}
