@@ -3,7 +3,7 @@ import * as core from 'express-serve-static-core';
 import {Router as dispatcherRouter} from './dispatcher';
 import {Router as jobRouter} from './job';
 import {Router as userRouter} from './user';
-import * as tr from 'rcf-msg-router';
+import * as tr from 'rcf-message-router';
 import * as tc from 'rcf-topic-conn';
 import * as events from 'events';
 import {IGridUser} from 'grid-client-core';

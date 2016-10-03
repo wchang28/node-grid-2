@@ -110,7 +110,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             });
         });
     }
-    private getNodRows() {
+    private getNodRows() : any {
         if (this.state.nodes && this.state.nodes.length > 0) {
             return this.state.nodes.map((nodeItem: INodeItem, index:number) => {
                 return (

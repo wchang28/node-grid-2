@@ -104,7 +104,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
         });
     }
 
-    private getJobsRows() {
+    private getJobsRows() : any {
         let actionsCellStyle = {whiteSpace: 'nowrap'};
         let reSubmitButtonStyle = {marginLeft: '2px'};
         if (this.state.jobs && this.state.jobs.length > 0) {

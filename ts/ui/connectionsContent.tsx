@@ -72,7 +72,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
             });
         }
     }
-    private getConnectionRows() {
+    private getConnectionRows() : any {
         if (this.state.connections && this.state.connections.length > 0) {
             return this.state.connections.map((connection: ITopicConnection, index:number) => {
                 let user:IGridUser= connection.cookie;

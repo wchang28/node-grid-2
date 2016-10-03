@@ -5,7 +5,6 @@
       "jsx": "react",
       "sourceMap": false,
       "declaration": true,
-      "noImplicitUseStrict": true,
       "outDir": "./js",
       "watch": true
   },

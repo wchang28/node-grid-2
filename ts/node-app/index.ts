@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
-import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'rcf-msg-router';
+import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'rcf-message-router';
 import {getConnectionFactory} from 'rcf-topic-conn';
 import {IGlobal} from '../global';
 import {Dispatcher} from '../dispatcher'; 
