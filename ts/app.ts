@@ -183,6 +183,8 @@ gridDB.on('error', (err: any) => {
         console.log('job ' + jobId.toString() + ' was submitted');
     }).on('job-finished', (jobId: string) => {
         console.log('job ' + jobId.toString() + ' is finished');
+    }).on('task-complete', (task: ITask) => {
+
     });
 
     clientConnectionsManager.on('change', () => {

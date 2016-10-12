@@ -486,6 +486,7 @@ class JobsStatusPolling extends events.EventEmitter {
 // 17. jobs-polling
 // 18. job-submitted
 // 19. job-finished
+// 20. task-complete
 export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
@@ -725,6 +726,7 @@ export class Dispatcher extends events.EventEmitter {
         this.__nodes.decrementCPUUsageCount(nodeId);
         let jobId = task.j;
         this.__jobsPolling.addJob(jobId);
+        this.emit('task-complete', task);
     }
     getJobProgress(jobId: string, done:(err:any, jobProgress: IJobProgress) => void): void {
         this.__gridDB.getJobProgress(jobId, done);

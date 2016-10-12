@@ -1,5 +1,5 @@
 import {ConnectionsManager} from 'rcf-message-router';
-import {GridMessage, IJobProgress, IQueueJSON, INodeItem, IDispControl, Utils} from 'grid-client-core';
+import {GridMessage, IJobProgress, ITask, IQueueJSON, INodeItem, IDispControl, Utils} from 'grid-client-core';
 
 export class ClientMessaging {
     constructor(private connectionsManager: ConnectionsManager) {}
@@ -48,5 +48,13 @@ export class ClientMessaging {
             ,content: jobProgress
         };
         this.connectionsManager.injectMessage(Utils.getJobNotificationTopic(jobProgress.jobId), {}, msg, done);
+    }
+
+    notifyTaskComplete(task:ITask, done: (err:any) => void) : void {
+        let msg: GridMessage = {
+            type: 'task-complete'
+            ,content: task
+        };
+        this.connectionsManager.injectMessage(Utils.getJobNotificationTopic(task.j), {}, msg, done);
     }
 }
