@@ -1,5 +1,5 @@
 import * as events from 'events';
-import {IGridUserProfile, IGridUser, IGridJobSubmit, IJobProgress, IJobInfo, IJobResult, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult} from 'grid-client-core';
+import {IGridUserProfile, IGridUser, IGridJobSubmit, IJobProgress, IJobInfo, IJobResult, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult, ITaskResult} from 'grid-client-core';
 import {SimpleMSSQL, Configuration, Options} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
 export {Configuration as SQLConfiguration, Options as DBOptions} from 'mssql-simple';
@@ -252,5 +252,22 @@ export class GridDB extends SimpleMSSQL {
         this.query(sql, {}, (err: any, recordsets: any) : void => {
             done(err);
         });
+    }
+    getTaskResult(task: ITask, done: (err:any, taskResult:ITaskResult) => void) {
+        let params = {
+            'jobId': task.j
+            ,'taskIndex': task.t
+        };
+        this.execute('[dbo].[stp_NodeJSGridGetTaskResult]', params, (err: any, recordsets: any) : void => {
+            if (err)
+                done(err, null);
+            else {
+                let ret = recordsets[0][0];
+                if (!ret)
+                    done(errors.bad_task_index, null);
+                else
+                    done(null, ret);
+            }
+        });  
     }
 }

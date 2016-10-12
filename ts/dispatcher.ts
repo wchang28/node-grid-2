@@ -1,7 +1,7 @@
 
 import * as events from 'events';
 import * as _ from 'lodash';
-import {Utils, INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON} from 'grid-client-core';
+import {Utils, INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON, ITaskResult} from 'grid-client-core';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -29,6 +29,7 @@ export interface IGridDB {
     getJobResult: (jobId: string, done:(err:any, jobResult: IJobResult) => void) => void;
     killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
     getMostRecentJobs: (done:(err:any, jobInfos: IJobInfo[]) => void) => void;
+    getTaskResult: (task: ITask, done: (err:any, taskResult:ITaskResult) => void) => void;
 }
 
 interface IInterval {
@@ -733,6 +734,9 @@ export class Dispatcher extends events.EventEmitter {
     }
     getJobResult(jobId: string, done: (err:any, jobResult:IJobResult) => void) {
         this.__gridDB.getJobResult(jobId, done);
+    }
+    getTaskResult(task: ITask, done: (err:any, taskResult:ITaskResult) => void) {
+        this.__gridDB.getTaskResult(task, done);
     }
     killJob(jobId: string, done: (err: any) => void): void {
         let getKillJobCall : IKillJobCallFactory = (jobId:string, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
