@@ -37,7 +37,7 @@ export class TaskRunner extends events.EventEmitter {
             }
         }
         let errorRaised = false;
-        let child = exec(cmd, {});
+        let child = exec(cmd, {maxBuffer: 20000 * 1024});
         if (instream && child.stdin) instream.pipe(child.stdin);
         pid = child.pid;
         this.emit('started', pid);
