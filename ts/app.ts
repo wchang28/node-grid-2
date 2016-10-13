@@ -184,7 +184,10 @@ gridDB.on('error', (err: any) => {
     }).on('job-finished', (jobId: string) => {
         console.log('job ' + jobId.toString() + ' is finished');
     }).on('task-complete', (task: ITask) => {
-
+        clientMessaging.notifyClientsTaskComplete(task, (err:any) => {
+            if (err)
+               console.error('!!! Error notifying client on task-complete: ' + JSON.stringify(err)); 
+        });
     });
 
     clientConnectionsManager.on('change', () => {

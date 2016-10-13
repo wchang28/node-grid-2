@@ -1,4 +1,4 @@
-import {ISession, IJobProgress, IJobResult} from 'grid-client-core';
+import {ISession, IJobProgress, ITask, ITaskResult, IJobResult} from 'grid-client-core';
 import {TestJobs} from './testJobs';
 
 export function run(session: ISession, done: (err:any) => void) {
@@ -10,6 +10,8 @@ export function run(session: ISession, done: (err:any) => void) {
         console.log('job submitted, joId=' + jobId);
     }).on('status-changed', (jp: IJobProgress) => {
         console.log(JSON.stringify(jp));
+    }).on('task-complete', (task:ITask) => {
+        console.log('task completed => ' + JSON.stringify(task));
     }).on('error', (error:any) => {
         console.error('!!! Error: ' + JSON.stringify(error));
         done(error);

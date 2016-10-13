@@ -50,7 +50,7 @@ export class ClientMessaging {
         this.connectionsManager.injectMessage(Utils.getJobNotificationTopic(jobProgress.jobId), {}, msg, done);
     }
 
-    notifyTaskComplete(task:ITask, done: (err:any) => void) : void {
+    notifyClientsTaskComplete(task:ITask, done: (err:any) => void) : void {
         let msg: GridMessage = {
             type: 'task-complete'
             ,content: task
