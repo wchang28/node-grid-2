@@ -1,4 +1,4 @@
-// route /services/job/::jobId/task
+// route /services/job/{jobId}/task
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../../global';
@@ -33,7 +33,7 @@ function getTaskResultMiddleware(req: express.Request, res: express.Response, ne
     let jobInfo = getJobInfo(req);
     let taskIndex:string = req.params['taskIndex'];
     let t: number = parseInt(taskIndex);
-    if (isNaN(t) || t >= jobInfo.numTasks)
+    if (isNaN(t) || t < 0 || t >= jobInfo.numTasks)
         res.status(400).json(errors.bad_task_index);
     else {
         let dispatcher = getDispatcher(req);

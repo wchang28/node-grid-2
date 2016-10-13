@@ -1,9 +1,11 @@
+// router services/job
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher} from '../../dispatcher';
 import {IGridUser, IJobProgress, IJobInfo, IJobResult} from 'grid-client-core';
 import * as errors from '../../errors';
+import {Router as taskRouter} from './task';
 
 let router = express.Router();
 
@@ -122,6 +124,9 @@ jobOperationRouter.get('/re_submit', canSubmitJob, (req: express.Request, res: e
             res.json(jobProgress);
     });
 });
+
+// /task route
+jobOperationRouter.use('/task', taskRouter);
 
 function getJobInfoMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
     let jobId:string = req.params['jobId'];

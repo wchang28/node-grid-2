@@ -2,7 +2,7 @@ import {ISession, IJobProgress, ITask, ITaskResult, IJobResult} from 'grid-clien
 import {TestJobs} from './testJobs';
 
 export function run(session: ISession, done: (err:any) => void) {
-    let js = TestJobs.getEchoTestJob(1000);
+    let js = TestJobs.getEchoTestJob(100);
     //let js = TestJobs.getSleepTestJob();
 
     let job = session.runJob(js);
@@ -14,7 +14,7 @@ export function run(session: ISession, done: (err:any) => void) {
         console.log('task completed => ' + JSON.stringify(task));
         session.getTaskResult(task.j, task.t, (err:any, taskResult:ITaskResult) => {
             if (err)
-                console.log("!!! Error getting task result for task " + JSON.stringify(task));
+                console.log("!!! Error getting task result for task " + JSON.stringify(task) + ": " + JSON.stringify(err));
             else
                 console.log(JSON.stringify(taskResult, null, 2));
         });
