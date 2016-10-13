@@ -726,7 +726,8 @@ export class Dispatcher extends events.EventEmitter {
         this.__nodes.decrementCPUUsageCount(nodeId);
         let jobId = task.j;
         this.__jobsPolling.addJob(jobId);
-        this.emit('task-complete', task);
+        let tk:ITask = {j:task.j, t: task.t};
+        this.emit('task-complete', tk);
     }
     getJobProgress(jobId: string, done:(err:any, jobProgress: IJobProgress) => void): void {
         this.__gridDB.getJobProgress(jobId, done);
