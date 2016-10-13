@@ -12,6 +12,12 @@ export function run(session: ISession, done: (err:any) => void) {
         console.log(JSON.stringify(jp));
     }).on('task-complete', (task:ITask) => {
         console.log('task completed => ' + JSON.stringify(task));
+        session.getTaskResult(task.j, task.t, (err:any, taskResult:ITaskResult) => {
+            if (err)
+                console.log("!!! Error getting task result for task " + JSON.stringify(task));
+            else
+                console.log(JSON.stringify(taskResult, null, 2));
+        });
     }).on('error', (error:any) => {
         console.error('!!! Error: ' + JSON.stringify(error));
         done(error);
