@@ -22,7 +22,6 @@ import * as prettyPrinter from 'express-pretty-print';
 interface IAppConfig {
     nodeWebServerConfig: IWebServerConfig;
     clientWebServerConfig: IWebServerConfig;
-    clientAppSettings: oauth2.ClientAppSettings;
     authorizeEndpointOptions: auth_client.IAuthorizeEndpointOptions;
     dbConfig: IGridDBConfiguration;
     dispatcherConfig?: IDispatcherConfig;
@@ -32,14 +31,14 @@ let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testi
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
-let authClient: auth_client.AuthClient = new auth_client.AuthClient(config.authorizeEndpointOptions, config.clientAppSettings);
+let tokenVerifier = new auth_client.TokenVerifier(config.authorizeEndpointOptions);
 
 function authorizedClientMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
     let accessToken:oauth2.AccessToken = oauth2.Utils.getAccessTokenFromAuthorizationHeader(req.headers['authorization']);
     if (!accessToken)
         res.status(401).json(oauth2.errors.bad_credential);
     else {
-        authClient.verifyAccessToken(accessToken, (err: any, user:auth_client.IAuthorizedUser) => {
+        tokenVerifier.verifyAccessToken(accessToken, (err: any, user:auth_client.IAuthorizedUser) => {
             if (err) {  // token verification error
                 res.status(401).json(oauth2.errors.bad_credential);
             } else {   // access token is good
