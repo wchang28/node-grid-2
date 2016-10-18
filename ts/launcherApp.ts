@@ -87,9 +87,16 @@ gridDB.on('error', (err:any) => {
                 let taskRunner = new TaskRunner(taskExecParams);
                 taskRunner.on('started', (pid: number) => {
                     gridDB.markTaskStart(task, pid, (err: any) => {
+                        if (err)
+                            console.error('!!! Error marking task <START> in DB: :-(');
                     });
                 }).on('finished', (taskExecResult: ITaskExecResult) => {
-                    gridDB.markTaskEnd(task, taskExecResult, done);
+                    gridDB.markTaskEnd(task, taskExecResult, (err: any) => {
+                        if (err)
+                            done('error marking task <END> in DB: ' + JSON.stringify(err));
+                        else
+                            done(null);
+                    });
                 });
                 taskRunner.run();
             }
@@ -112,9 +119,10 @@ gridDB.on('error', (err:any) => {
             if (gMsg.type === 'launch-task') {
                 let task: ITask = gMsg.content;
                 nodeRunTask(nodeId, task, (err:any) => {
+                    if (err) console.error("!!! Error running task " + JSON.stringify(task) + ": " + JSON.stringify(err) + " :-(");
                     sendDispatcherTaskComplete(task, (err: any): void => {
                         if (err)
-                            console.log('!!! Error sending task-complete message :-(');
+                            console.error('!!! Error sending task-complete message :-(');
                         else
                             console.log('task-complete message sent successfully :-)');
                     });
