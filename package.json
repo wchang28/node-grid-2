@@ -1,6 +1,6 @@
 {
   "name": "node-grid-2",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Node.js-based Grid v2",
   "main": "./js/gridNodeClient.js",
   "typings": "./js/gridNodeClient.d.ts",
@@ -48,7 +48,6 @@
     "rcf": "git+https://github.com/wchang28/rcf.git",
     "rcf-http-proxy": "git+https://github.com/wchang28/rcf-http-proxy.git",
     "rcf-message-router": "git+https://github.com/wchang28/rcf-message-router.git",
-    "rcf-topic-conn": "git+https://github.com/wchang28/rcf-topic-conn.git",
     "react": "^15.2.0",
     "react-dom": "^15.2.0",
     "rest-api-interfaces": "git+https://github.com/wchang28/rest-api-interfaces.git",

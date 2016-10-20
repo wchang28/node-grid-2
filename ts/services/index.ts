@@ -4,7 +4,6 @@ import {Router as dispatcherRouter} from './dispatcher';
 import {Router as jobRouter} from './job';
 import {Router as userRouter} from './user';
 import * as tr from 'rcf-message-router';
-import * as tc from 'rcf-topic-conn';
 import * as events from 'events';
 import {IGridUser} from 'grid-client-core';
 
@@ -19,11 +18,11 @@ router.use('/user', userRouter);
 router.use('/job', jobRouter);
 router.use('/dispatcher', dispatcherRouter);
 
-let options: tc.Options = {
+let options: tr.Options = {
     pingIntervalMS: 10000
     ,cookieSetter: (req: express.Request) => {return getUser(req);}
 }
-let topicRouter = tr.getRouter('/event_stream', tc.getConnectionFactory(options));
+let topicRouter = tr.getRouter('/event_stream', options);
 
 router.use('/events', topicRouter); // topic subscription endpoint is available at /events/event_stream from this route
 
