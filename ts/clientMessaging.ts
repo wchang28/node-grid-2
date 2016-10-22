@@ -9,21 +9,21 @@ export class ClientMessaging {
             type: 'queue-changed'
             ,content: queue
         };
-        this.connectionsManager.injectMessage(Utils.getDispatcherTopic(), {}, msg, done);
+        this.connectionsManager.dispatchMessage(Utils.getDispatcherTopic(), {}, msg, done);
     }
     notifyClientsNodesChanged(nodes: INodeItem[], done: (err:any) => void) : void {
         let msg: GridMessage = {
             type: 'nodes-changed'
             ,content: nodes
         };
-        this.connectionsManager.injectMessage(Utils.getDispatcherTopic(), {}, msg, done);
+        this.connectionsManager.dispatchMessage(Utils.getDispatcherTopic(), {}, msg, done);
     }
     notifyClientsDispControlChanged(dispControl: IDispControl, done: (err:any) => void) : void {
         let msg: GridMessage = {
             type: 'ctrl-changed'
             ,content: dispControl
         };
-        this.connectionsManager.injectMessage(Utils.getDispatcherTopic(), {}, msg, done);
+        this.connectionsManager.dispatchMessage(Utils.getDispatcherTopic(), {}, msg, done);
     }
 
     notifyClientsJobsTrackingChanged(done: (err:any) => void) : void {
@@ -31,7 +31,7 @@ export class ClientMessaging {
             type: 'tracking-changed'
             ,content: {}
         };
-        this.connectionsManager.injectMessage(Utils.getJobsTrackingTopic(), {}, msg, done);
+        this.connectionsManager.dispatchMessage(Utils.getJobsTrackingTopic(), {}, msg, done);
     }
 
     notifyClientsConnectionsChanged(connections:any, done: (err:any) => void) : void {
@@ -39,7 +39,7 @@ export class ClientMessaging {
             type: 'connections-changed'
             ,content: connections
         };
-        this.connectionsManager.injectMessage(Utils.getConnectionsTopic(), {}, msg, done);
+        this.connectionsManager.dispatchMessage(Utils.getConnectionsTopic(), {}, msg, done);
     }
 
     notifyClientsJobStatusChanged(jobProgress: IJobProgress, done: (err:any) => void) : void {
@@ -47,7 +47,7 @@ export class ClientMessaging {
             type: 'status-changed'
             ,content: jobProgress
         };
-        this.connectionsManager.injectMessage(Utils.getJobNotificationTopic(jobProgress.jobId), {}, msg, done);
+        this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(jobProgress.jobId), {}, msg, done);
     }
 
     notifyClientsTaskComplete(task:ITask, done: (err:any) => void) : void {
@@ -55,6 +55,6 @@ export class ClientMessaging {
             type: 'task-complete'
             ,content: task
         };
-        this.connectionsManager.injectMessage(Utils.getJobNotificationTopic(task.j), {}, msg, done);
+        this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(task.j), {}, msg, done);
     }
 }

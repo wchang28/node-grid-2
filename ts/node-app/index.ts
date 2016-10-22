@@ -1,13 +1,25 @@
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
-import {getRouter as getTopicRouter, ConnectedEventParams, ConnectionsManager, CommandEventParams} from 'rcf-message-router';
+import {getRouter as getTopicRouter, Options, getDestinationAuthReqRes, ConnectedEventParams, ConnectionsManager, ClientSendMsgEventParams} from 'rcf-message-router';
 import {IGlobal} from '../global';
 import {Dispatcher} from '../dispatcher'; 
 import {GridMessage, INode, INodeReady, ITask} from 'grid-client-core';
 
 let router = express.Router();
 
-let topicRouter = getTopicRouter('/event_stream', {pingIntervalMS: 10000});
+let destAuthApp = express();
+
+destAuthApp.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    let {authReq, authRes} = getDestinationAuthReqRes(req, res);
+})
+
+let options: Options = {
+    pingIntervalMS: 10000
+    ,dispatchMsgOnClientSend: false
+    ,destinationAuthorizeApp: destAuthApp
+};
+
+let topicRouter = getTopicRouter('/event_stream', options);
 router.use('/events', topicRouter); // topic subscription endpoint is available at /events/event_stream from this route
 
 let routerEventEmitter = topicRouter.eventEmitter;
@@ -32,21 +44,17 @@ routerEventEmitter.on('client_disconnect', (params: ConnectedEventParams) : void
     dispatcher.removeNode(params.conn_id);
 });
 
-routerEventEmitter.on('client_cmd', (params: CommandEventParams) => {
+routerEventEmitter.on('on_client_send_msg', (params: ClientSendMsgEventParams) => {
     let dispatcher = getDispatcher(params.req);
     let nodeId = params.conn_id;
-    if (params.cmd === 'send') {
-        let data = params.data;
-        //console.log('data=' + JSON.stringify(data));
-        if (data.destination === '/topic/dispatcher') {
-            let msg:GridMessage = data.body;
-            if (msg.type === 'node-ready') {
-                let nodeReady: INodeReady = msg.content;
-                dispatcher.markNodeReady(nodeId, nodeReady);
-            } else if (msg.type === 'task-complete') {
-                let task: ITask = msg.content;
-                dispatcher.onNodeCompleteTask(nodeId, task);
-            }
+    if (params.destination === '/topic/dispatcher') {
+        let msg:GridMessage = params.body;
+        if (msg.type === 'node-ready') {
+            let nodeReady: INodeReady = msg.content;
+            dispatcher.markNodeReady(nodeId, nodeReady);
+        } else if (msg.type === 'task-complete') {
+            let task: ITask = msg.content;
+            dispatcher.onNodeCompleteTask(nodeId, task);
         }
     }
 });

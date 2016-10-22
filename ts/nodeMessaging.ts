@@ -9,13 +9,13 @@ export class NodeMessaging {
             type: 'launch-task'
             ,content: task
         };
-        this.nodeAppConnectionsManager.injectMessage('/topic/node/' + nodeId, {}, msg,  done);
+        this.nodeAppConnectionsManager.dispatchMessage('/topic/node/' + nodeId, {}, msg,  done);
     }
     killProcessesTree(nodeId: string, pids:number[], done: (err: any) => void): void {
         let msg: GridMessage = {
             type: 'kill-processes-tree'
             ,content: pids
         };
-        this.nodeAppConnectionsManager.injectMessage('/topic/node/' + nodeId, {}, msg,  done);
+        this.nodeAppConnectionsManager.dispatchMessage('/topic/node/' + nodeId, {}, msg,  done);
     }
 }
