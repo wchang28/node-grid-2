@@ -5,7 +5,7 @@ import {Router as jobRouter} from './job';
 import {Router as userRouter} from './user';
 import * as tr from 'rcf-message-router';
 import * as events from 'events';
-import {IGridUser} from 'grid-client-core';
+import {IGridUser, Utils} from 'grid-client-core';
 
 let router = express.Router();
 
@@ -18,9 +18,25 @@ router.use('/user', userRouter);
 router.use('/job', jobRouter);
 router.use('/dispatcher', dispatcherRouter);
 
+let destAuthRouter = new tr.DestinationAuthRouter();
+
+let destAuthHandler = (req: tr.DestAuthRequest, res: tr.DestAuthResponse): void => {
+    if (req.authMode === tr.DestAuthMode.Subscribe)
+        res.accept();
+    else
+        res.reject();
+}
+
+destAuthRouter.use(Utils.getDispatcherTopic(), destAuthHandler);
+destAuthRouter.use(Utils.getJobsTrackingTopic(), destAuthHandler);
+destAuthRouter.use(Utils.getConnectionsTopic(), destAuthHandler);
+destAuthRouter.use('/topic/job/:jobId', destAuthHandler);
+
 let options: tr.Options = {
     pingIntervalMS: 10000
     ,cookieSetter: (req: express.Request) => {return getUser(req);}
+    ,dispatchMsgOnClientSend: false
+    ,destinationAuthorizeRouter: destAuthRouter
 }
 let topicRouter = tr.getRouter('/event_stream', options);
 
