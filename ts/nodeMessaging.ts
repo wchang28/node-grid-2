@@ -1,4 +1,4 @@
-import {ConnectionsManager} from 'rcf-message-router';
+import {ConnectionsManager} from 'rcf-message-router-2';
 import {GridMessage, ITask} from 'grid-client-core';
 
 export class NodeMessaging {

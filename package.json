@@ -47,7 +47,7 @@
     "polaris-auth-client": "git+https://github.com/wchang28/polaris-auth-client.git",
     "rcf": "git+https://github.com/wchang28/rcf.git",
     "rcf-http-proxy": "git+https://github.com/wchang28/rcf-http-proxy.git",
-    "rcf-message-router": "git+https://github.com/wchang28/rcf-message-router.git",
+    "rcf-message-router-2": "git+https://github.com/wchang28/rcf-message-router-2.git",
     "react": "^15.2.0",
     "react-dom": "^15.2.0",
     "rest-api-interfaces": "git+https://github.com/wchang28/rest-api-interfaces.git",
