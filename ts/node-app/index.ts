@@ -16,7 +16,7 @@ topicRouter.route('/dispatcher').post(tr.destAuth((req: tr.DestAuthRequest, res:
     res.reject();
 }));
 
-// allow the node to subscribe to it's own topic
+// allow the node to subscribe to it's own topic (topic/node/:nodeId)
 topicRouter.route('/node/:nodeId').post(tr.destAuth((req: tr.DestAuthRequest, res:tr.DestAuthResponse) => {
     res.reject();
 })).get(tr.destAuth((req: tr.DestAuthRequest, res:tr.DestAuthResponse) => {
