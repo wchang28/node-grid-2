@@ -1,6 +1,6 @@
 {
   "name": "node-grid-2",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Node.js-based Grid v2",
   "main": "./js/gridNodeClient.js",
   "typings": "./js/gridNodeClient.d.ts",
@@ -34,7 +34,7 @@
     "express": "^4.14.0",
     "express-pretty-print": "git+https://github.com/wchang28/express-pretty-print.git",
     "express-session": "^1.14.0",
-    "express-web-seerver": "git+https://github.com/wchang28/express-web-server.git",
+    "express-web-server": "git+https://github.com/wchang28/express-web-server.git",
     "grid-client-core": "git+https://github.com/wchang28/grid-client-core.git",
     "grid-client-node": "git+https://github.com/wchang28/grid-client-node.git",
     "jquery": "^3.1.0",
