@@ -16,8 +16,8 @@ interface ITaskItemDispatch extends ITaskItem {
 }
 
 export interface INodeMessaging {
-    dispatchTaskToNode: (nodeId: string, task: ITask, done: (err: any) => void) => void;
-    killProcessesTree: (nodeId: string, pids:number[], done: (err: any) => void) => void;
+    dispatchTaskToNode: (nodeId: string, task: ITask, done:(err:any) => void) => void;
+    killProcessesTree: (nodeId: string, pids:number[], done:(err:any) => void) => void;
 }
 
 export interface IGridDB {
@@ -640,7 +640,7 @@ export class Dispatcher extends events.EventEmitter {
 		}
 		return cpusPicked;
     }
-    private dispathTaskToNode(nodeId: string, task: ITaskItem, done: (err: any) => void) {
+    private dispathTaskToNode(nodeId: string, task: ITaskItem, done:(err: any) => void) {
         this.__nodeMessaging.dispatchTaskToNode(nodeId, task, done);
     }
     private dispatchTasksIfNecessary() : void {
@@ -755,7 +755,7 @@ export class Dispatcher extends events.EventEmitter {
                         else {  // there are tasks still running
                             for (let nodeId in runningProcess) {    // for each node
                                 let pids = runningProcess[nodeId];
-                                this.__nodeMessaging.killProcessesTree(nodeId, pids, (err: any): void => {});
+                                this.__nodeMessaging.killProcessesTree(nodeId, pids, (err:any) => {});
                             }
                             if (tryIndex < maxTries-1)
                                 setTimeout(getKillJobCall(jobId, false, waitMS, maxTries, tryIndex+1, done), waitMS);

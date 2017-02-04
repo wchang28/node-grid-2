@@ -30,7 +30,7 @@ let destAuthRouter = express.Router();
 destAuthRouter.use('/topic', topicRouter);
 
 let options: tr.Options = {
-    pingIntervalMS: 10000
+    connPingIntervalMS: 10000
     ,dispatchMsgOnClientSend: false
     ,destinationAuthorizeRouter: destAuthRouter
 };
