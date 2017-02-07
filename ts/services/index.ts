@@ -33,7 +33,7 @@ destAuthRouter.use(Utils.getConnectionsTopic(), destAuthHandler);
 destAuthRouter.use('/topic/job/:jobId', destAuthHandler);
 
 let options: tr.Options = {
-    connPingIntervalMS: 10000
+    connKeepAliveIntervalMS: 10000
     ,connCookieMaker: (req: express.Request) => {return getUser(req);}
     ,dispatchMsgOnClientSend: false
     ,destinationAuthorizeRouter: destAuthRouter
