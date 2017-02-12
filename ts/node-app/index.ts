@@ -46,20 +46,20 @@ let getDispatcher = (req:any) : Dispatcher => {
     return g.dispatcher;
 }
 
-connectionsManager.on('client_connect', (params: tr.ConnectedEventParams) : void => {
-    console.log('node ' + params.conn_id + ' @ ' + params.remoteAddress + ' connected to the SSE topic endpoint');
-    let dispatcher = getDispatcher(params.req);
-    let node:INode = {id: params.conn_id, name: params.remoteAddress};
+connectionsManager.on('client_connect', (req:express.Request, connection: tr.ITopicConnection) : void => {
+    console.log('node ' + connection.id + ' @ ' + connection.remoteAddress + ' connected to the SSE topic endpoint');
+    let dispatcher = getDispatcher(req);
+    let node:INode = {id: connection.id, name: connection.remoteAddress};
     dispatcher.addNewNode(node);
-}).on('client_disconnect', (params: tr.ConnectedEventParams) : void => {
-    console.log('node ' + params.conn_id + ' @ ' + params.remoteAddress +  ' disconnected from the SSE topic endpoint');
-    let dispatcher = getDispatcher(params.req);
-    dispatcher.removeNode(params.conn_id);
-}).on('on_client_send_msg', (params: tr.ClientSendMsgEventParams) => {
-    let dispatcher = getDispatcher(params.req);
-    let nodeId = params.conn_id;
-    if (params.data.destination === '/topic/dispatcher') {
-        let msg:GridMessage = params.data.body;
+}).on('client_disconnect', (req:express.Request, connection: tr.ITopicConnection) : void => {
+    console.log('node ' + connection.id + ' @ ' + connection.remoteAddress +  ' disconnected from the SSE topic endpoint');
+    let dispatcher = getDispatcher(req);
+    dispatcher.removeNode(connection.id);
+}).on('on_client_send_msg', (req:express.Request, connection: tr.ITopicConnection, params: tr.SendMsgParams) => {
+    let dispatcher = getDispatcher(req);
+    let nodeId = connection.id;
+    if (params.destination === '/topic/dispatcher') {
+        let msg:GridMessage = params.body;
         if (msg.type === 'node-ready') {
             let nodeReady: INodeReady = msg.content;
             dispatcher.markNodeReady(nodeId, nodeReady);

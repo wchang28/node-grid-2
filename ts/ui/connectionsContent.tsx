@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {IMessageClient, GridMessage, Utils, ISession, IGridUser} from '../gridBrowserClient';
+import {ITopicConnectionJSON} from "rcf-message-router";
 
 export interface IConnectionsContentProps {
     msgClient: IMessageClient;
@@ -8,15 +9,9 @@ export interface IConnectionsContentProps {
     currConnId: string;
 }
 
-export interface ITopicConnection {
-    id: string
-    remoteAddress: string
-    cookie: any;
-}
-
 export interface IConnectionsContentState {
     sub_id?:string;
-    connections?: ITopicConnection[];
+    connections?: ITopicConnectionJSON[];
 }
 
 export class ConnectionsContent extends React.Component<IConnectionsContentProps, IConnectionsContentState> {
@@ -29,12 +24,12 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
     protected handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'connections-changed') {
             //console.log('receive <<connections-changed>');
-            let connections: ITopicConnection[] = gMsg.content;
+            let connections: ITopicConnectionJSON[] = gMsg.content;
             this.setState({connections: connections});
         }     
     }
     private getConnections() : void {
-        this.session.getConnections((err: any, connections: ITopicConnection[]) => {
+        this.session.getConnections((err: any, connections: ITopicConnectionJSON[]) => {
             if (err)
                 console.error('!!! Error getting client connections');
             else {
@@ -74,7 +69,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
     }
     private getConnectionRows() : any {
         if (this.state.connections && this.state.connections.length > 0) {
-            return this.state.connections.map((connection: ITopicConnection, index:number) => {
+            return this.state.connections.map((connection: ITopicConnectionJSON, index:number) => {
                 let user:IGridUser= connection.cookie;
                 return (
                     <tr key={index}>

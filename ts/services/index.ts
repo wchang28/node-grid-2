@@ -44,14 +44,10 @@ router.use('/events', ret.router); // topic subscription endpoint is available a
 
 let connectionsManager = ret.connectionsManager;
 
-connectionsManager.on('client_connect', (params: tr.ConnectedEventParams) : void => {
-    console.log('client ' + params.conn_id + ' @ ' + params.remoteAddress + ' connected to the SSE topic endpoint');
-}).on('client_disconnect', (params: tr.ConnectedEventParams) : void => {
-    console.log('client ' + params.conn_id + ' @ ' + params.remoteAddress +  ' disconnected from the SSE topic endpoint');
-}).on('sse_send', (s: string) => {
-    if (s.match(/queue-changed/gi)) {
-        console.log('sending => ' + s);
-    }
+connectionsManager.on('client_connect', (req:express.Request, connection: tr.ITopicConnection) : void => {
+    console.log('client ' + connection.id + ' @ ' + connection.remoteAddress + ' connected to the SSE topic endpoint');
+}).on('client_disconnect', (req:express.Request, connection: tr.ITopicConnection) : void => {
+    console.log('client ' + connection.id + ' @ ' + connection.remoteAddress +  ' disconnected from the SSE topic endpoint');
 });
 
 router.get('/connections', (req: express.Request, res: express.Response) => {
