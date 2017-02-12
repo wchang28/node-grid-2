@@ -9,7 +9,7 @@ export interface IConnectionsContentProps {
 }
 
 export interface ITopicConnection {
-    conn_id: string
+    id: string
     remoteAddress: string
     cookie: any;
 }
@@ -79,7 +79,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
                 return (
                     <tr key={index}>
                         <td>{index+1}</td>
-                        <td>{connection.conn_id + (connection.conn_id === this.props.currConnId ? " (Me)": "")}</td>
+                        <td>{connection.id + (connection.id === this.props.currConnId ? " (Me)": "")}</td>
                         <td>{connection.remoteAddress}</td>
                         <td>{user.userId}</td>
                         <td>{user.userName}</td>
