@@ -1,8 +1,8 @@
-import {ConnectionsManager} from 'rcf-message-router-2';
+import {IConnectionsManager} from 'rcf-message-router';
 import {GridMessage, IJobProgress, ITask, IQueueJSON, INodeItem, IDispControl, Utils} from 'grid-client-core';
 
 export class ClientMessaging {
-    constructor(private connectionsManager: ConnectionsManager) {}
+    constructor(private connectionsManager: IConnectionsManager) {}
 
     notifyClientsQueueChanged(queue: IQueueJSON) : void {
         let msg: GridMessage = {

@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
-import * as tr from 'rcf-message-router-2';
+import * as tr from 'rcf-message-router';
 import {IGlobal} from '../global';
 import {Dispatcher} from '../dispatcher'; 
 import {GridMessage, INode, INodeReady, ITask} from 'grid-client-core';
@@ -20,7 +20,7 @@ topicRouter.route('/dispatcher').post(tr.destAuth((req: tr.DestAuthRequest, res:
 topicRouter.route('/node/:nodeId').post(tr.destAuth((req: tr.DestAuthRequest, res:tr.DestAuthResponse) => {
     res.reject();
 })).get(tr.destAuth((req: tr.DestAuthRequest, res:tr.DestAuthResponse) => {
-    if (req.conn_id == req.params['nodeId'])
+    if (req.connection.id == req.params['nodeId'])
         res.accept();
     else
         res.reject();
@@ -35,11 +35,10 @@ let options: tr.Options = {
     ,destinationAuthorizeRouter: destAuthRouter
 };
 
-let msgRouter = tr.getRouter('/event_stream', options);
-router.use('/events', msgRouter); // topic subscription endpoint is available at /events/event_stream from this route
+let ret = tr.get('/event_stream', options);
+router.use('/events', ret.router); // topic subscription endpoint is available at /events/event_stream from this route
 
-let routerEventEmitter = msgRouter.eventEmitter;
-let connectionsManager = msgRouter.connectionsManager;
+let connectionsManager = ret.connectionsManager;
 
 let getDispatcher = (req:any) : Dispatcher => {
     let request: express.Request = req;
@@ -47,7 +46,7 @@ let getDispatcher = (req:any) : Dispatcher => {
     return g.dispatcher;
 }
 
-routerEventEmitter.on('client_connect', (params: tr.ConnectedEventParams) : void => {
+connectionsManager.on('client_connect', (params: tr.ConnectedEventParams) : void => {
     console.log('node ' + params.conn_id + ' @ ' + params.remoteAddress + ' connected to the SSE topic endpoint');
     let dispatcher = getDispatcher(params.req);
     let node:INode = {id: params.conn_id, name: params.remoteAddress};

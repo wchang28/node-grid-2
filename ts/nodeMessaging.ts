@@ -1,9 +1,9 @@
-import {ConnectionsManager} from 'rcf-message-router-2';
+import {IConnectionsManager} from 'rcf-message-router';
 import {GridMessage, ITask} from 'grid-client-core';
 import {INodeMessaging} from './dispatcher';
 
 export class NodeMessaging implements INodeMessaging {
-    constructor(private nodeAppConnectionsManager: ConnectionsManager) {
+    constructor(private nodeAppConnectionsManager: IConnectionsManager) {
     }
     dispatchTaskToNode(nodeId: string, task: ITask, done:(err:any) => void): void {
         let msg: GridMessage = {

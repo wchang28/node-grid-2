@@ -3,7 +3,7 @@ import * as core from 'express-serve-static-core';
 import {Router as dispatcherRouter} from './dispatcher';
 import {Router as jobRouter} from './job';
 import {Router as userRouter} from './user';
-import * as tr from 'rcf-message-router-2';
+import * as tr from 'rcf-message-router';
 import * as events from 'events';
 import {IGridUser, Utils} from 'grid-client-core';
 
@@ -38,22 +38,17 @@ let options: tr.Options = {
     ,dispatchMsgOnClientSend: false
     ,destinationAuthorizeRouter: destAuthRouter
 }
-let msgRouter = tr.getRouter('/event_stream', options);
 
-router.use('/events', msgRouter); // topic subscription endpoint is available at /events/event_stream from this route
+let ret = tr.get('/event_stream', options);
+router.use('/events', ret.router); // topic subscription endpoint is available at /events/event_stream from this route
 
-let routerEventEmitter = msgRouter.eventEmitter;
-let connectionsManager = msgRouter.connectionsManager;
+let connectionsManager = ret.connectionsManager;
 
-routerEventEmitter.on('client_connect', (params: tr.ConnectedEventParams) : void => {
+connectionsManager.on('client_connect', (params: tr.ConnectedEventParams) : void => {
     console.log('client ' + params.conn_id + ' @ ' + params.remoteAddress + ' connected to the SSE topic endpoint');
-});
-
-routerEventEmitter.on('client_disconnect', (params: tr.ConnectedEventParams) : void => {
+}).on('client_disconnect', (params: tr.ConnectedEventParams) : void => {
     console.log('client ' + params.conn_id + ' @ ' + params.remoteAddress +  ' disconnected from the SSE topic endpoint');
-});
-
-routerEventEmitter.on('sse_send', (s: string) => {
+}).on('sse_send', (s: string) => {
     if (s.match(/queue-changed/gi)) {
         console.log('sending => ' + s);
     }
