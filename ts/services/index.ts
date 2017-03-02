@@ -30,7 +30,8 @@ let destAuthHandler = tr.destAuth((req: tr.DestAuthRequest, res: tr.DestAuthResp
 destAuthRouter.use(Utils.getDispatcherTopic(), destAuthHandler);
 destAuthRouter.use(Utils.getJobsTrackingTopic(), destAuthHandler);
 destAuthRouter.use(Utils.getConnectionsTopic(), destAuthHandler);
-destAuthRouter.use('/topic/job/:jobId', destAuthHandler);
+//destAuthRouter.use('/topic/job/:jobId', destAuthHandler);
+destAuthRouter.use('/topic/job', destAuthHandler);
 
 let options: tr.Options = {
     connKeepAliveIntervalMS: 10000
