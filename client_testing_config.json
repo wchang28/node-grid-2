@@ -3,7 +3,7 @@
      {
         "tokenGrantOptions":
         {
-            "url": "http://shohuo28.ddns.net:33821/services/oauth2/token"
+            "url": "http://24.193.106.118:33821/services/oauth2/token"
         }
         ,"clientAppSettings":
         {
