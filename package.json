@@ -1,6 +1,6 @@
 {
   "name": "node-grid-2",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Node.js-based Grid v2",
   "main": "./js/gridNodeClient.js",
   "typings": "./js/gridNodeClient.d.ts",
