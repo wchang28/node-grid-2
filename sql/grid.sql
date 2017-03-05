@@ -536,7 +536,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	select top 500
+	select top 100
 	*
 	from [dbo].[GridJobsView]
 	order by [jobId] desc
