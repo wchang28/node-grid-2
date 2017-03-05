@@ -5,9 +5,12 @@ class GridSession extends SessionBase implements ISession {
     constructor() {
         super($browser.get({EventSource: global['EventSource']}), null, null);
     }
-    logout(done?:(err:any) => void) : void {
-        let path = "/logout";
-        window.location.href = path;
+    logout() : Promise<any> {
+        return new Promise<any>((resolve: (value: any) => void, reject: (err: any) => void) => {
+            let path = "/logout";
+            window.location.href = path;
+            resolve({});
+        });
     }
 }
 

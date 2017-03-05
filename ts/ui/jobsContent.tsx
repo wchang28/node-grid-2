@@ -27,41 +27,35 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
         }     
     }
     private getMostRecentJobs() : void {
-        this.session.getMostRecentJobs((err: any, jobInfos: IJobInfo[]) => {
-            if (err)
-                console.error('!!! Error getting most recent jobs');
-            else {
-                this.setState({
-                    jobs: jobInfos
-                });
-            }
+        this.session.getMostRecentJobs()
+        .then((jobInfos: IJobInfo[]) => {
+            this.setState({
+                jobs: jobInfos
+            });
+        }).catch((err: any) => {
+            console.error('!!! Error getting most recent jobs');
         });
     }
     componentDidMount() {
         console.log('JobsContent.componentDidMount()');
         this.getMostRecentJobs();
-        let sub_id = this.msgClient.subscribe(Utils.getJobsTrackingTopic()
-        ,this.handleMessages.bind(this)
-        ,{}
-        ,(err: any) => {
-            if (err) {
-                console.error('!!! Error: topic subscription failed');
-            } else {
-                console.log('topic subscribed sub_id=' + sub_id + " :-)");
-                this.setState({sub_id});
-            }
+        this.msgClient.subscribe(Utils.getJobsTrackingTopic(), this.handleMessages.bind(this), {})
+        .then((sub_id: string) => {
+            console.log('topic subscribed sub_id=' + sub_id + " :-)");
+            this.setState({sub_id});
+        }).catch((err: any) => {
+            console.error('!!! Error: topic subscription failed');
         });
-
     }
     componentWillUnmount() {
         console.log('JobsContent.componentWillUnmount()');
         if (this.state.sub_id) {
             let sub_id = this.state.sub_id;
-            this.msgClient.unsubscribe(sub_id, (err:any) => {
-                if (err)
-                    console.error('!!! Error unsubscribing subscription ' + sub_id);
-                else
-                    console.log('successfully unsubscribed subscription ' + sub_id);
+            this.msgClient.unsubscribe(sub_id)
+            .then(() => {
+                console.log('successfully unsubscribed subscription ' + sub_id);
+            }).catch((err:any) => {
+                console.error('!!! Error unsubscribing subscription ' + sub_id);
             });
         }
     }
@@ -85,21 +79,23 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
         return ((e:any):void => {
             let jobInfo = this.state.jobs[index];
             let jobId=jobInfo.jobId;
-            this.session.killJob(jobId, (err:any) => {
-                if (err) {
-                    console.error('!!! Error killing job: ' + JSON.stringify(err));
-                }
+            this.session.killJob(jobId)
+            .then(() => {
+
+            }).catch((err: any) => {
+                console.error('!!! Error killing job: ' + JSON.stringify(err));
             });
         });
     }
-    private getReSubmitJobClickHandler(index: number) : (e:any) => void {
+    private getReSubmitJobClickHandler(index: number, failedTasksOnly: boolean) : (e:any) => void {
         return ((e:any):void => {
             let jobInfo = this.state.jobs[index];
             let jobId=jobInfo.jobId;
-            this.session.reSumbitJob(jobId, false, (err:any) => {
-                if (err) {
-                    console.error('!!! Error re-sumbitJob job: ' + JSON.stringify(err));
-                }
+            this.session.reSumbitJob(jobId, failedTasksOnly)
+            .then(() => {
+
+            }).catch((err:any) => {
+                console.error('!!! Error re-sumbitJob job: ' + JSON.stringify(err));
             });
         });
     }
@@ -121,7 +117,8 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
                         <td>{(this.isCompleteStatus(jobInfo.status) ? (jobInfo.success ? 'Success': 'Failed') : '')}</td>
                         <td style={actionsCellStyle}>
                             <button disabled={!this.canKillJob(index)} onClick={this.getKillJobClickHandler(index)}>Kill</button>
-                            <button style={reSubmitButtonStyle} disabled={!this.canSubmitJob()} onClick={this.getReSubmitJobClickHandler(index)}>Re-submit</button>
+                            <button style={reSubmitButtonStyle} disabled={!this.canSubmitJob()} onClick={this.getReSubmitJobClickHandler(index, false)}>Re-submit</button>
+                            <button style={reSubmitButtonStyle} disabled={!this.canSubmitJob() || jobInfo.success} onClick={this.getReSubmitJobClickHandler(index, true)}>Re-submit Failed</button>
                         </td>
                     </tr>
                 );

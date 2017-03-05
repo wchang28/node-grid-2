@@ -25,28 +25,30 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
     protected get session() : ISession {return this.props.session;}
     private getOnSubmitTestEchoJobHandler(numTasks:number) {
         return (event: any) => {
-            this.session.sumbitJob(TestJobs.getEchoTestJob(numTasks), (err:any, jp:IJobProgress) => {
-                if (err)
-                    console.log('!!! Error submitting job: ' + JSON.stringify(err));
-                else
-                    console.log('test job submitted, jobId=' + jp.jobId);
+            this.session.sumbitJob(TestJobs.getEchoTestJob(numTasks))
+            .then((jp: IJobProgress) => {
+                console.log('test job submitted, jobId=' + jp.jobId);
+            }).catch((err: any) => {
+                console.log('!!! Error submitting job: ' + JSON.stringify(err));
             });
             return false;
         };
     }
     private onSubmitTestSleepJob(event: any) {
-        this.session.sumbitJob(TestJobs.getSleepTestJob(), (err:any, jp:IJobProgress) => {
-            if (err)
-                console.log('!!! Error submitting job: ' + JSON.stringify(err));
-            else
-                console.log('test job submitted, jobId=' + jp.jobId);
+        this.session.sumbitJob(TestJobs.getSleepTestJob())
+        .then((jp: IJobProgress) => {
+            console.log('test job submitted, jobId=' + jp.jobId);
+        }).catch((err: any) => {
+            console.log('!!! Error submitting job: ' + JSON.stringify(err));
         });
         return false;
     }
     private onRunSomeTestJob(event: any) {
-        runSomeTestJob(this.session, (err: any) => {
-            if (err)
-                console.log('!!! Error running job: ' + JSON.stringify(err));
+        runSomeTestJob(this.session)
+        .then(() => {
+
+        }).catch((err: any) => {
+            console.log('!!! Error running job: ' + JSON.stringify(err));
         });
         return false;
     }

@@ -24,9 +24,20 @@ client.login(username, password, (err:any, session: ISession) => {
         console.error('!!! Login error: ' + JSON.stringify(err));
         process.exit(1);
     } else {
-        runSomeTestJob(session, (error:any) => {
-            session.logout((err:any) => {
-                process.exit(error ? 1 : 0);
+        runSomeTestJob(session)
+        .then(() => {
+            session.logout()
+            .then(() => {
+                process.exit(0);
+            }).catch((err: any) => {
+                process.exit(0);
+            });
+        }).catch((error: any) => {
+            session.logout()
+            .then(() => {
+                process.exit(1);
+            }).catch((err: any) => {
+                process.exit(1);
             });
         });
     }

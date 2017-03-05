@@ -29,41 +29,35 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
         }     
     }
     private getConnections() : void {
-        this.session.getConnections((err: any, connections: ITopicConnectionJSON[]) => {
-            if (err)
-                console.error('!!! Error getting client connections');
-            else {
-                this.setState({
-                    connections: connections
-                });
-            }
+        this.session.getConnections()
+        .then((connections: ITopicConnectionJSON[]) => {
+            this.setState({
+                connections: connections
+            });
+        }).catch((err: any) => {
+            console.error('!!! Error getting client connections');
         });
     }
     componentDidMount() {
         console.log('ConnectionsContent.componentDidMount()');
         this.getConnections();
-        let sub_id = this.msgClient.subscribe(Utils.getConnectionsTopic()
-        ,this.handleMessages.bind(this)
-        ,{}
-        ,(err: any) => {
-            if (err) {
-                console.error('!!! Error: topic subscription failed');
-            } else {
-                console.log('topic subscribed sub_id=' + sub_id + " :-)");
-                this.setState({sub_id});
-            }
+        this.msgClient.subscribe(Utils.getConnectionsTopic(), this.handleMessages.bind(this), {})
+        .then((sub_id: string) => {
+            console.log('topic subscribed sub_id=' + sub_id + " :-)");
+            this.setState({sub_id});
+        }).catch((err: any) => {
+            console.error('!!! Error: topic subscription failed');
         });
-
     }
     componentWillUnmount() {
         console.log('ConnectionsContent.componentWillUnmount()');
         if (this.state.sub_id) {
             let sub_id = this.state.sub_id;
-            this.msgClient.unsubscribe(sub_id, (err:any) => {
-                if (err)
-                    console.error('!!! Error unsubscribing subscription ' + sub_id);
-                else
-                    console.log('successfully unsubscribed subscription ' + sub_id);
+            this.msgClient.unsubscribe(sub_id)
+            .then(() => {
+                console.log('successfully unsubscribed subscription ' + sub_id);
+            }).catch((err: any) => {
+                console.error('!!! Error unsubscribing subscription ' + sub_id);
             });
         }
     }

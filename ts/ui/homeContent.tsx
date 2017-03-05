@@ -38,43 +38,37 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         }       
     }
     private getDispatcherJSON() : void {
-        this.session.getDispatcherJSON((err: any, dispatcherJSON: IDispatcherJSON) => {
-            if (err)
-                console.error('!!! Error getting dispatcher state');
-            else {
-                this.setState({
-                    nodes: dispatcherJSON.nodes
-                    ,queue: dispatcherJSON.queue
-                    ,dispControl: dispatcherJSON.dispControl
-                });
-            }            
+        this.session.getDispatcherJSON()
+        .then((dispatcherJSON: IDispatcherJSON) => {
+            this.setState({
+                nodes: dispatcherJSON.nodes
+                ,queue: dispatcherJSON.queue
+                ,dispControl: dispatcherJSON.dispControl
+            });
+        }).catch((err: any) => {
+            console.error('!!! Error getting dispatcher state');
         });
     }
     componentDidMount() {
         console.log('HomeContent.componentDidMount()');
         this.getDispatcherJSON();
-        let sub_id = this.msgClient.subscribe(Utils.getDispatcherTopic()
-        ,this.handleMessages.bind(this)
-        ,{}
-        ,(err: any) => {
-            if (err) {
-                console.error('!!! Error: topic subscription failed');
-            } else {
-                console.log('topic subscribed sub_id=' + sub_id + " :-)");
-                this.setState({sub_id});
-            }
+        this.msgClient.subscribe(Utils.getDispatcherTopic(), this.handleMessages.bind(this), {})
+        .then((sub_id: string) => {
+            console.log('topic subscribed sub_id=' + sub_id + " :-)");
+            this.setState({sub_id});
+        }).catch((err: any) => {
+            console.error('!!! Error: topic subscription failed');
         });
-
     }
     componentWillUnmount() {
         console.log('HomeContent.componentWillUnmount()');
         if (this.state.sub_id) {
             let sub_id = this.state.sub_id;
-            this.msgClient.unsubscribe(sub_id, (err:any) => {
-                if (err)
-                    console.error('!!! Error unsubscribing subscription ' + sub_id);
-                else
-                    console.log('successfully unsubscribed subscription ' + sub_id);
+            this.msgClient.unsubscribe(sub_id)
+            .then(() => {
+                console.log('successfully unsubscribed subscription ' + sub_id);
+            }).catch((err: any) => {
+                console.error('!!! Error unsubscribing subscription ' + sub_id);
             });
         }
     }
@@ -103,10 +97,11 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         return ((e:any):void => {
             let nodeItem = this.state.nodes[index];
             let nodeId=nodeItem.id;
-            this.session.setNodeEnabled(nodeId, !nodeItem.enabled, (err:any, nodeItem: INodeItem) => {
-                if (err) {
-                    console.error('!!! Error enable/disable node: ' + JSON.stringify(err));
-                }
+            this.session.setNodeEnabled(nodeId, !nodeItem.enabled)
+            .then((nodeItem: INodeItem) => {
+
+            }).catch((err: any) => {
+                console.error('!!! Error enable/disable node: ' + JSON.stringify(err));
             });
         });
     }
@@ -139,23 +134,21 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
     }
     private onQueueCloseClick(e:any) {
         if (this.state.dispControl) {
-            this.session.setQueueOpened(this.state.dispControl.queueClosed, (err:any, dispControl: IDispControl) => {
-                if (err) {
-                    console.error('!!! Error opening/closing queue: ' + JSON.stringify(err));
-                } else {
-                    this.setState({dispControl: dispControl});
-                }
+            this.session.setQueueOpened(this.state.dispControl.queueClosed)
+            .then((dispControl: IDispControl) => {
+                this.setState({dispControl});
+            }).catch((err: any) => {
+                console.error('!!! Error opening/closing queue: ' + JSON.stringify(err));
             });
         }
     }
     private onDispatchingEnableClick(e:any) {
         if (this.state.dispControl) {
-            this.session.setDispatchingEnabled(!this.state.dispControl.dispatchEnabled, (err:any, dispControl: IDispControl) => {
-                if (err) {
-                    console.error('!!! Unable to start/stop task dispatching: ' + JSON.stringify(err));
-                } else {
-                    this.setState({dispControl: dispControl});
-                }
+            this.session.setDispatchingEnabled(!this.state.dispControl.dispatchEnabled)
+            .then((dispControl: IDispControl) => {
+                this.setState({dispControl});
+            }).catch((err: any) => {
+                console.error('!!! Unable to start/stop task dispatching: ' + JSON.stringify(err));
             });
         }        
     }
