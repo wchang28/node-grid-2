@@ -2,6 +2,7 @@
 import * as events from 'events';
 import * as _ from 'lodash';
 import {Utils, INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON, ITaskResult} from 'grid-client-core';
+import {IAutoScalableState, IWorkerState} from 'autoscalable-grid';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -160,6 +161,16 @@ class Nodes extends events.EventEmitter {
         let node = this.__nodes[id];
         return (node ? node : null);
     }
+    // returns the number of idle cpus
+    get numIdleCPUs(): number {
+        let count = 0;
+        for (let conn_id in this.__nodes) {    // for each node/host
+            let node = this.__nodes[conn_id];
+            if (typeof node.numCPUs === 'number' && node.numCPUs > 0)
+                count += (node.numCPUs - node.cpusUsed);
+        }
+        return count;
+    }
     toJSON(): INodeItem[] {
         let ret: INodeItem[] = [];
         for (let conn_id in this.__nodes)
@@ -301,6 +312,9 @@ class Queue extends events.EventEmitter {
         this.__numtasks -= numRemoved;
         if (numRemoved > 0) this.emit('changed');
     }
+    get empty() : boolean {return (this.__numtasks === 0);}
+    get numTasks() : number {return this.__numtasks;}
+    get numJobs() : number {return this.__numJobs;}
     toJSON(): IQueueJSON {
         let priorities: number[] = [];
         for (let p in this.__queue)
@@ -823,5 +837,14 @@ export class Dispatcher extends events.EventEmitter {
             ,states: this.states
             ,jobsPolling: this.jobsPolling
         };
+    }
+    get AutoScalableState() : IAutoScalableState {
+        let state: IAutoScalableState = {
+            CurrentTime: new Date().getTime()
+            ,QueueEmpty: this.__queue.empty
+            ,CPUDebt: this.__queue.numTasks - this.__nodes.numIdleCPUs
+            ,WorkerStates: []
+        };
+        return state;
     }
 }
