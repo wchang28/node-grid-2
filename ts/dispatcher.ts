@@ -2,7 +2,7 @@
 import * as events from 'events';
 import * as _ from 'lodash';
 import {Utils, INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON, ITaskResult} from 'grid-client-core';
-import {IAutoScalableState, IWorkerState} from 'autoscalable-grid';
+import {IAutoScalableState, IWorkerState, IAutoScalableGrid} from 'autoscalable-grid';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -175,6 +175,21 @@ class Nodes extends events.EventEmitter {
         let ret: INodeItem[] = [];
         for (let conn_id in this.__nodes)
             ret.push(this.__nodes[conn_id]);
+        return ret;
+    }
+    // AutoScalableGrid support
+    get WorkerStates() : IWorkerState[] {
+        let ret: IWorkerState[] = [];
+        for (let conn_id in this.__nodes) {   // for each node/host
+            let node = this.__nodes[conn_id];
+            let ws: IWorkerState = {
+                Id: node.id
+                ,Name: node.name
+                ,Busy: node.cpusUsed > 0
+                ,LastIdleTime: node.lastIdleTime              
+            }
+            ret.push(ws);
+        }
         return ret;
     }
 }
@@ -838,12 +853,14 @@ export class Dispatcher extends events.EventEmitter {
             ,jobsPolling: this.jobsPolling
         };
     }
+
+    // AutoScalableGrid support
     get AutoScalableState() : IAutoScalableState {
         let state: IAutoScalableState = {
             CurrentTime: new Date().getTime()
             ,QueueEmpty: this.__queue.empty
             ,CPUDebt: this.__queue.numTasks - this.__nodes.numIdleCPUs
-            ,WorkerStates: []
+            ,WorkerStates: this.__nodes.WorkerStates
         };
         return state;
     }
