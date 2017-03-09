@@ -73,6 +73,7 @@ class Nodes extends events.EventEmitter {
         let node = this.__nodes[id];
         if (node) {
             node.cpusUsed++;
+            node.lastIdleTime = null;
             this.emit('usage-changed');
         }
     }
@@ -80,6 +81,7 @@ class Nodes extends events.EventEmitter {
         let node = this.__nodes[id];
         if (node && node.cpusUsed > 0) {
             node.cpusUsed--;
+            if (node.cpusUsed === 0) node.lastIdleTime = new Date().getTime();
             this.emit('usage-changed');
             if (this.nodeActive(node))
                 this.emit('more-cpus-available');
@@ -114,6 +116,7 @@ class Nodes extends events.EventEmitter {
                 ,numCPUs: null
                 ,enabled: true
                 ,cpusUsed: 0
+                ,lastIdleTime: new Date().getTime()
             }
             this.__nodes[newNode.id] = node;
             this.emit('node-added', newNode.id);
@@ -124,11 +127,12 @@ class Nodes extends events.EventEmitter {
         if (node) {
             node.numCPUs = nodeReady.numCPUs;
             if (nodeReady.name) node.name = nodeReady.name;
+            node.lastIdleTime = new Date().getTime();
             this.emit('node-ready', id);
             if (this.nodeActive(node)) {
                 this.emit('more-cpus-available');
             }
-        }        
+        }
     }
     // remove the node
     removeNode(id: string) : void {

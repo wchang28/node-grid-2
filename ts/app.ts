@@ -172,6 +172,7 @@ gridDB.on('error', (err: any) => {
     
     let g: IGlobal = {
         dispatcher
+        ,gridDB
     };
 
     clientApp.set("global", g);

@@ -27,23 +27,21 @@ export class GridDB extends SimpleMSSQL {
            }
         });
     }
-    /*
-    registerNewJob(user: IGridUser, jobXML: string, done:(err:any, jobProgress: IJobProgress) => void) : void {
-        this.execute('[dbo].[stp_NodeJSGridSubmitJob]', {'userId': user.userId, 'priority': user.profile.priority, 'jobXML': jobXML}, (err: any, recordsets: any) : void => {
-            if (err)
-                done(err, null);
-            else {
-                let ret = recordsets[0][0];
-                if (ret.err != 0) {
-                    done(ret.error, null);
-                } else {
-                    let ret = recordsets[1][0];
-                    done(null, ret);
+
+    // return DB time
+    getTime() : Promise<number> {
+        return new Promise<number>((resolve: (value: number) => void, reject: (err: any) => void) => {
+            this.query('select [time]=getdate()', {}, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let time: Date = recordsets[0][0]['time'];
+                    resolve(time.getTime());
                 }
-            }
+            });
         });
     }
-    */
+
     private static makeJobXML(jobSubmit:IGridJobSubmit) : string {
         if (!jobSubmit || !jobSubmit.tasks || jobSubmit.tasks.length === 0) {
             throw errors.no_task_for_job;
