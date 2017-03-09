@@ -49,7 +49,7 @@ let getDispatcher = (req:any) : Dispatcher => {
 connectionsManager.on('client_connect', (req:express.Request, connection: tr.ITopicConnection) : void => {
     console.log('node ' + connection.id + ' @ ' + connection.remoteAddress + ' connected to the SSE topic endpoint');
     let dispatcher = getDispatcher(req);
-    let node:INode = {id: connection.id, name: connection.remoteAddress};
+    let node:INode = {id: connection.id, name: connection.remoteAddress, remoteAddress: connection.remoteAddress, remotePort: connection.remotePort};
     dispatcher.addNewNode(node);
 }).on('client_disconnect', (req:express.Request, connection: tr.ITopicConnection) : void => {
     console.log('node ' + connection.id + ' @ ' + connection.remoteAddress +  ' disconnected from the SSE topic endpoint');

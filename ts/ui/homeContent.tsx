@@ -133,6 +133,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                         <td>{index+1}</td>
                         <td>{nodeItem.id}</td>
                         <td>{nodeItem.name}</td>
+                        <td>{nodeItem.remoteAddress+":"+nodeItem.remotePort.toString()}</td>
                         <td>{this.booleanString(nodeItem.enabled)}</td>
                         <td>{this.geUtilizationString(nodeItem.cpusUsed, nodeItem.numCPUs, false)}</td>
                         <td>{this.getIdleMinutesString(nodeItem.lastIdleTime)}</td>
@@ -144,6 +145,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             return (
                 <tr>
                     <td>(None)</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -190,6 +192,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <th>#</th>
                                             <th>Id</th>
                                             <th>Name</th>
+                                            <th>Remote Addr.</th>
                                             <th>Enabled</th>
                                             <th>Usage</th>
                                             <th>Idle Time</th>

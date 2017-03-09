@@ -114,6 +114,8 @@ class Nodes extends events.EventEmitter {
             let node: INodeItem = {
                 name: newNode.name
                 ,id: newNode.id
+                ,remoteAddress: newNode.remoteAddress
+                ,remotePort: newNode.remotePort
                 ,numCPUs: null
                 ,enabled: true
                 ,cpusUsed: 0
@@ -185,6 +187,8 @@ class Nodes extends events.EventEmitter {
             let ws: IWorkerState = {
                 Id: node.id
                 ,Name: node.name
+                ,RemoteAddress: node.remoteAddress
+                ,RemotePort: node.remotePort    
                 ,Busy: node.cpusUsed > 0
                 ,LastIdleTime: node.lastIdleTime              
             }
