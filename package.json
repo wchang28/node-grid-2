@@ -27,6 +27,7 @@
     "@types/react-dom": "^0.14.17",
     "@types/tree-kill": "git+https://github.com/wchang28/tree-kill-types.git",
     "@types/xmldom": "^0.1.28",
+    "autoscalable-grid": "git+https://github.com/wchang28/autoscalable-grid.git",
     "body-parser": "^1.15.2",
     "event-source-polyfill": "0.0.7",
     "eventsource": "^0.2.1",
