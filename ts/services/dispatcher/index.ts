@@ -13,8 +13,7 @@ function getUser(req: express.Request): IGridUser {
 }
 
 function getDispatcher(req:express.Request) : Dispatcher {
-    let request: express.Request = req;
-    let g:IGlobal = request.app.get('global');
+    let g:IGlobal = req.app.get('global');
     return g.dispatcher;
 }
 
