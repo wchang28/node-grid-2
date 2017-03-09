@@ -111,6 +111,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
                         <td>{jobInfo.cookie}</td>
                         <td>{jobInfo.description}</td>
                         <td>{jobInfo.userName}</td>
+                        <td>{jobInfo.priority}</td>
                         <td>{jobInfo.submitTime}</td>
                         <td>{jobInfo.status}</td>
                         <td>{this.geUtilizationString(jobInfo.numTasksFinished, jobInfo.numTasks, true)}</td>
@@ -127,6 +128,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
             return (
                 <tr>
                     <td>(None)</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -156,6 +158,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
                                             <th>Cookie</th>
                                             <th>Description</th>
                                             <th>User Name</th>
+                                            <th>Priority</th>
                                             <th>Submit Time</th>
                                             <th>Status</th>
                                             <th>Completion</th>
