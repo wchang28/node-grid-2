@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON} from '../gridBrowserClient';
+import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON, Times} from '../gridBrowserClient';
 
 export interface IHomeContentProps {
     msgClient: IMessageClient;
@@ -13,12 +13,14 @@ export interface IHomeContentState {
     nodes?: INodeItem[];
     queue?:IQueueJSON;
     dispControl?: IDispControl;
+    timer?: any;
+    times?: Times;
 }
 
 export class HomeContent extends React.Component<IHomeContentProps, IHomeContentState> {
     constructor(props:IHomeContentProps) {
         super(props);
-        this.state = {sub_id: null};
+        this.state = {sub_id: null, timer: null, times: null};
     }
     protected get msgClient(): IMessageClient {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
@@ -49,7 +51,17 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             console.error('!!! Error getting dispatcher state');
         });
     }
+    private getServerTimes() {
+        this.session.getTimes()
+        .then((times: Times) => {
+            this.setState({times});
+        }).catch((err: any) => {
+            console.error('!!! Error getting server times');
+        });       
+    }
     componentDidMount() {
+        this.getServerTimes();
+        this.state.timer = setInterval(this.getServerTimes.bind(this), 15000);
         console.log('HomeContent.componentDidMount()');
         this.getDispatcherJSON();
         this.msgClient.subscribe(Utils.getDispatcherTopic(), this.handleMessages.bind(this), {})
@@ -61,6 +73,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         });
     }
     componentWillUnmount() {
+        if (this.state.timer) clearInterval(this.state.timer);
         console.log('HomeContent.componentWillUnmount()');
         if (this.state.sub_id) {
             let sub_id = this.state.sub_id;
@@ -105,7 +118,14 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             });
         });
     }
-    private getNodRows() : any {
+    private getIdleMinutesString(lastIdleTime?: number) : string {
+        if (typeof lastIdleTime === "number" && this.state.times && this.state.times.serverTime) {
+            let t = Math.round(Math.max(this.state.times.serverTime - lastIdleTime, 0)/1000.0/60.0);
+            return t.toString() + " min.";
+        } else
+            return "";
+    }
+    private getNodeRows() : any {
         if (this.state.nodes && this.state.nodes.length > 0) {
             return this.state.nodes.map((nodeItem: INodeItem, index:number) => {
                 return (
@@ -115,6 +135,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                         <td>{nodeItem.name}</td>
                         <td>{this.booleanString(nodeItem.enabled)}</td>
                         <td>{this.geUtilizationString(nodeItem.cpusUsed, nodeItem.numCPUs, false)}</td>
+                        <td>{this.getIdleMinutesString(nodeItem.lastIdleTime)}</td>
                         <td><button disabled={!this.props.currentUser.profile.canEnableDisableNode} onClick={this.getNodeEnableDisableClickHandler(index)}>{nodeItem.enabled ? "Disable" : "Enable"}</button></td>
                     </tr>
                 );
@@ -123,6 +144,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             return (
                 <tr>
                     <td>(None)</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -170,10 +192,11 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <th>Name</th>
                                             <th>Enabled</th>
                                             <th>Usage</th>
+                                            <th>Idle For</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>{this.getNodRows()}</tbody>
+                                    <tbody>{this.getNodeRows()}</tbody>
                                 </table>
                             </div>
                         </div>
