@@ -192,7 +192,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <th>Name</th>
                                             <th>Enabled</th>
                                             <th>Usage</th>
-                                            <th>Idle For</th>
+                                            <th>Idle Time</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
