@@ -3,6 +3,7 @@ CREATE TABLE [dbo].[GridJobs](
 	[description] [varchar](250) NULL,
 	[cookie] [varchar](250) NULL,
 	[userId] [varchar](100) NOT NULL,
+	[userName] [varchar](200) NULL,
 	[priority] [int] NOT NULL,
 	[submitTime] [datetime] NOT NULL,
 	[aborted] [bit] NOT NULL,
@@ -98,6 +99,7 @@ with stat as
 	,jobs.[submitTime]
 	,[status]=iif(jobs.[aborted]=1,'ABORTED',iif(stat.[numTasks]=stat.[numTasksFinished],'FINISHED', iif(stat.[startTime] is null, 'SUBMITTED', 'STARTED')))
 	,stat.*
+	,jobs.[userName]
 	from stat
 	left join [dbo].[GridJobs] (nolock) jobs
 	on stat.[jobId]=jobs.[jobId]
@@ -117,6 +119,7 @@ stat2.[jobId]
 ,[durationSeconds]=iif(stat2.[status]='FINISHED', DATEDIFF(s, stat2.[startTime], stat2.[maxFinishTime]), null)
 ,[success]=cast(iif(stat2.[status]='ABORTED', 0, iif(stat2.[numTasks]=stat2.[numSuccess],1,0)) as bit)
 ,[completePct]=cast(stat2.[numTasksFinished] as float)/cast(stat2.[numTasks] as float) * 100.0
+,[userName]
 from stat2;
 
 GO
@@ -241,6 +244,7 @@ GO
 
 CREATE PROCEDURE [dbo].[stp_NodeJSGridSubmitJob]
 	@userId varchar(100)
+	,@userName varchar(200)
 	,@priority int
 	,@jobXML xml
 AS
@@ -291,8 +295,8 @@ BEGIN
 	if @description = '' set @description=null
 	if @cookie = '' set @cookie=null
 	insert into [dbo].[GridJobs]
-	([description],[cookie],[userId],[priority],[submitTime],[aborted])
-	values (@description, @cookie, @userId, @priority, getdate(), 0)
+	([description],[cookie],[userId],[userName],[priority],[submitTime],[aborted])
+	values (@description, @cookie, @userId, @userName, @priority, getdate(), 0)
 
 	set @jobId = @@IDENTITY
 
@@ -318,6 +322,7 @@ GO
 
 CREATE PROCEDURE [dbo].[stp_NodeJSGridReSubmitJob]
 	@userId varchar(100)
+	,@userName varchar(200)
 	,@priority int
 	,@oldJobId bigint
 	,@failedTasksOnly bit = 0
@@ -379,8 +384,8 @@ BEGIN
 	where [jobId]=@oldJobId
 
 	insert into [dbo].[GridJobs]
-	([description],[cookie],[userId],[priority],[submitTime],[aborted])
-	values (@description, @cookie, @userId, @priority, getdate(), 0)
+	([description],[cookie],[userId],[userName],[priority],[submitTime],[aborted])
+	values (@description, @cookie, @userId, @userName, @priority, getdate(), 0)
 
 	set @jobId = @@IDENTITY
 

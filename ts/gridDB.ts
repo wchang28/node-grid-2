@@ -66,6 +66,7 @@ export class GridDB extends SimpleMSSQL {
     registerNewJob(user: IGridUser, jobSubmit:IGridJobSubmit, done:(err:any, jobProgress: IJobProgress) => void) : void {
         let sql = "exec [dbo].[stp_NodeJSGridSubmitJob]";
         sql += " @userId='" + GridDB.sqlEscapeString(user.userId) + "'";
+        sql += ",@userName=" + GridDB.sqlEscapeString(user.displayName.toString());
         sql += ",@priority=" + GridDB.sqlEscapeString(user.profile.priority.toString());
         let xml = GridDB.makeJobXML(jobSubmit);
         sql += ",@jobXML='" + GridDB.sqlEscapeString(xml) + "'";
@@ -86,6 +87,7 @@ export class GridDB extends SimpleMSSQL {
     reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) : void {
         let params = {
             'userId': user.userId
+            ,'userName': user.displayName
             ,'priority': user.profile.priority
             ,'oldJobId': oldJobId
             ,'failedTasksOnly': failedTasksOnly
