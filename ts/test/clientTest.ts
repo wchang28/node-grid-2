@@ -19,26 +19,25 @@ let config: IGridClientConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let client = new GridClient(config);
 
-client.login(username, password, (err:any, session: ISession) => {
-    if (err) {
-        console.error('!!! Login error: ' + JSON.stringify(err));
-        process.exit(1);
-    } else {
-        runSomeTestJob(session)
+client.login(username, password)
+.then((session: ISession) => {
+    runSomeTestJob(session)
+    .then(() => {
+        session.logout()
         .then(() => {
-            session.logout()
-            .then(() => {
-                process.exit(0);
-            }).catch((err: any) => {
-                process.exit(0);
-            });
-        }).catch((error: any) => {
-            session.logout()
-            .then(() => {
-                process.exit(1);
-            }).catch((err: any) => {
-                process.exit(1);
-            });
+            process.exit(0);
+        }).catch((err: any) => {
+            process.exit(0);
         });
-    }
+    }).catch((error: any) => {
+        session.logout()
+        .then(() => {
+            process.exit(1);
+        }).catch((err: any) => {
+            process.exit(1);
+        });
+    });
+}).catch((err: any) => {
+    console.error('!!! Login error: ' + JSON.stringify(err));
+    process.exit(1); 
 });
