@@ -16,3 +16,13 @@ function getDispatcher(req:express.Request) : Dispatcher {
 router.get('/state', (req: express.Request, res: express.Response) => {
     res.jsonp(getDispatcher(req).AutoScalableState);
 });
+
+router.post('/disable_workers', (req: express.Request, res: express.Response) => {
+    getDispatcher(req).disableNodes(req.body);
+    res.jsonp({});
+});
+
+router.post('/set_workers_terminating', (req: express.Request, res: express.Response) => {
+    getDispatcher(req).setNodesTerminating(req.body);
+    res.jsonp({});
+});
