@@ -54,13 +54,14 @@ export interface IDispatcherConfig {
 }
 
 // will emit the following events
-// 1. usage-changed
-// 2. more-cpus-available
-// 3. node-added
-// 4. node-ready
-// 5. node-removed
-// 6. node-enabled
-// 6. node-disabled
+// 1. usage-changed ()
+// 2. more-cpus-available ()
+// 3. node-added (id: string)
+// 4. node-ready (id: string)
+// 5. node-removed (id: string)
+// 6. node-enabled (id: string)
+// 7. nodes-disabled (ids: string[])
+// 8. nodes-terminating (ids: string[])
 class Nodes extends events.EventEmitter {
     private __nodes: {[id:string]: INodeItem} = {};
     constructor() {
@@ -68,7 +69,7 @@ class Nodes extends events.EventEmitter {
     }
     // returen true if node is available for task dispatching
     private nodeActive(node: INodeItem): boolean {
-        return (node.enabled && typeof node.numCPUs === 'number' && node.numCPUs > 0);
+        return (node.enabled && typeof node.numCPUs === 'number' && node.numCPUs > 0 && !node.terminating);
     }
     incrementCPUUsageCount(id: string) {
         let node = this.__nodes[id];
@@ -93,22 +94,54 @@ class Nodes extends events.EventEmitter {
         if (node) {
             if (!node.enabled) {
                 node.enabled = true;
-                this.emit('node-enabled');
+                this.emit('node-enabled', id);
                 if (this.nodeActive(node)) {
                     this.emit('more-cpus-available');
                 }
             }
         }
     }
-    disableNode(id: string) : void {
-        let node = this.__nodes[id];
-        if (node) {
-            if (node.enabled) {
-                node.enabled = false;
-                this.emit('node-disabled');
+    disableNodes(ids: string[]) : void {
+        if (ids && ids.length > 0) {
+            let nodeIds: string[] = [];
+            for (let i in ids) {
+                let id = ids[i];
+                let node = this.__nodes[id];
+                if (node && node.enabled) {
+                    node.enabled = false;
+                    nodeIds.push(id);
+                }
             }
+            if (nodeIds.length > 0) this.emit('nodes-disabled', nodeIds);
         }
     }
+    disableNode(id: string) : void { this.disableNodes([id]);}
+
+    setNodesTerminating(ids: string[]) : void {
+        if (ids && ids.length > 0) {
+            let disabledNodeIds: string[] = [];
+            let terminatingNodeIds: string[] = [];
+            for (let i in ids) {
+                let id = ids[i];
+                let node = this.__nodes[id];
+                if (node) {
+                    if (node.enabled) {
+                        node.enabled = false;
+                        disabledNodeIds.push(id);
+                    }
+                    if (!node.terminating) {
+                        node.terminating = true;
+                        terminatingNodeIds.push(id);
+                    }
+                }
+            }
+            if (disabledNodeIds.length > 0) this.emit('nodes-disabled', disabledNodeIds);
+            if (terminatingNodeIds.length > 0) this.emit('nodes-terminating', terminatingNodeIds);
+        }
+    }
+
+    setNodeTerminating(id: string) : void { this.setNodesTerminating([id]); }
+
     addNewNode(newNode: INode) : void {
         if (!this.__nodes[newNode.id]) {
             let node: INodeItem = {
@@ -118,6 +151,7 @@ class Nodes extends events.EventEmitter {
                 ,remotePort: newNode.remotePort
                 ,numCPUs: null
                 ,enabled: true
+                ,terminating: false
                 ,cpusUsed: 0
                 ,lastIdleTime: new Date().getTime()
             }
@@ -190,6 +224,8 @@ class Nodes extends events.EventEmitter {
                 ,RemoteAddress: node.remoteAddress
                 ,RemotePort: node.remotePort    
                 ,Busy: node.cpusUsed > 0
+                ,Enabled: node.enabled
+                ,Terminating: node.terminating
                 ,LastIdleTime: node.lastIdleTime              
             }
             ret.push(ws);
@@ -199,8 +235,8 @@ class Nodes extends events.EventEmitter {
 }
 
 // will emit the following events
-// 1. changed
-// 2. enqueued
+// 1. changed ()
+// 2. enqueued ()
 class Queue extends events.EventEmitter {
     private __numtasks: number = 0;
     private __numJobs: number = 0;
@@ -348,10 +384,10 @@ class Queue extends events.EventEmitter {
 }
 
 // will emit the following events
-// 1. changed
-// 2. job-added
-// 3. job-removed
-// 4. job-status-changed
+// 1. changed ()
+// 2. job-added (jobId: string)
+// 3. job-removed (jobId: string)
+// 4. job-status-changed (jobProgress: IJobProgress)
 class JobsTracker extends events.EventEmitter {
     private __trackItems: {[jobId: string]: IJobProgress} = {};
     private __numJobs: number = 0;
@@ -439,10 +475,10 @@ class JobsTracker extends events.EventEmitter {
 }
 
 // will emit the followings events
-// 1. changed
-// 2. polling
-// 3. error
-// 4. jobs-status
+// 1. changed ()
+// 2. polling (jobIds: string[])
+// 3. error (err: any)
+// 4. jobs-status (jobsProgress:IJobProgress[])
 class JobsStatusPolling extends events.EventEmitter {
     private __numJobs:number = 0;
     private __queues: {[jobId:string]:boolean} = {};
@@ -504,26 +540,27 @@ class JobsStatusPolling extends events.EventEmitter {
 }
 
 // will emit the following events
-// 1. queue-changed
-// 2. nodes-usage-changed
-// 3. node-added
-// 4. node-ready
-// 5. node-removed
-// 6. node-enabled
-// 7. node-disabled
-// 8. states-changed
-// 9. ctrl-changed
-// 10. jobs-tracking-changed
-// 11. job-status-changed
-// 12. polling-changed
-// 13. error
-// 14. kill-job-begin
-// 15. kill-job-end
-// 16. kill-job-poll
-// 17. jobs-polling
-// 18. job-submitted
-// 19. job-finished
-// 20. task-complete
+// 1. queue-changed ()
+// 2. nodes-usage-changed ()
+// 3. node-added (id: string)
+// 4. node-ready (id: string)
+// 5. node-removed (id: string)
+// 6. node-enabled (id: string)
+// 7. nodes-disabled (nodeIds: string[])
+// 8. nodes-terminating (nodeIds: string[])
+// 9. states-changed ()
+// 10. ctrl-changed ()
+// 11. jobs-tracking-changed ()
+// 12. job-status-changed (jobProgress: IJobProgress)
+// 13. polling-changed ()
+// 14. error (err: any)
+// 15. kill-job-begin (jobId: string)
+// 16. kill-job-end (jobId: string, err: any)
+// 17. kill-job-poll (jobId: string, tries: number)
+// 18. jobs-polling ()
+// 19. job-submitted (jobId: string)
+// 20. job-finished (jobId: string)
+// 21. task-complete (task: ITask)
 export class Dispatcher extends events.EventEmitter {
     private __queueClosed: boolean = false;
     private __dispatchEnabled: boolean = true;
@@ -581,8 +618,10 @@ export class Dispatcher extends events.EventEmitter {
             this.emit('node-removed', nodeId);
         }).on('node-enabled', (nodeId: string) => {
             this.emit('node-enabled', nodeId);
-        }).on('node-disabled', (nodeId: string) => {
-            this.emit('node-disabled', nodeId);
+        }).on('nodes-disabled', (nodeIds: string[]) => {
+            this.emit('nodes-disabled', nodeIds);
+        }).on('nodes-terminating', (nodeIds: string[]) => {
+            this.emit('nodes-terminating', nodeIds);
         });
 
         this.__jobsTacker.on('changed', () => {
@@ -831,6 +870,9 @@ export class Dispatcher extends events.EventEmitter {
         else
             this.__nodes.disableNode(nodeId);
     }
+
+    disableNodes(nodeIds: string[]) : void {this.__nodes.disableNodes(nodeIds);}
+    setNodesTerminating(nodeIds: string[]) : void {this.__nodes.setNodesTerminating(nodeIds);}
 
     get dispControl(): IDispControl {
         return {

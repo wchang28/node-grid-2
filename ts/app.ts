@@ -141,7 +141,9 @@ gridDB.on('error', (err: any) => {
         notifyClientsNodesChanges();
     }).on('node-enabled', (nodeId:string) => {
         notifyClientsNodesChanges();
-    }).on('node-disabled', (nodeId:string) => {
+    }).on('nodes-disabled', (nodeIds: string[]) => {
+        notifyClientsNodesChanges();
+    }).on('nodes-terminating', (nodeIds: string[]) => {
         notifyClientsNodesChanges();
     }).on('ctrl-changed', () => {
         clientMessaging.notifyClientsDispControlChanged(dispatcher.dispControl);
