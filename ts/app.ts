@@ -18,6 +18,9 @@ import * as errors from './errors';
 import * as auth_client from 'polaris-auth-client';
 import * as prettyPrinter from 'express-pretty-print';
 import {IAppConfig} from './appConfig';
+import {GridAutoScaler} from 'grid-autoscaler';
+import {AutoScalableGridBridge} from './autoScalableGridBridge';
+import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory} from './autoScalerConfig';
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
@@ -164,9 +167,20 @@ gridDB.on('error', (err: any) => {
         clientMessaging.notifyClientsConnectionsChanged(o);
     });
     
+    let gridAutoScaler: GridAutoScaler = null;
+    if (config.autoScalerConfig && config.autoScalerConfig.implementationConfig && config.autoScalerConfig.implementationConfig.factoryPackagePath) {
+        let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
+        if (packageExport.factory) {
+            let impl = packageExport.factory(config.autoScalerConfig.implementationConfig.options);
+            if (impl)
+                gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
+        }
+    }
+
     let g: IGlobal = {
         dispatcher
         ,gridDB
+        ,gridAutoScaler
     };
 
     clientApp.set("global", g);
