@@ -1,4 +1,4 @@
-import {IWebServerConfig, startServer} from 'express-web-server';
+import {startServer} from 'express-web-server';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as express from 'express';
@@ -6,11 +6,10 @@ import * as bodyParser from 'body-parser';
 import noCache = require('no-cache-express');
 import {IGlobal} from "./global";
 import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobProgress} from "grid-client-core";
-import {Dispatcher, INodeMessaging, IDispatcherConfig} from './dispatcher';
+import {Dispatcher, INodeMessaging} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
 import {GridDB} from './gridDB';
-import {IGridDBConfiguration} from './gridDBConfig';
 import * as oauth2 from 'oauth2';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
@@ -18,14 +17,7 @@ import * as events from 'events';
 import * as errors from './errors';
 import * as auth_client from 'polaris-auth-client';
 import * as prettyPrinter from 'express-pretty-print';
-
-interface IAppConfig {
-    nodeWebServerConfig: IWebServerConfig;
-    clientWebServerConfig: IWebServerConfig;
-    authorizeEndpointOptions: auth_client.IAuthorizeEndpointOptions;
-    dbConfig: IGridDBConfiguration;
-    dispatcherConfig?: IDispatcherConfig;
-}
+import {IAppConfig} from './appConfig';
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
