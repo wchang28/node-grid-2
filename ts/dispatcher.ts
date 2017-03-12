@@ -2,7 +2,7 @@
 import * as events from 'events';
 import * as _ from 'lodash';
 import {Utils, INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON, ITaskResult} from 'grid-client-core';
-import {IAutoScalableState, IWorkerState, IAutoScalableGrid} from 'autoscalable-grid';
+import {IAutoScalableState, IWorker, IWorkerState, IAutoScalableGrid} from 'autoscalable-grid';
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -214,6 +214,27 @@ class Nodes extends events.EventEmitter {
         return ret;
     }
     // AutoScalableGrid support
+    /////////////////////////////////////////////////////////////////////////
+    getWorkers(nodeIds: string[]) : Promise<IWorker[]> {
+        let workers: IWorker[] = [];
+        if (nodeIds && nodeIds.length > 0) {
+            for (let i in nodeIds) {
+                let nodeId = nodeIds[i];
+                let node = this.__nodes[nodeId];
+                if (node) {
+                    let worker: IWorker = {
+                        Id: node.id
+                        ,Name: node.name
+                        ,RemoteAddress: node.remoteAddress
+                        ,RemotePort: node.remotePort   
+                    }
+                    workers.push(worker);
+                } else
+                    return Promise.reject({error: 'bad_node', error_description: 'worker_not_found'});
+            }
+        }
+        return Promise.resolve<IWorker[]>(workers);
+    }
     get WorkerStates() : IWorkerState[] {
         let ret: IWorkerState[] = [];
         for (let conn_id in this.__nodes) {   // for each node/host
@@ -232,6 +253,7 @@ class Nodes extends events.EventEmitter {
         }
         return ret;
     }
+    /////////////////////////////////////////////////////////////////////////
 }
 
 // will emit the following events
@@ -901,6 +923,8 @@ export class Dispatcher extends events.EventEmitter {
     }
 
     // AutoScalableGrid support
+    ///////////////////////////////////////////////////////////////////////////
+    getWorkers(nodeIds: string[]) : Promise<IWorker[]> {return this.__nodes.getWorkers(nodeIds);}
     get AutoScalableState() : IAutoScalableState {
         let state: IAutoScalableState = {
             CurrentTime: new Date().getTime()
@@ -910,4 +934,5 @@ export class Dispatcher extends events.EventEmitter {
         };
         return state;
     }
+    ///////////////////////////////////////////////////////////////////////////
 }
