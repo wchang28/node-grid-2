@@ -137,6 +137,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                         <td>{this.booleanString(nodeItem.enabled)}</td>
                         <td>{this.geUtilizationString(nodeItem.cpusUsed, nodeItem.numCPUs, false)}</td>
                         <td>{this.getIdleMinutesString(nodeItem.lastIdleTime)}</td>
+                        <td>{nodeItem.terminating ? "Terminating..." : "Good"}</td>
                         <td><button disabled={!this.props.currentUser.profile.canEnableDisableNode} onClick={this.getNodeEnableDisableClickHandler(index)}>{nodeItem.enabled ? "Disable" : "Enable"}</button></td>
                     </tr>
                 );
@@ -145,6 +146,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             return (
                 <tr>
                     <td>(None)</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -196,6 +198,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <th>Enabled</th>
                                             <th>Usage</th>
                                             <th>Idle Time</th>
+                                            <th>State</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
