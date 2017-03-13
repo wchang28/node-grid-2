@@ -9,6 +9,7 @@ import {run as runSomeTestJob} from '../test/runSomeTestJob';
 interface IGridAdminAppProps {
     currentUser: IGridUser;
     session: ISession;
+    autoScalerAvailable: boolean;
 }
 
 interface IGridAdminAppState {
@@ -84,7 +85,7 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
         this.session.logout();
     }
     getAppContent() : any {
-        return (<appContent.AppContent msgClient={this.msgClient} contentType={this.state.contentType} currConnId={this.state.conn_id} session={this.session} currentUser={this.props.currentUser}/>);
+        return (<appContent.AppContent msgClient={this.msgClient} contentType={this.state.contentType} currConnId={this.state.conn_id} session={this.session} currentUser={this.props.currentUser} autoScalerAvailable={this.props.autoScalerAvailable}/>);
     }
     render() {
         let currentUserName = this.props.currentUser.displayName + ' ';
@@ -113,4 +114,5 @@ class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppStat
 }
 
 //console.log('__currentUser='+JSON.stringify(global['__currentUser']));
-ReactDOM.render(<GridAdminApp currentUser={global['__currentUser']} session={GridClient.getSession()}/>, document.getElementById('main'));
+console.log('__autoScalerAvailable='+JSON.stringify(global['__autoScalerAvailable']));
+ReactDOM.render(<GridAdminApp currentUser={global['__currentUser']} session={GridClient.getSession()} autoScalerAvailable={global['__autoScalerAvailable']}/>, document.getElementById('main'));

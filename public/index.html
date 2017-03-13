@@ -8,9 +8,12 @@
 <script src="eventsource.min.js"></script>
 <script>
   var __currentUser = null;
+  var __autoScalerAvailable = false;
   function setCurrentUser(user) {__currentUser = user;}
+  function setAutoScalerAvailable(available) {__autoScalerAvailable = available;}
 </script>
 <script src="/services/user/me?cb=setCurrentUser"></script>
+<script src="/services/autoscaler_available?cb=setAutoScalerAvailable"></script>
 <style>
 </style>
 <body>

@@ -17,6 +17,7 @@ export interface IAppContentProps {
     contentType: ContentType;
     currConnId: string;
     currentUser: IGridUser
+    autoScalerAvailable: boolean;
 }
 
 export interface IAppContentState {}
@@ -32,7 +33,7 @@ export class AppContent extends React.Component<IAppContentProps, IAppContentSta
         } else {
             switch(this.props.contentType) {
                 case ContentType.Home:
-                    return (<homeContent.HomeContent msgClient={this.props.msgClient} session={this.props.session} currentUser={this.props.currentUser}/>);
+                    return (<homeContent.HomeContent msgClient={this.props.msgClient} session={this.props.session} currentUser={this.props.currentUser} autoScalerAvailable={this.props.autoScalerAvailable}/>);
                case ContentType.Jobs:
                     return (<jobsContent.JobsContent msgClient={this.props.msgClient} session={this.props.session} currentUser={this.props.currentUser}/>);
                 case ContentType.Connections:

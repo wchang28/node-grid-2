@@ -6,6 +6,7 @@ export interface IHomeContentProps {
     msgClient: IMessageClient;
     session: ISession;
     currentUser: IGridUser;
+    autoScalerAvailable: boolean;
 }
 
 export interface IHomeContentState {
