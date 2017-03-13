@@ -16,9 +16,8 @@ class Implementation implements IAutoScalerImplementation {
         return Promise.resolve<WorkerKey[]>(workerKeys);
     }
     EstimateWorkersLaunchRequest(state: IAutoScalableState): Promise<IWorkersLaunchRequest> {
-        let value = (state.CPUDebt * 1.0)/(this.options.CPUsPerWorker * 1.0);
-        value *= 0.5;
-        let NumInstances = Math.max(Math.round(value), 1);
+        let NumInstances = (state.CPUDebt * 1.0)/(this.options.CPUsPerWorker * 1.0);
+        NumInstances = Math.max(Math.round(NumInstances), 1);
         return Promise.resolve<IWorkersLaunchRequest>({NumInstances});
     }
     LaunchInstances(launchRequest: IWorkersLaunchRequest): Promise<WorkerKey[]> {
