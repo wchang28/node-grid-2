@@ -5,6 +5,7 @@ import {Router as dispatcherRouter} from './dispatcher';
 import {Router as jobRouter} from './job';
 import {Router as userRouter} from './user';
 import {Router as scalableRouter} from './scalable';
+import {Router as autoscalerRouter} from './autoscaler';
 import * as tr from 'rcf-message-router';
 import * as events from 'events';
 import {IGridUser, Utils, Times} from 'grid-client-core';
@@ -17,18 +18,20 @@ function getUser(req: express.Request): IGridUser {
     let user:IGridUser = req["user"];
     return user;
 }
-
-function getGlobal(req:express.Request) : IGlobal {
-    let g:IGlobal = req.app.get('global');
-    return g;
-}
-
+function getGlobal(req:express.Request) : IGlobal {return req.app.get('global');}
+function autoScalerAvailable(req:express.Request) : boolean {return (getGlobal(req).gridAutoScaler ? true : false);}
 function getDB(req:express.Request) : GridDB {return getGlobal(req).gridDB;}
 
 router.use('/user', userRouter);
 router.use('/job', jobRouter);
 router.use('/dispatcher', dispatcherRouter);
 router.use('/scalable', scalableRouter);
+router.use('/autoscaler', (req:express.Request, res: express.Response, next: express.NextFunction) => {
+    if (autoScalerAvailable(req))
+        next();
+    else
+        res.status(400).json({error: "autoscaler-not-available", error_description: "auto-scaler is not setup for this grid"});
+}, autoscalerRouter);
 
 let destAuthRouter = express.Router();
 
@@ -42,12 +45,12 @@ let destAuthHandler = tr.destAuth((req: tr.DestAuthRequest, res: tr.DestAuthResp
 destAuthRouter.use(Utils.getDispatcherTopic(), destAuthHandler);
 destAuthRouter.use(Utils.getJobsTrackingTopic(), destAuthHandler);
 destAuthRouter.use(Utils.getConnectionsTopic(), destAuthHandler);
-//destAuthRouter.use('/topic/job/:jobId', destAuthHandler);
+destAuthRouter.use(Utils.getAutoScalerTopic(), destAuthHandler);
 destAuthRouter.use('/topic/job', destAuthHandler);
 
 let options: tr.Options = {
     connKeepAliveIntervalMS: 10000
-    ,connCookieMaker: (req: express.Request) => {return getUser(req);}
+    ,connCookieMaker: (req: express.Request) => {return getUser(req);}  // connection cookie is the user
     ,dispatchMsgOnClientSend: false
     ,destinationAuthorizeRouter: destAuthRouter
 }
@@ -77,7 +80,7 @@ router.get('/times', (req: express.Request, res: express.Response) => {
 });
 
 router.get('/autoscaler_available', (req: express.Request, res: express.Response) => {
-    res.jsonp(getGlobal(req).gridAutoScaler ? true : false);
+    res.jsonp(autoScalerAvailable(req));
 });
 
 export {router as Router, connectionsManager as ConnectionsManager};

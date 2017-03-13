@@ -172,8 +172,12 @@ gridDB.on('error', (err: any) => {
         let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
         if (packageExport.factory) {
             let impl = packageExport.factory(config.autoScalerConfig.implementationConfig.options);
-            if (impl)
+            if (impl) {
                 gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
+                gridAutoScaler.on('change', () => {
+                    clientMessaging.notifyClientsAutoScalerChanged();
+                });
+            }
         }
     }
 

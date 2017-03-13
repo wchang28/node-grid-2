@@ -57,4 +57,12 @@ export class ClientMessaging {
         };
         this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(task.j), {}, msg);
     }
+
+    notifyClientsAutoScalerChanged() : void {
+        let msg: GridMessage = {
+            type: 'change'
+            ,content: {}
+        };
+        this.connectionsManager.dispatchMessage(Utils.getAutoScalerTopic(), {}, msg);        
+    }
 }
