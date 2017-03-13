@@ -41,4 +41,23 @@
         ,"jobsKillPollingIntervalMS": 3000
         ,"jobsKillMaxRetries": 5	
 	}
+	,"autoScalerConfig":
+	{
+		"autoScalerOptions":
+		{
+			"EnabledAtStart": true
+			,"MaxWorkersCap": 20
+			,"MinWorkersCap": 1
+			,"PollingIntervalMS": 1000
+			,"TerminateWorkerAfterMinutesIdle": 1
+		}
+		,"implementationConfig":
+		{
+			"factoryPackagePath": "./test/autoScalerImpl"
+			,"options":
+			{
+				"CPUsPerWorker": 3
+			}
+		}
+	}
 }
