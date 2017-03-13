@@ -18,10 +18,12 @@ function getUser(req: express.Request): IGridUser {
     return user;
 }
 
-function getDB(req:express.Request) : GridDB {
+function getGlobal(req:express.Request) : IGlobal {
     let g:IGlobal = req.app.get('global');
-    return g.gridDB;
+    return g;
 }
+
+function getDB(req:express.Request) : GridDB {return getGlobal(req).gridDB;}
 
 router.use('/user', userRouter);
 router.use('/job', jobRouter);
@@ -72,6 +74,10 @@ router.get('/times', (req: express.Request, res: express.Response) => {
     }).catch((err: any) => {
         res.status(400).json(err);
     });
+});
+
+router.get('/autoscaler_available', (req: express.Request, res: express.Response) => {
+    res.jsonp(getGlobal(req).gridAutoScaler ? true : false);
 });
 
 export {router as Router, connectionsManager as ConnectionsManager};
