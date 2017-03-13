@@ -60,7 +60,7 @@ export class ClientMessaging {
 
     notifyClientsAutoScalerChanged() : void {
         let msg: GridMessage = {
-            type: 'change'
+            type: 'autoscaler-changed'
             ,content: {}
         };
         this.connectionsManager.dispatchMessage(Utils.getAutoScalerTopic(), {}, msg);        

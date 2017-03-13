@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON, Times} from '../gridBrowserClient';
+import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON, Times, IGridAutoScalerJSON} from '../gridBrowserClient';
 
 export interface IHomeContentProps {
     msgClient: IMessageClient;
@@ -10,18 +10,20 @@ export interface IHomeContentProps {
 }
 
 export interface IHomeContentState {
-    sub_id?:string;
+    disp_sub_id?:string;
+    autoscaler_sub_id?:string;
     nodes?: INodeItem[];
     queue?:IQueueJSON;
     dispControl?: IDispControl;
     timer?: any;
     times?: Times;
+    autoScalerJSON?: IGridAutoScalerJSON;
 }
 
 export class HomeContent extends React.Component<IHomeContentProps, IHomeContentState> {
     constructor(props:IHomeContentProps) {
         super(props);
-        this.state = {sub_id: null, timer: null, times: null};
+        this.state = {disp_sub_id: null, autoscaler_sub_id: null, timer: null, times: null, autoScalerJSON: null};
     }
     protected get msgClient(): IMessageClient {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
@@ -60,24 +62,51 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             console.error('!!! Error getting server times');
         });       
     }
+    private getAutoScalerJSON() {
+        this.session.GridAutoScaler.getJSON()
+        .then((autoScalerJSON: IGridAutoScalerJSON) => {
+            this.setState({autoScalerJSON})
+        }).catch((err: any) => {
+            console.error('!!! Error getting auto-scaler json');
+        });
+    }
     componentDidMount() {
+        console.log('HomeContent.componentDidMount()');
         this.getServerTimes();
         this.state.timer = setInterval(this.getServerTimes.bind(this), 15000);
-        console.log('HomeContent.componentDidMount()');
         this.getDispatcherJSON();
         this.msgClient.subscribe(Utils.getDispatcherTopic(), this.handleMessages.bind(this), {})
-        .then((sub_id: string) => {
-            console.log('topic subscribed sub_id=' + sub_id + " :-)");
-            this.setState({sub_id});
+        .then((disp_sub_id: string) => {
+            console.log('dispatcher topic subscribed, sub_id=' + disp_sub_id + " :-)");
+            this.setState({disp_sub_id});
         }).catch((err: any) => {
             console.error('!!! Error: topic subscription failed');
         });
+        if (this.props.autoScalerAvailable) {
+            this.getAutoScalerJSON();
+            this.msgClient.subscribe(Utils.getAutoScalerTopic(), this.handleMessages.bind(this), {})
+            .then((autoscaler_sub_id: string) => {
+                console.log('autoscaler topic subscribed, sub_id=' + autoscaler_sub_id + " :-)");
+                this.setState({autoscaler_sub_id});
+            }).catch((err: any) => {
+                console.error('!!! Error: topic subscription failed');
+            });
+        }
     }
     componentWillUnmount() {
-        if (this.state.timer) clearInterval(this.state.timer);
         console.log('HomeContent.componentWillUnmount()');
-        if (this.state.sub_id) {
-            let sub_id = this.state.sub_id;
+        if (this.state.timer) clearInterval(this.state.timer);
+        if (this.state.disp_sub_id) {
+            let sub_id = this.state.disp_sub_id;
+            this.msgClient.unsubscribe(sub_id)
+            .then(() => {
+                console.log('successfully unsubscribed subscription ' + sub_id);
+            }).catch((err: any) => {
+                console.error('!!! Error unsubscribing subscription ' + sub_id);
+            });
+        }
+        if (this.state.autoscaler_sub_id) {
+            let sub_id = this.state.autoscaler_sub_id;
             this.msgClient.unsubscribe(sub_id)
             .then(() => {
                 console.log('successfully unsubscribed subscription ' + sub_id);
@@ -253,6 +282,16 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             </td>
                                         </tr>
                                     </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div className="w3-card-4 w3-margin">
+                            <div className="w3-container w3-blue">
+                                <h6>Auto-Scaler</h6>
+                            </div>
+                            <div className="w3-container w3-white">
+                                <table className="w3-table w3-bordered w3-small">
                                 </table>
                             </div>
                         </div>
