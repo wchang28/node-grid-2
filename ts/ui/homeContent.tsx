@@ -18,12 +18,13 @@ export interface IHomeContentState {
     timer?: any;
     times?: Times;
     autoScalerJSON?: IGridAutoScalerJSON;
+    autoScalerConfigUrl?: string;
 }
 
 export class HomeContent extends React.Component<IHomeContentProps, IHomeContentState> {
     constructor(props:IHomeContentProps) {
         super(props);
-        this.state = {disp_sub_id: null, autoscaler_sub_id: null, timer: null, times: null, autoScalerJSON: null};
+        this.state = {disp_sub_id: null, autoscaler_sub_id: null, timer: null, times: null, autoScalerJSON: null, autoScalerConfigUrl: null};
     }
     protected get msgClient(): IMessageClient {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
@@ -70,6 +71,14 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             console.error('!!! Error getting auto-scaler json');
         });
     }
+    private getAutoScalerConfigUrl() {
+        this.session.GridAutoScaler.getImplementationConfigUrl()
+        .then((autoScalerConfigUrl: string) => {
+            this.setState({autoScalerConfigUrl})
+        }).catch((err: any) => {
+            console.error('!!! Error getting auto-scaler config url');
+        });
+    }
     componentDidMount() {
         console.log('HomeContent.componentDidMount()');
         this.getServerTimes();
@@ -84,6 +93,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         });
         if (this.props.autoScalerAvailable) {
             this.getAutoScalerJSON();
+            this.getAutoScalerConfigUrl();
             this.msgClient.subscribe(Utils.getAutoScalerTopic(), this.handleMessages.bind(this), {})
             .then((autoscaler_sub_id: string) => {
                 console.log('autoscaler topic subscribed, sub_id=' + autoscaler_sub_id + " :-)");
@@ -299,6 +309,33 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Enabled</td>
+                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? (this.state.autoScalerJSON.Enabled ? "Yes": "No") : "") : "N/A")}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Scaling</td>
+                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? (this.state.autoScalerJSON.ScalingUp ? "Scaling Up...": "Idle") : "") : "N/A")}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Max. # of Workers</td>
+                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.MaxWorkersCap : "") : "N/A")}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Min. # of Workers</td>
+                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.MinWorkersCap : "") : "N/A")}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Additional Config.</td>
+                                            <td><a href={(this.props.autoScalerAvailable ? (this.state.autoScalerConfigUrl ? this.state.autoScalerConfigUrl : "#") : "#")}></a>Click Here</td>
+                                            <td></td>
+                                        </tr>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
