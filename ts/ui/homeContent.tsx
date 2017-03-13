@@ -332,7 +332,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                         </tr>
                                         <tr>
                                             <td>Additional Config.</td>
-                                            <td><a href={(this.props.autoScalerAvailable ? (this.state.autoScalerConfigUrl ? this.state.autoScalerConfigUrl : "#") : "#")}></a>Click Here</td>
+                                            <td><a href={(this.props.autoScalerAvailable ? (this.state.autoScalerConfigUrl ? this.state.autoScalerConfigUrl : "#") : "#")}>Click Here</a></td>
                                             <td></td>
                                         </tr>
                                     </tbody>
