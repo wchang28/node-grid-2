@@ -32,6 +32,6 @@ class Implementation implements IAutoScalerImplementation {
     }
 }
 
-export function factory(options: Options) : IAutoScalerImplementation {
-    return new Implementation(options);
+export function factory(options: Options) : Promise<IAutoScalerImplementation> {
+    return Promise.resolve<IAutoScalerImplementation>(new Implementation(options));
 }
