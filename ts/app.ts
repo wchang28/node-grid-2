@@ -175,6 +175,7 @@ gridDB.on('error', (err: any) => {
             let impl = packageExport.factory(config.autoScalerConfig.implementationConfig.options);
             if (!impl) throw "bad implementation";
             gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
+            console.log("auto-scaler loaded successfully :-)");
             gridAutoScaler.on('change', () => {
                 clientMessaging.notifyClientsAutoScalerChanged();
             });
