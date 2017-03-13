@@ -169,15 +169,17 @@ gridDB.on('error', (err: any) => {
     
     let gridAutoScaler: GridAutoScaler = null;
     if (config.autoScalerConfig && config.autoScalerConfig.implementationConfig && config.autoScalerConfig.implementationConfig.factoryPackagePath) {
-        let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
-        if (packageExport.factory) {
+        try {
+            let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
+            if (!packageExport.factory) throw "cannot find the factory function in the package";
             let impl = packageExport.factory(config.autoScalerConfig.implementationConfig.options);
-            if (impl) {
-                gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
-                gridAutoScaler.on('change', () => {
-                    clientMessaging.notifyClientsAutoScalerChanged();
-                });
-            }
+            if (!impl) throw "bad implementation";
+            gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
+            gridAutoScaler.on('change', () => {
+                clientMessaging.notifyClientsAutoScalerChanged();
+            });
+        } catch(e) {
+            console.error("!!! Error loading auto-scaler implementation: " + e.toString());
         }
     }
 

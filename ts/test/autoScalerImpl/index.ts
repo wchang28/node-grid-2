@@ -33,6 +33,5 @@ class Implementation implements IAutoScalerImplementation {
 }
 
 export function factory(options: Options) : IAutoScalerImplementation {
-    console.log("I am in the IAutoScalerImplementation factory :-)");
     return new Implementation(options);
 }
