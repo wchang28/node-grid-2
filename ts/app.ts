@@ -2,6 +2,7 @@ import {startServer} from 'express-web-server';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as express from 'express';
+import * as core from 'express-serve-static-core';
 import * as bodyParser from 'body-parser';
 import noCache = require('no-cache-express');
 import {IGlobal} from "./global";
@@ -20,13 +21,46 @@ import * as prettyPrinter from 'express-pretty-print';
 import {IAppConfig} from './appConfig';
 import {GridAutoScaler} from 'grid-autoscaler';
 import {AutoScalableGridBridge} from './autoScalableGridBridge';
-import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory} from './autoScalerConfig';
+import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory, GetAutoScalerImplementationProc} from './autoScalerConfig';
+import {IAutoScalerImplementation} from 'autoscalable-grid';
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let tokenVerifier = new auth_client.TokenVerifier(config.authorizeEndpointOptions);
+
+let getImpProc: GetAutoScalerImplementationProc = (req: express.Request) : Promise<IAutoScalerImplementation> => {
+    let global: IGlobal = req.app.get('global');
+    return Promise.resolve<IAutoScalerImplementation>(global.gridAutoScaler.Implementation);
+}
+
+function initAutoScalerImplementation(dispatcher: Dispatcher) : Promise<[GridAutoScaler, express.Router]> {
+    return new Promise<[GridAutoScaler, express.Router]>((resolve: (value: [GridAutoScaler, express.Router]) => void, reject: (err: any) => void) => {
+        let gridAutoScaler: GridAutoScaler = null;
+        if (config.autoScalerConfig && config.autoScalerConfig.implementationConfig && config.autoScalerConfig.implementationConfig.factoryPackagePath) {
+            let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
+            if (packageExport.factory) {
+                packageExport.factory(config.autoScalerConfig.implementationConfig.options)
+                .then((impl: IAutoScalerImplementation) => {
+                    gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
+                    if (packageExport.routerFactory)
+                        return packageExport.routerFactory(getImpProc);
+                    else
+                        return Promise.resolve<express.Router>(null);
+                }).then((router:express.Router) => {
+                    resolve([gridAutoScaler, router]);
+                }).catch((err: any) => {
+                    reject(err);
+                });
+            } else {
+                console.error("!!! Error loading auto-scaler implementation: cannot find the factory function in the package");
+                resolve([null, null]);
+            }
+        } else
+            resolve([null, null]);
+    });
+}
 
 function authorizedClientMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
     let accessToken:oauth2.AccessToken = oauth2.Utils.getAccessTokenFromAuthorizationHeader(req.headers['authorization']);
@@ -167,46 +201,47 @@ gridDB.on('error', (err: any) => {
         clientMessaging.notifyClientsConnectionsChanged(o);
     });
     
-    let gridAutoScaler: GridAutoScaler = null;
-    if (config.autoScalerConfig && config.autoScalerConfig.implementationConfig && config.autoScalerConfig.implementationConfig.factoryPackagePath) {
-        try {
-            let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
-            if (!packageExport.factory) throw "cannot find the factory function in the package";
-            let impl = packageExport.factory(config.autoScalerConfig.implementationConfig.options);
-            if (!impl) throw "bad implementation";
-            gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
-            console.log("auto-scaler loaded successfully :-)");
+    initAutoScalerImplementation(dispatcher)
+    .then((value: [GridAutoScaler, express.Router]) => {
+        let gridAutoScaler = value[0];
+        let autoScalerImplRouter = value[1];
+
+        if (gridAutoScaler) {
+            console.log("grid auto-scaler loaded successfully :-)");
             gridAutoScaler.on('change', () => {
                 clientMessaging.notifyClientsAutoScalerChanged();
             });
-        } catch(e) {
-            console.error("!!! Error loading auto-scaler implementation: " + e.toString());
         }
-    }
 
-    let g: IGlobal = {
-        dispatcher
-        ,gridDB
-        ,gridAutoScaler
-    };
+        let g: IGlobal = {
+            dispatcher
+            ,gridDB
+            ,gridAutoScaler
+        };
 
-    clientApp.set("global", g);
-    nodeApp.set("global", g);
+        clientApp.set("global", g);
+        nodeApp.set("global", g);
 
-    clientApp.use('/services', authorizedClientMiddleware, clientApiRouter);
-    clientApp.get('/logout', authorizedClientMiddleware, (req: express.Request, res: express.Response) => {res.json({});});
+        clientApp.use('/services', authorizedClientMiddleware, clientApiRouter);
+        clientApp.get('/logout', authorizedClientMiddleware, (req: express.Request, res: express.Response) => {res.json({});});
 
-    nodeApp.use('/node-app', nodeAppRouter);
+        nodeApp.use('/node-app', nodeAppRouter);
 
-    // evenstream located at:
-    // node: /node-app/events/event_stream
-    // client: /services/events/event_stream
+        if (autoScalerImplRouter) clientApp.use('/services/autoscaler/implementation', autoScalerImplRouter);
 
-    startServer(config.nodeWebServerConfig, nodeApp, (secure:boolean, host:string, port:number) => {
-        console.log('node app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
-        startServer(config.clientWebServerConfig, clientApp, (secure:boolean, host:string, port:number) => {
-            console.log('client app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
+        // evenstream located at:
+        // node: /node-app/events/event_stream
+        // client: /services/events/event_stream
+
+        startServer(config.nodeWebServerConfig, nodeApp, (secure:boolean, host:string, port:number) => {
+            console.log('node app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
+            startServer(config.clientWebServerConfig, clientApp, (secure:boolean, host:string, port:number) => {
+                console.log('client app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
+            });
         });
+    }).catch((err: any) => {
+        gridDB.disconnect();
+        process.exit(1);
     });
 });
 
