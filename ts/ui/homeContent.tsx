@@ -220,6 +220,14 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             });
         }        
     }
+    private allowChangeAutoScalerConfig() : boolean {
+        if (!this.props.autoScalerAvailable)
+            return false;
+        else if (!this.state.autoScalerJSON)
+            return false;
+        else
+            return true;
+    }
     private onAutoScalerEnableClick(e:any) {
         if (this.state.autoScalerJSON) {
             let p = (this.state.autoScalerJSON.Enabled ? this.session.GridAutoScaler.disable() : this.session.GridAutoScaler.enable());
@@ -325,7 +333,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                         <tr>
                                             <td>Enabled</td>
                                             <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.booleanString(this.state.autoScalerJSON.Enabled) : "") : "N/A")}</td>
-                                            <td><button disabled={(this.state.autoScalerJSON ? false : true)} onClick={this.onAutoScalerEnableClick.bind(this)}>{!this.state.autoScalerJSON || this.state.autoScalerJSON.Enabled ? "Disable" : "Enable"}</button></td>
+                                            <td><button disabled={!this.allowChangeAutoScalerConfig()} onClick={this.onAutoScalerEnableClick.bind(this)}>{!this.state.autoScalerJSON || this.state.autoScalerJSON.Enabled ? "Disable" : "Enable"}</button></td>
                                         </tr>
                                         <tr>
                                             <td>Scaling</td>
@@ -333,19 +341,29 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <td></td>
                                         </tr>
                                         <tr>
-                                            <td>Max. # of Nodes</td>
+                                            <td>Max. # of nodes</td>
                                             <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.MaxWorkersCap : "") : "N/A")}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
-                                            <td>Min. # of Nodes</td>
+                                            <td>Min. # of nodes</td>
                                             <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.MinWorkersCap : "") : "N/A")}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
-                                            <td>Additional Config.</td>
+                                            <td>Terminate node after idle for </td>
+                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.TerminateWorkerAfterMinutesIdle.toString() + " min." : "") : "N/A")}</td>
                                             <td></td>
-                                            <td><a href={(this.props.autoScalerAvailable ? (this.state.autoScalerConfigUrl ? this.state.autoScalerConfigUrl : "#") : "#")}>Click Here</a></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Ramp up speed ratio</td>
+                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.RampUpSpeedRatio.toString() : "") : "N/A")}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Additional config.</td>
+                                            <td></td>
+                                            <td><a disabled={!this.allowChangeAutoScalerConfig()} href={(this.props.autoScalerAvailable ? (this.state.autoScalerConfigUrl ? this.state.autoScalerConfigUrl : "#") : "#")}>Click Here</a></td>
                                         </tr>
                                     </tbody>
                                 </table>
