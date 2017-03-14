@@ -48,7 +48,7 @@ function initGridAutoScaler(dispatcher: Dispatcher) : Promise<[GridAutoScaler, e
                         return packageExport.routerFactory(getImpProc);
                     else
                         return Promise.resolve<express.Router>(null);
-                }).then((router:express.Router) => {
+                }).then((router: express.Router) => {
                     resolve([gridAutoScaler, router]);
                 }).catch((err: any) => {
                     reject(err);
@@ -228,9 +228,12 @@ gridDB.on('error', (err: any) => {
 
         nodeApp.use('/node-app', nodeAppRouter);
 
-        if (autoScalerImplRouter) {
-            clientApp.use('/services/autoscaler/implementation', autoScalerImplRouter);
-            console.log("grid auto-scaler router loaded successfully :-)");
+        if (gridAutoScaler) {
+            if (autoScalerImplRouter) {
+                clientApp.use('/services/autoscaler/implementation', autoScalerImplRouter);
+                console.log("grid auto-scaler router is loaded and attached to '/services/autoscaler/implementation' :-)");
+            } else
+                console.log("no grid auto-scaler router detected");
         }
 
         // evenstream located at:
