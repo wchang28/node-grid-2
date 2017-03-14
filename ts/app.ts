@@ -227,7 +227,10 @@ gridDB.on('error', (err: any) => {
 
         nodeApp.use('/node-app', nodeAppRouter);
 
-        if (autoScalerImplRouter) clientApp.use('/services/autoscaler/implementation', autoScalerImplRouter);
+        if (autoScalerImplRouter) {
+            clientApp.use('/services/autoscaler/implementation', autoScalerImplRouter);
+            console.log("grid auto-scaler router loaded successfully :-)");
+        }
 
         // evenstream located at:
         // node: /node-app/events/event_stream
