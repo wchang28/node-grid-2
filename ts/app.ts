@@ -30,11 +30,6 @@ let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let tokenVerifier = new auth_client.TokenVerifier(config.authorizeEndpointOptions);
 
-let getImpProc: GetAutoScalerImplementationProc = (req: express.Request) : Promise<IAutoScalerImplementation> => {
-    let global: IGlobal = req.app.get('global');
-    return Promise.resolve<IAutoScalerImplementation>(global.gridAutoScaler.Implementation);
-}
-
 function initGridAutoScaler(dispatcher: Dispatcher) : Promise<[GridAutoScaler, express.Router]> {
     return new Promise<[GridAutoScaler, express.Router]>((resolve: (value: [GridAutoScaler, express.Router]) => void, reject: (err: any) => void) => {
         let gridAutoScaler: GridAutoScaler = null;
@@ -44,9 +39,13 @@ function initGridAutoScaler(dispatcher: Dispatcher) : Promise<[GridAutoScaler, e
                 packageExport.factory(config.autoScalerConfig.implementationConfig.options)
                 .then((impl: IAutoScalerImplementation) => {
                     gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
-                    if (packageExport.routerFactory)
+                    if (packageExport.routerFactory) {
+                        let getImpProc: GetAutoScalerImplementationProc = (req: express.Request) : Promise<IAutoScalerImplementation> => {
+                            let global: IGlobal = req.app.get('global');
+                            return Promise.resolve<IAutoScalerImplementation>(global.gridAutoScaler.Implementation);
+                        };
                         return packageExport.routerFactory(getImpProc);
-                    else
+                    } else
                         return Promise.resolve<express.Router>(null);
                 }).then((router: express.Router) => {
                     resolve([gridAutoScaler, router]);
