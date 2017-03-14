@@ -41,7 +41,9 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             //console.log('receive <<queue-changed>>: ' + JSON.stringify(gMsg.content));
             let queue: IQueueJSON = gMsg.content;
             this.setState({queue: queue});
-        }       
+        } else if (gMsg.type === 'autoscaler-changed') {
+            this.getAutoScalerJSON();
+        }
     }
     private getDispatcherJSON() : void {
         this.session.getDispatcherJSON()
