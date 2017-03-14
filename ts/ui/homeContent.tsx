@@ -218,6 +218,16 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             });
         }        
     }
+    private onAutoScalerEnableClick(e:any) {
+        if (this.state.autoScalerJSON) {
+            let p = (this.state.autoScalerJSON.Enabled ? this.session.GridAutoScaler.disable() : this.session.GridAutoScaler.enable());
+            p.then(() => {
+
+            }).catch((err: any) => {
+                console.error('!!! Unable to enable/disable auto-scaler: ' + JSON.stringify(err));
+            });
+        }
+    }
     render() {
         return (
             <div>
@@ -312,8 +322,8 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                     <tbody>
                                         <tr>
                                             <td>Enabled</td>
-                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? (this.state.autoScalerJSON.Enabled ? "Yes": "No") : "") : "N/A")}</td>
-                                            <td></td>
+                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.booleanString(this.state.autoScalerJSON.Enabled) : "") : "N/A")}</td>
+                                            <td><button disabled={(this.state.autoScalerJSON ? false : true)} onClick={this.onAutoScalerEnableClick.bind(this)}>{!this.state.autoScalerJSON || this.state.autoScalerJSON.Enabled ? "Disable" : "Enable"}</button></td>
                                         </tr>
                                         <tr>
                                             <td>Scaling</td>
@@ -321,12 +331,12 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <td></td>
                                         </tr>
                                         <tr>
-                                            <td>Max. # of Workers</td>
+                                            <td>Max. # of Nodes</td>
                                             <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.MaxWorkersCap : "") : "N/A")}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
-                                            <td>Min. # of Workers</td>
+                                            <td>Min. # of Nodes</td>
                                             <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.MinWorkersCap : "") : "N/A")}</td>
                                             <td></td>
                                         </tr>
