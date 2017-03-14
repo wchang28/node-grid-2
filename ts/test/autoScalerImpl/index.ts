@@ -1,6 +1,7 @@
 import {IWorker, IAutoScalerImplementation, IAutoScalableState, WorkerKey, IWorkersLaunchRequest} from 'autoscalable-grid';
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
+import {GetAutoScalerImplementationProc} from 'grid-autoscaler-impl-pkg';
 
 export interface Options {
     CPUsPerWorker: number;
@@ -29,15 +30,13 @@ class Implementation implements IAutoScalerImplementation {
         return Promise.resolve<WorkerKey[]>(null);
     }
     getConfigUrl(): Promise<string> {
-        return Promise.resolve<string>("https://www.google.com/");
+        return Promise.resolve<string>("autoscaler/implementation");
     }
 }
 
 export function factory(options: Options) : Promise<IAutoScalerImplementation> {
     return Promise.resolve<IAutoScalerImplementation>(new Implementation(options));
 }
-
-export type GetAutoScalerImplementationProc = (req: express.Request) => Promise<IAutoScalerImplementation>;
 
 function getImplementation(req: express.Request, getImplProc: GetAutoScalerImplementationProc) : Promise<Implementation> {
     return new Promise<Implementation>((resolve: (value: Implementation) => void, reject: (err: any) => void) => {

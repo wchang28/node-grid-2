@@ -21,7 +21,7 @@ import * as prettyPrinter from 'express-pretty-print';
 import {IAppConfig} from './appConfig';
 import {GridAutoScaler} from 'grid-autoscaler';
 import {AutoScalableGridBridge} from './autoScalableGridBridge';
-import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory, GetAutoScalerImplementationProc} from './autoScalerConfig';
+import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory, GetAutoScalerImplementationProc} from 'grid-autoscaler-impl-pkg';
 import {IAutoScalerImplementation} from 'autoscalable-grid';
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
@@ -35,7 +35,7 @@ let getImpProc: GetAutoScalerImplementationProc = (req: express.Request) : Promi
     return Promise.resolve<IAutoScalerImplementation>(global.gridAutoScaler.Implementation);
 }
 
-function initAutoScalerImplementation(dispatcher: Dispatcher) : Promise<[GridAutoScaler, express.Router]> {
+function loadGridAutoScalerImplementation(dispatcher: Dispatcher) : Promise<[GridAutoScaler, express.Router]> {
     return new Promise<[GridAutoScaler, express.Router]>((resolve: (value: [GridAutoScaler, express.Router]) => void, reject: (err: any) => void) => {
         let gridAutoScaler: GridAutoScaler = null;
         if (config.autoScalerConfig && config.autoScalerConfig.implementationConfig && config.autoScalerConfig.implementationConfig.factoryPackagePath) {
@@ -201,7 +201,7 @@ gridDB.on('error', (err: any) => {
         clientMessaging.notifyClientsConnectionsChanged(o);
     });
     
-    initAutoScalerImplementation(dispatcher)
+    loadGridAutoScalerImplementation(dispatcher)
     .then((value: [GridAutoScaler, express.Router]) => {
         let gridAutoScaler = value[0];
         let autoScalerImplRouter = value[1];

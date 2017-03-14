@@ -1,4 +1,5 @@
 import {Options as AutoScalerOptions} from 'grid-autoscaler';
+/*
 import {IAutoScalerImplementation} from 'autoscalable-grid';
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
@@ -11,6 +12,7 @@ export interface AutoScalerImplementationPackageExport {
     factory: AutoScalerImplementationFactory;
     routerFactory?: AutoScalerImplementationRouterFactory;
 }
+*/
 
 export interface AutoScalerImplementationConfig {
     factoryPackagePath: string;
