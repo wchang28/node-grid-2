@@ -35,7 +35,7 @@ let getImpProc: GetAutoScalerImplementationProc = (req: express.Request) : Promi
     return Promise.resolve<IAutoScalerImplementation>(global.gridAutoScaler.Implementation);
 }
 
-function loadGridAutoScalerImplementation(dispatcher: Dispatcher) : Promise<[GridAutoScaler, express.Router]> {
+function initGridAutoScaler(dispatcher: Dispatcher) : Promise<[GridAutoScaler, express.Router]> {
     return new Promise<[GridAutoScaler, express.Router]>((resolve: (value: [GridAutoScaler, express.Router]) => void, reject: (err: any) => void) => {
         let gridAutoScaler: GridAutoScaler = null;
         if (config.autoScalerConfig && config.autoScalerConfig.implementationConfig && config.autoScalerConfig.implementationConfig.factoryPackagePath) {
@@ -201,7 +201,7 @@ gridDB.on('error', (err: any) => {
         clientMessaging.notifyClientsConnectionsChanged(o);
     });
     
-    loadGridAutoScalerImplementation(dispatcher)
+    initGridAutoScaler(dispatcher)
     .then((value: [GridAutoScaler, express.Router]) => {
         let gridAutoScaler = value[0];
         let autoScalerImplRouter = value[1];
@@ -211,7 +211,8 @@ gridDB.on('error', (err: any) => {
             gridAutoScaler.on('change', () => {
                 clientMessaging.notifyClientsAutoScalerChanged();
             });
-        }
+        } else
+            console.log("grid auto-scaler is not available");
 
         let g: IGlobal = {
             dispatcher
