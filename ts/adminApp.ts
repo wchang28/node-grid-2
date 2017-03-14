@@ -19,6 +19,7 @@ interface IAppConfig {
     adminWebServerConfig: IWebServerConfig;
     sessionOptions: ISessionOptions;
     oauth2Options: oauth2.ClientAppOptions;
+    autoScalerImplConfigUIPath?: string;
 }
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../admin_testing_config.json') : process.argv[2]);
@@ -88,6 +89,8 @@ adminApp.use(session({
 
 adminApp.use('/app', hasAccessMiddleware, express.static(path.join(__dirname, '../public')));
 adminApp.use('/bower_components', hasAccessMiddleware, express.static(path.join(__dirname, '../bower_components')));
+// if auto-scaler implementation config UI is available
+if (config.autoScalerImplConfigUIPath) adminApp.use('/app/autoscaler/implementation', hasAccessMiddleware, express.static(config.autoScalerImplConfigUIPath));
 
 let targetAcquisition: httpProxy.TargetAcquisition = (req:express.Request, done: httpProxy.TargetAcquisitionCompletionHandler) => {
     let accessStore: AccessStore = req.session["access"];
