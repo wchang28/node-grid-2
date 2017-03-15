@@ -37,7 +37,7 @@ function initGridAutoScaler(dispatcher: Dispatcher, clientMessaging: ClientMessa
             let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
             if (packageExport.factory) {
                 packageExport.factory(config.autoScalerConfig.implementationConfig.options, () => {
-                    clientMessaging.notifyClientsAutoScalerChanged();    // TODO:
+                    clientMessaging.notifyClientsAutoScalerImplementationChanged();
                 })
                 .then((impl: IAutoScalerImplementation) => {
                     gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
@@ -202,7 +202,7 @@ gridDB.on('error', (err: any) => {
         clientMessaging.notifyClientsConnectionsChanged(o);
     });
     
-    initGridAutoScaler(dispatcher)
+    initGridAutoScaler(dispatcher, clientMessaging)
     .then((value: [GridAutoScaler, express.Router]) => {
         let gridAutoScaler = value[0];
         let autoScalerImplRouter = value[1];

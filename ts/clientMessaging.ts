@@ -65,4 +65,12 @@ export class ClientMessaging {
         };
         this.connectionsManager.dispatchMessage(Utils.getAutoScalerTopic(), {}, msg);        
     }
+
+    notifyClientsAutoScalerImplementationChanged() : void {
+        let msg: GridMessage = {
+            type: 'autoscaler-implementation-changed'
+            ,content: {}
+        };
+        this.connectionsManager.dispatchMessage(Utils.getAutoScalerImplementation(), {}, msg);        
+    }
 }
