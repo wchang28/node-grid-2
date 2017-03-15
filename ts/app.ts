@@ -21,7 +21,7 @@ import * as prettyPrinter from 'express-pretty-print';
 import {IAppConfig} from './appConfig';
 import {GridAutoScaler} from 'grid-autoscaler';
 import {AutoScalableGridBridge} from './autoScalableGridBridge';
-import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory, GetAutoScalerImplementationProc} from 'grid-autoscaler-impl-pkg';
+import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory, GetAutoScalerImplementationProc, AutoScalerImplementationOnChangeHandler} from 'grid-autoscaler-impl-pkg';
 import {IAutoScalerImplementation} from 'autoscalable-grid';
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
@@ -30,13 +30,15 @@ let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let tokenVerifier = new auth_client.TokenVerifier(config.authorizeEndpointOptions);
 
-function initGridAutoScaler(dispatcher: Dispatcher) : Promise<[GridAutoScaler, express.Router]> {
+function initGridAutoScaler(dispatcher: Dispatcher, clientMessaging: ClientMessaging) : Promise<[GridAutoScaler, express.Router]> {
     return new Promise<[GridAutoScaler, express.Router]>((resolve: (value: [GridAutoScaler, express.Router]) => void, reject: (err: any) => void) => {
         let gridAutoScaler: GridAutoScaler = null;
         if (config.autoScalerConfig && config.autoScalerConfig.implementationConfig && config.autoScalerConfig.implementationConfig.factoryPackagePath) {
             let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
             if (packageExport.factory) {
-                packageExport.factory(config.autoScalerConfig.implementationConfig.options)
+                packageExport.factory(config.autoScalerConfig.implementationConfig.options, () => {
+                    clientMessaging.notifyClientsAutoScalerChanged();    // TODO:
+                })
                 .then((impl: IAutoScalerImplementation) => {
                     gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
                     if (packageExport.routerFactory) {
