@@ -351,6 +351,11 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <td></td>
                                         </tr>
                                         <tr>
+                                            <td>Node launching timeout</td>
+                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.LaunchingTimeoutMinutes.toString() + " min." : "") : "N/A")}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
                                             <td>Terminate node after idle for </td>
                                             <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.TerminateWorkerAfterMinutesIdle.toString() + " min." : "") : "N/A")}</td>
                                             <td></td>
