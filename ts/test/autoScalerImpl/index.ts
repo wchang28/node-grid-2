@@ -1,4 +1,4 @@
-import {IWorker, IAutoScalerImplementation, IAutoScalableState, WorkerKey, IWorkersLaunchRequest} from 'autoscalable-grid';
+import {IWorker, IAutoScalerImplementation, IAutoScalableState, WorkerKey, WorkerInstance, IWorkersLaunchRequest} from 'autoscalable-grid';
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {GetAutoScalerImplementationProc} from 'grid-autoscaler-impl-pkg';
@@ -23,11 +23,11 @@ class Implementation implements IAutoScalerImplementation {
         NumInstances = Math.max(Math.round(NumInstances), 1);
         return Promise.resolve<IWorkersLaunchRequest>({NumInstances});
     }
-    LaunchInstances(launchRequest: IWorkersLaunchRequest): Promise<WorkerKey[]> {
-        return Promise.resolve<WorkerKey[]>(null);
+    LaunchInstances(launchRequest: IWorkersLaunchRequest): Promise<WorkerInstance[]> {
+        return Promise.resolve<WorkerInstance[]>(null);
     }
-    TerminateInstances (workerKeys: WorkerKey[]): Promise<WorkerKey[]> {
-        return Promise.resolve<WorkerKey[]>(null);
+    TerminateInstances (workerKeys: WorkerKey[]): Promise<WorkerInstance[]> {
+        return Promise.resolve<WorkerInstance[]>(null);
     }
     getConfigUrl(): Promise<string> {
         return Promise.resolve<string>("autoscaler/implementation");

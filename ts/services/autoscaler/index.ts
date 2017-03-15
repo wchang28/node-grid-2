@@ -63,6 +63,15 @@ router.post('/set_min_workers_cap', (req: express.Request, res: express.Response
     res.jsonp(getAutoScaler(req).MinWorkersCap);
 });
 
+router.get('/get_launching_timeout_minutes', (req: express.Request, res: express.Response) => {
+    res.jsonp(getAutoScaler(req).LaunchingTimeoutMinutes);
+});
+
+router.post('/set_launching_timeout_minutes', (req: express.Request, res: express.Response) => {
+    getAutoScaler(req).LaunchingTimeoutMinutes = req.body;
+    res.jsonp(getAutoScaler(req).LaunchingTimeoutMinutes);
+});
+
 router.get('/get_terminate_worker_after_minutes_idle', (req: express.Request, res: express.Response) => {
     res.jsonp(getAutoScaler(req).TerminateWorkerAfterMinutesIdle);
 });
