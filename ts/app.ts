@@ -36,24 +36,13 @@ function initGridAutoScaler(dispatcher: Dispatcher, clientMessaging: ClientMessa
         if (config.autoScalerConfig && config.autoScalerConfig.implementationConfig && config.autoScalerConfig.implementationConfig.factoryPackagePath) {
             let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
             if (packageExport.factory) {
-                packageExport.factory(config.autoScalerConfig.implementationConfig.options, () => {
+                let getImpProc: GetAutoScalerImplementationProc = (req: express.Request) : Promise<IAutoScalerImplementation> => {
+                    let global: IGlobal = req.app.get('global');
+                    return Promise.resolve<IAutoScalerImplementation>(global.gridAutoScaler.Implementation);
+                };
+                return packageExport.factory(getImpProc, config.autoScalerConfig.implementationConfig.options, () => {
                     clientMessaging.notifyClientsAutoScalerImplementationChanged();
                 })
-                .then((impl: IAutoScalerImplementation) => {
-                    gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), impl, config.autoScalerConfig.autoScalerOptions);
-                    if (packageExport.routerFactory) {
-                        let getImpProc: GetAutoScalerImplementationProc = (req: express.Request) : Promise<IAutoScalerImplementation> => {
-                            let global: IGlobal = req.app.get('global');
-                            return Promise.resolve<IAutoScalerImplementation>(global.gridAutoScaler.Implementation);
-                        };
-                        return packageExport.routerFactory(getImpProc);
-                    } else
-                        return Promise.resolve<express.Router>(null);
-                }).then((router: express.Router) => {
-                    resolve([gridAutoScaler, router]);
-                }).catch((err: any) => {
-                    reject(err);
-                });
             } else {
                 console.error("!!! Error loading auto-scaler implementation: cannot find the factory function in the package");
                 resolve([null, null]);

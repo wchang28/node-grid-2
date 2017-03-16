@@ -1,7 +1,7 @@
 import {IWorker, IAutoScalerImplementation, IAutoScalableState, WorkerKey, WorkerInstance, IWorkersLaunchRequest} from 'autoscalable-grid';
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
-import {AutoScalerImplementationOnChangeHandler, GetAutoScalerImplementationProc} from 'grid-autoscaler-impl-pkg';
+import {AutoScalerImplementationFactory, AutoScalerImplementationOnChangeHandler, GetAutoScalerImplementationProc} from 'grid-autoscaler-impl-pkg';
 
 export interface Options {
     CPUsPerWorker: number;
@@ -34,13 +34,9 @@ class Implementation implements IAutoScalerImplementation {
     }
 }
 
-export function factory(options: Options, onChange: AutoScalerImplementationOnChangeHandler) : Promise<IAutoScalerImplementation> {
-    return Promise.resolve<IAutoScalerImplementation>(new Implementation(options));
-}
-
-function getImplementation(req: express.Request, getImplProc: GetAutoScalerImplementationProc) : Promise<Implementation> {
+function getImplementation(req: express.Request, getImpl: GetAutoScalerImplementationProc) : Promise<Implementation> {
     return new Promise<Implementation>((resolve: (value: Implementation) => void, reject: (err: any) => void) => {
-        getImplProc(req)
+        getImpl(req)
         .then((impl: IAutoScalerImplementation) => {
             let o: any = impl;
             resolve(o);
@@ -52,9 +48,9 @@ function getImplementation(req: express.Request, getImplProc: GetAutoScalerImple
 
 type Handler = (impl: Implementation) => Promise<any>;
 
-function getRequestHandler(getImplProc: GetAutoScalerImplementationProc, handler: Handler) : express.RequestHandler {
+function getRequestHandler(getImpl: GetAutoScalerImplementationProc, handler: Handler) : express.RequestHandler {
     return (req: express.Request, res: express.Response) => {
-        getImplementation(req, getImplProc)
+        getImplementation(req, getImpl)
         .then((impl: Implementation) => {
             return handler(impl)
         }).then((ret: any) => {
@@ -65,10 +61,13 @@ function getRequestHandler(getImplProc: GetAutoScalerImplementationProc, handler
     }
 }
 
-export function routerFactory(getImplProc: GetAutoScalerImplementationProc) : Promise<express.Router> {
+// factory function
+let factory: AutoScalerImplementationFactory = (getImpl: GetAutoScalerImplementationProc, options: Options, onChange: AutoScalerImplementationOnChangeHandler) => {
     let router = express.Router();
-    router.get('/config_url', getRequestHandler(getImplProc, (impl: Implementation) => {
+    router.get('/config_url', getRequestHandler(getImpl, (impl: Implementation) => {
         return impl.getConfigUrl();
     }));
-    return Promise.resolve<express.Router>(router);
-}
+    return Promise.resolve<[IAutoScalerImplementation, express.Router]>([new Implementation(options), router]);
+};
+
+export {factory};
