@@ -56,7 +56,8 @@
 			"factoryPackagePath": "./test/autoScalerImpl"
 			,"options":
 			{
-				"CPUsPerWorker": 3
+				"Name": "TestImplementation"
+				,"CPUsPerWorker": 3
 			}
 		}
 	}

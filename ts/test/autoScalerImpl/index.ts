@@ -1,14 +1,14 @@
 import {IWorker, IAutoScalerImplementation, IAutoScalableState, WorkerKey, WorkerInstance, IWorkersLaunchRequest, AutoScalerImplementationInfo} from 'autoscalable-grid';
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
+import {ImplementationBase, ConvertToWorkerKeyProc, Options} from 'grid-autoscaler-impl-base';
 import {AutoScalerImplementationFactory, AutoScalerImplementationOnChangeHandler, GetAutoScalerImplementationProc} from 'grid-autoscaler-impl-pkg';
 
-export interface Options {
-    CPUsPerWorker: number;
-}
-
-class Implementation implements IAutoScalerImplementation {
-    constructor(private options: Options) {}
+class Implementation extends ImplementationBase implements IAutoScalerImplementation {
+    constructor(workerToKey: ConvertToWorkerKeyProc, options?: Options) {
+        super(workerToKey, options)
+    }
+    /*
     TranslateToWorkerKeys(workers: IWorker[]): Promise<WorkerKey[]> {
         let workerKeys: WorkerKey[] = [];
         for (let i in workers) {
@@ -23,14 +23,12 @@ class Implementation implements IAutoScalerImplementation {
         NumInstances = Math.max(Math.round(NumInstances), 1);
         return Promise.resolve<IWorkersLaunchRequest>({NumInstances});
     }
+    */
     LaunchInstances(launchRequest: IWorkersLaunchRequest): Promise<WorkerInstance[]> {
         return Promise.resolve<WorkerInstance[]>(null);
     }
     TerminateInstances (workerKeys: WorkerKey[]): Promise<WorkerInstance[]> {
         return Promise.resolve<WorkerInstance[]>(null);
-    }
-    getInfo(): Promise<AutoScalerImplementationInfo> {
-        return Promise.resolve<AutoScalerImplementationInfo>({Name: "TestAutoScalerImpl"});
     }
 }
 
@@ -67,7 +65,8 @@ let factory: AutoScalerImplementationFactory = (getImpl: GetAutoScalerImplementa
     router.get('/info', getRequestHandler(getImpl, (impl: Implementation) => {
         return impl.getInfo();
     }));
-    return Promise.resolve<[IAutoScalerImplementation, express.Router]>([new Implementation(options), router]);
+    let workerToKey: ConvertToWorkerKeyProc = (worker: IWorker) => (worker.RemoteAddress+ ":" + worker.RemotePort.toString());
+    return Promise.resolve<[IAutoScalerImplementation, express.Router]>([new Implementation(workerToKey, options), router]);
 };
 
 export {factory};

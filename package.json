@@ -37,6 +37,7 @@
     "express-session": "^1.14.0",
     "express-web-server": "git+https://github.com/wchang28/express-web-server.git",
     "grid-autoscaler": "git+https://github.com/wchang28/grid-autoscaler.git",
+    "grid-autoscaler-impl-base": "git+https://github.com/wchang28/grid-autoscaler-impl-base.git",
     "grid-autoscaler-impl-pkg": "git+https://github.com/wchang28/grid-autoscaler-impl-pkg.git",
     "grid-client-browser": "git+https://github.com/wchang28/grid-client-browser.git",
     "grid-client-core": "git+https://github.com/wchang28/grid-client-core.git",
