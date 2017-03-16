@@ -6,7 +6,7 @@ import * as core from 'express-serve-static-core';
 import * as bodyParser from 'body-parser';
 import noCache = require('no-cache-express');
 import {IGlobal} from "./global";
-import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobProgress} from "grid-client-core";
+import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobProgress, Utils} from "grid-client-core";
 import {Dispatcher, INodeMessaging} from './dispatcher';
 import {NodeMessaging} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
@@ -231,8 +231,8 @@ gridDB.on('error', (err: any) => {
 
         if (gridAutoScaler) {
             if (autoScalerImplRouter) {
-                clientApp.use('/services/autoscaler/implementation', autoScalerImplRouter);
-                console.log("grid auto-scaler router is loaded and attached to '/services/autoscaler/implementation' :-)");
+                clientApp.use(Utils.getAutoScalerImplementationApiBasePath(), autoScalerImplRouter);
+                console.log("grid auto-scaler implementation router is loaded and attached to '" + Utils.getAutoScalerImplementationApiBasePath() + "' :-)");
             } else
                 console.log("no grid auto-scaler router detected");
         }

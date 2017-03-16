@@ -71,6 +71,6 @@ export class ClientMessaging {
             type: 'autoscaler-implementation-changed'
             ,content: {}
         };
-        this.connectionsManager.dispatchMessage(Utils.getAutoScalerImplementation(), {}, msg);        
+        this.connectionsManager.dispatchMessage(Utils.getAutoScalerImplementationTopic(), {}, msg);        
     }
 }
