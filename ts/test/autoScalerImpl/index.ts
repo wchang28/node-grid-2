@@ -1,4 +1,4 @@
-import {IWorker, IAutoScalerImplementation, IAutoScalableState, WorkerKey, WorkerInstance, IWorkersLaunchRequest} from 'autoscalable-grid';
+import {IWorker, IAutoScalerImplementation, IAutoScalableState, WorkerKey, WorkerInstance, IWorkersLaunchRequest, AutoScalerImplementationInfo} from 'autoscalable-grid';
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {AutoScalerImplementationFactory, AutoScalerImplementationOnChangeHandler, GetAutoScalerImplementationProc} from 'grid-autoscaler-impl-pkg';
@@ -29,8 +29,8 @@ class Implementation implements IAutoScalerImplementation {
     TerminateInstances (workerKeys: WorkerKey[]): Promise<WorkerInstance[]> {
         return Promise.resolve<WorkerInstance[]>(null);
     }
-    getConfigUrl(): Promise<string> {
-        return Promise.resolve<string>("autoscaler/implementation");
+    getInfo(): Promise<AutoScalerImplementationInfo> {
+        return Promise.resolve<AutoScalerImplementationInfo>({Name: "TestAutoScalerImpl"});
     }
 }
 
@@ -64,8 +64,8 @@ function getRequestHandler(getImpl: GetAutoScalerImplementationProc, handler: Ha
 // factory function
 let factory: AutoScalerImplementationFactory = (getImpl: GetAutoScalerImplementationProc, options: Options, onChange: AutoScalerImplementationOnChangeHandler) => {
     let router = express.Router();
-    router.get('/config_url', getRequestHandler(getImpl, (impl: Implementation) => {
-        return impl.getConfigUrl();
+    router.get('/info', getRequestHandler(getImpl, (impl: Implementation) => {
+        return impl.getInfo();
     }));
     return Promise.resolve<[IAutoScalerImplementation, express.Router]>([new Implementation(options), router]);
 };

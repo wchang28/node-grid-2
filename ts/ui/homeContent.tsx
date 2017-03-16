@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON, Times, IGridAutoScalerJSON} from 'grid-client-core';
+import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON, Times, IGridAutoScalerJSON, AutoScalerImplementationInfo} from 'grid-client-core';
 
 export interface IHomeContentProps {
     msgClient: IMessageClient;
@@ -18,13 +18,13 @@ export interface IHomeContentState {
     timer?: any;
     times?: Times;
     autoScalerJSON?: IGridAutoScalerJSON;
-    autoScalerConfigUrl?: string;
+    autoScalerImplementationInfo?: AutoScalerImplementationInfo;
 }
 
 export class HomeContent extends React.Component<IHomeContentProps, IHomeContentState> {
     constructor(props:IHomeContentProps) {
         super(props);
-        this.state = {disp_sub_id: null, autoscaler_sub_id: null, timer: null, times: null, autoScalerJSON: null, autoScalerConfigUrl: null};
+        this.state = {disp_sub_id: null, autoscaler_sub_id: null, timer: null, times: null, autoScalerJSON: null, autoScalerImplementationInfo: null};
     }
     protected get msgClient(): IMessageClient {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
@@ -73,10 +73,10 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             console.error('!!! Error getting auto-scaler json');
         });
     }
-    private getAutoScalerConfigUrl() {
-        this.session.GridAutoScaler.getImplementationConfigUrl()
-        .then((autoScalerConfigUrl: string) => {
-            this.setState({autoScalerConfigUrl})
+    private getAutoScalerImplementationInfo() {
+        this.session.GridAutoScaler.getImplementationInfo()
+        .then((autoScalerImplementationInfo: AutoScalerImplementationInfo) => {
+            this.setState({autoScalerImplementationInfo})
         }).catch((err: any) => {
             console.error('!!! Error getting auto-scaler config url');
         });
@@ -95,7 +95,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         });
         if (this.props.autoScalerAvailable) {
             this.getAutoScalerJSON();
-            this.getAutoScalerConfigUrl();
+            this.getAutoScalerImplementationInfo();
             this.msgClient.subscribe(Utils.getAutoScalerTopic(), this.handleMessages.bind(this), {})
             .then((autoscaler_sub_id: string) => {
                 console.log('autoscaler topic subscribed, sub_id=' + autoscaler_sub_id + " :-)");
@@ -366,9 +366,14 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <td></td>
                                         </tr>
                                         <tr>
+                                            <td>Implementation Name</td>
+                                            <td>{this.props.autoScalerAvailable ? (this.state.autoScalerImplementationInfo ? this.state.autoScalerImplementationInfo.Name: "") : "N/A"}</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
                                             <td>Additional config.</td>
                                             <td></td>
-                                            <td><a disabled={!this.allowChangeAutoScalerConfig()} href={(this.props.autoScalerAvailable ? (this.state.autoScalerConfigUrl ? this.state.autoScalerConfigUrl : "#") : "#")}>Click Here</a></td>
+                                            <td><a disabled={!this.allowChangeAutoScalerConfig()} href={(this.props.autoScalerAvailable ? "autoscaler/implementation" : "#")}>Click Here</a></td>
                                         </tr>
                                     </tbody>
                                 </table>

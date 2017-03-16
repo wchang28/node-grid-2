@@ -3,6 +3,7 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {GridAutoScaler} from 'grid-autoscaler';
+import {AutoScalerImplementationInfo} from  'grid-client-core';
 
 let router = express.Router();
 
@@ -98,10 +99,10 @@ router.get('/', (req: express.Request, res: express.Response) => {
     res.jsonp(getAutoScaler(req).toJSON());
 });
 
-router.get('/get_impl_config_url', (req: express.Request, res: express.Response) => {
-    getAutoScaler(req).ImplementationConfigUrl
-    .then((url: string) => {
-        res.jsonp(url);
+router.get('/get_impl_info', (req: express.Request, res: express.Response) => {
+    getAutoScaler(req).ImplementationInfo
+    .then((info: AutoScalerImplementationInfo) => {
+        res.jsonp(info);
     }).catch((err: any) => {
         res.status(400).json(err);
     });
