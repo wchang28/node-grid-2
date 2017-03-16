@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, ISession, IGridUser} from '../gridBrowserClient';
+import {IMessageClient, ISession, IGridUser} from 'grid-client-core';
 import * as homeContent from "./homeContent";
 import * as jobsContent from "./jobsContent";
 import * as connectionsContent from "./connectionsContent";

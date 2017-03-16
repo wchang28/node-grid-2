@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, GridMessage, Utils, ISession, IGridUser} from '../gridBrowserClient';
+import {IMessageClient, GridMessage, Utils, ISession, IGridUser} from 'grid-client-core';
 import {ITopicConnectionJSON} from "rcf-message-router";
 
 export interface IConnectionsContentProps {

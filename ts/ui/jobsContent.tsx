@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IJobInfo} from '../gridBrowserClient';
+import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IJobInfo} from 'grid-client-core';
 
 export interface IJobsContentProps {
     msgClient: IMessageClient;

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON, Times, IGridAutoScalerJSON} from '../gridBrowserClient';
+import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON, Times, IGridAutoScalerJSON} from 'grid-client-core';
 
 export interface IHomeContentProps {
     msgClient: IMessageClient;
