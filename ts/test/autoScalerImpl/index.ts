@@ -8,22 +8,6 @@ class Implementation extends ImplementationBase implements IAutoScalerImplementa
     constructor(workerToKey: ConvertToWorkerKeyProc, options?: Options) {
         super(workerToKey, options)
     }
-    /*
-    TranslateToWorkerKeys(workers: IWorker[]): Promise<WorkerKey[]> {
-        let workerKeys: WorkerKey[] = [];
-        for (let i in workers) {
-            let worker = workers[i];
-            let workerKey = worker.RemoteAddress+ ":" + worker.RemotePort.toString();
-            workerKeys.push(workerKey);
-        }
-        return Promise.resolve<WorkerKey[]>(workerKeys);
-    }
-    EstimateWorkersLaunchRequest(state: IAutoScalableState): Promise<IWorkersLaunchRequest> {
-        let NumInstances = (state.CPUDebt * 1.0)/(this.options.CPUsPerWorker * 1.0);
-        NumInstances = Math.max(Math.round(NumInstances), 1);
-        return Promise.resolve<IWorkersLaunchRequest>({NumInstances});
-    }
-    */
     LaunchInstances(launchRequest: IWorkersLaunchRequest): Promise<WorkerInstance[]> {
         return Promise.resolve<WorkerInstance[]>(null);
     }
