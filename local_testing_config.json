@@ -61,7 +61,10 @@
 					"Name": "TestImplementation"
 					,"HasSetupUI": false
 				}
-				,"CPUsPerWorker": 3
+				,"Options":
+				{
+					"CPUsPerWorker": 3
+				}
 			}
 		}
 	}
