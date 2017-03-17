@@ -45,11 +45,14 @@ function getRequestHandler(getImpl: GetAutoScalerImplementationProc, handler: Ha
 
 // factory function
 let factory: AutoScalerImplementationFactory = (getImpl: GetAutoScalerImplementationProc, options: Options, onChange: AutoScalerImplementationOnChangeHandler) => {
+    console.log("I am here 1, options=" + JSON.stringify(options, null, 2));
     let router = express.Router();
     router.get('/info', getRequestHandler(getImpl, (impl: Implementation) => {
         return impl.getInfo();
     }));
+    console.log("I am here 2");
     let workerToKey: ConvertToWorkerKeyProc = (worker: IWorker) => (worker.RemoteAddress+ ":" + worker.RemotePort.toString());
+    console.log("I am here 3");
     return Promise.resolve<[IAutoScalerImplementation, express.Router]>([new Implementation(workerToKey, options), router]);
 };
 
