@@ -200,7 +200,6 @@ gridDB.on('error', (err: any) => {
     
     initGridAutoScaler(dispatcher, clientMessaging)
     .then((value: [GridAutoScaler, express.Router]) => {
-        console.log("I am here 1");
         let gridAutoScaler = value[0];
         let autoScalerImplRouter = value[1];
 
