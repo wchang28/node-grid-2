@@ -220,14 +220,31 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             });
         }        
     }
-    private allowChangeAutoScalerConfig() : boolean {
-        if (!this.props.autoScalerAvailable)
+
+    private get AutoScalerAvailable(): boolean {return this.props.autoScalerAvailable};
+    private get AutoScalerJSON(): IGridAutoScalerJSON {return this.state.autoScalerJSON;}
+    private get AutoScalerImplInfo(): AutoScalerImplementationInfo {return this.state.autoScalerImplementationInfo;}
+    // TODO: check profile
+    private get AllowToChangeAutoScalerConfig() : boolean {
+        if (!this.AutoScalerAvailable)
             return false;
-        else if (!this.state.autoScalerJSON)
+        else if (!this.AutoScalerJSON)
             return false;
         else
             return true;
     }
+    private get AutoScalerEnabledText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.booleanString(this.AutoScalerJSON.Enabled) : null) : "N/A");}
+    private get AutoScalerScalingText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? (this.AutoScalerJSON.ScalingUp ? "Scaling up...": "Idle") : null) : "N/A");}
+    private get AutoScalerMaxNodesText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.AutoScalerJSON.MaxWorkersCap.toString() : null) : "N/A");}
+    private get AutoScalerMinNodesText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.AutoScalerJSON.MinWorkersCap.toString() : null) : "N/A");}
+    private get AutoScalerNodeLaunchingTimeoutText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.AutoScalerJSON.LaunchingTimeoutMinutes.toString() + " min." : null) : "N/A");}
+    private get AutoScalerTerminateWorkerAfterMinutesIdleText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.AutoScalerJSON.TerminateWorkerAfterMinutesIdle.toString() + " min." : null) : "N/A");}
+    private get AutoScalerRampUpSpeedRatioText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.AutoScalerJSON.RampUpSpeedRatio.toString() : null) : "N/A");}
+    private get AutoScalerImplName() : string {return (this.AutoScalerAvailable ? (this.AutoScalerImplInfo ? this.AutoScalerImplInfo.Name : null) : "N/A");}
+    private get HasAutoScalerImplSetupUI() : boolean {return (this.AutoScalerAvailable ? (this.AutoScalerImplInfo ? this.AutoScalerImplInfo.HasSetupUI : false) : false);}
+    private get AutoScalerImplSetupUILinkEnabled() : boolean {return this.AllowToChangeAutoScalerConfig && this.HasAutoScalerImplSetupUI;}
+    private get AutoScalerImplSetupUIUrl() : string {return (this.HasAutoScalerImplSetupUI ? "autoscaler/implementation" : "#");}
+
     private onAutoScalerEnableClick(e:any) {
         if (this.state.autoScalerJSON) {
             let p = (this.state.autoScalerJSON.Enabled ? this.session.GridAutoScaler.disable() : this.session.GridAutoScaler.enable());
@@ -332,48 +349,48 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                     <tbody>
                                         <tr>
                                             <td>Enabled</td>
-                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.booleanString(this.state.autoScalerJSON.Enabled) : "") : "N/A")}</td>
-                                            <td><button disabled={!this.allowChangeAutoScalerConfig()} onClick={this.onAutoScalerEnableClick.bind(this)}>{!this.state.autoScalerJSON || this.state.autoScalerJSON.Enabled ? "Disable" : "Enable"}</button></td>
+                                            <td>{this.AutoScalerEnabledText}</td>
+                                            <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.onAutoScalerEnableClick.bind(this)}>{!this.state.autoScalerJSON || this.state.autoScalerJSON.Enabled ? "Disable" : "Enable"}</button></td>
                                         </tr>
                                         <tr>
                                             <td>Scaling</td>
-                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? (this.state.autoScalerJSON.ScalingUp ? "Scaling Up...": "Idle") : "") : "N/A")}</td>
+                                            <td>{this.AutoScalerScalingText}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
                                             <td>Max. # of nodes</td>
-                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.MaxWorkersCap : "") : "N/A")}</td>
+                                            <td>{this.AutoScalerMaxNodesText}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
                                             <td>Min. # of nodes</td>
-                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.MinWorkersCap : "") : "N/A")}</td>
+                                            <td>{this.AutoScalerMinNodesText}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
                                             <td>Node launching timeout</td>
-                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.LaunchingTimeoutMinutes.toString() + " min." : "") : "N/A")}</td>
+                                            <td>{this.AutoScalerNodeLaunchingTimeoutText}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
                                             <td>Terminate node after idle for </td>
-                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.TerminateWorkerAfterMinutesIdle.toString() + " min." : "") : "N/A")}</td>
+                                            <td>{this.AutoScalerTerminateWorkerAfterMinutesIdleText}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
                                             <td>Ramp up speed ratio</td>
-                                            <td>{(this.props.autoScalerAvailable ? (this.state.autoScalerJSON ? this.state.autoScalerJSON.RampUpSpeedRatio.toString() : "") : "N/A")}</td>
+                                            <td>{this.AutoScalerRampUpSpeedRatioText}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
                                             <td>Implementation Name</td>
-                                            <td>{this.props.autoScalerAvailable ? (this.state.autoScalerImplementationInfo ? this.state.autoScalerImplementationInfo.Name: "") : "N/A"}</td>
+                                            <td>{this.AutoScalerImplName}</td>
                                             <td></td>
                                         </tr>
                                         <tr>
                                             <td>Additional config.</td>
                                             <td></td>
-                                            <td><a disabled={!this.allowChangeAutoScalerConfig()} href={(this.props.autoScalerAvailable ? "autoscaler/implementation" : "#")}>Click Here</a></td>
+                                            <td><a disabled={!this.AutoScalerImplSetupUILinkEnabled} href={this.AutoScalerImplSetupUIUrl}>Click Here</a></td>
                                         </tr>
                                     </tbody>
                                 </table>
