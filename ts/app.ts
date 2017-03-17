@@ -32,7 +32,6 @@ let tokenVerifier = new auth_client.TokenVerifier(config.authorizeEndpointOption
 
 function initGridAutoScaler(dispatcher: Dispatcher, clientMessaging: ClientMessaging) : Promise<[GridAutoScaler, express.Router]> {
     return new Promise<[GridAutoScaler, express.Router]>((resolve: (value: [GridAutoScaler, express.Router]) => void, reject: (err: any) => void) => {
-        let gridAutoScaler: GridAutoScaler = null;
         if (config.autoScalerConfig && config.autoScalerConfig.implementationConfig && config.autoScalerConfig.implementationConfig.factoryPackagePath) {
             let packageExport: AutoScalerImplementationPackageExport = require(config.autoScalerConfig.implementationConfig.factoryPackagePath);
             if (packageExport.factory) {
@@ -40,8 +39,16 @@ function initGridAutoScaler(dispatcher: Dispatcher, clientMessaging: ClientMessa
                     let global: IGlobal = req.app.get('global');
                     return Promise.resolve<IAutoScalerImplementation>(global.gridAutoScaler.Implementation);
                 };
-                return packageExport.factory(getImpProc, config.autoScalerConfig.implementationConfig.options, () => {
+                packageExport.factory(getImpProc, config.autoScalerConfig.implementationConfig.options, () => {
                     clientMessaging.notifyClientsAutoScalerImplementationChanged();
+                })
+                .then((value: [IAutoScalerImplementation, express.Router]) => {
+                    let autoScalerImpl = value[0];
+                    let gridAutoScaler = new GridAutoScaler(new AutoScalableGridBridge(dispatcher), autoScalerImpl, config.autoScalerConfig.autoScalerOptions);
+                    let autoScalerImplRouter = value[1];
+                    resolve([gridAutoScaler, autoScalerImplRouter])
+                }).catch((err: any) => {
+                    reject(err);
                 })
             } else {
                 console.error("!!! Error loading auto-scaler implementation: cannot find the factory function in the package");
