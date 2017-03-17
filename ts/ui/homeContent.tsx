@@ -335,7 +335,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
 
                         <div className="w3-card-4 w3-margin">
                             <div className="w3-container w3-blue">
-                                <h6>Auto-Scaler ({this.props.autoScalerAvailable ? "Available" : "N/A"})</h6>
+                                <h6>Auto-Scaler ({this.AutoScalerAvailable ? "Available" : "N/A"})</h6>
                             </div>
                             <div className="w3-container w3-white">
                                 <table className="w3-table w3-bordered w3-small">
