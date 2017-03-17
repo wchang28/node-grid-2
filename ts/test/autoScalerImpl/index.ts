@@ -2,7 +2,7 @@ import {IWorker, IAutoScalerImplementation, IAutoScalableState, WorkerKey, Worke
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {ImplementationBase, ConvertToWorkerKeyProc, Options as OptionsBase} from 'grid-autoscaler-impl-base';
-import {AutoScalerImplementationFactory, AutoScalerImplementationOnChangeHandler, GetAutoScalerImplementationProc} from 'grid-autoscaler-impl-pkg';
+import {AutoScalerImplementationFactory, AutoScalerImplementationOnChangeHandler, GetAutoScalerImplementationProc, getRequestHandlerForImplementation} from 'grid-autoscaler-impl-pkg';
 
 class Implementation extends ImplementationBase implements IAutoScalerImplementation {
     constructor(info: AutoScalerImplementationInfo, workerToKey: ConvertToWorkerKeyProc, options?: OptionsBase) {
@@ -15,7 +15,7 @@ class Implementation extends ImplementationBase implements IAutoScalerImplementa
         return Promise.resolve<WorkerInstance[]>(null);
     }
 }
-
+/*
 function getImplementation(req: express.Request, getImpl: GetAutoScalerImplementationProc) : Promise<Implementation> {
     return new Promise<Implementation>((resolve: (value: Implementation) => void, reject: (err: any) => void) => {
         getImpl(req)
@@ -42,6 +42,7 @@ function getRequestHandler(getImpl: GetAutoScalerImplementationProc, handler: Ha
         })
     }
 }
+*/
 
 interface Options {
     Info: AutoScalerImplementationInfo
@@ -50,7 +51,7 @@ interface Options {
 // factory function
 let factory: AutoScalerImplementationFactory = (getImpl: GetAutoScalerImplementationProc, options: Options, onChange: AutoScalerImplementationOnChangeHandler) => {
     let router = express.Router();
-    router.get('/info', getRequestHandler(getImpl, (impl: Implementation) => {
+    router.get('/info', getRequestHandlerForImplementation(getImpl, (impl: Implementation) => {
         return impl.getInfo();
     }));
     let workerToKey: ConvertToWorkerKeyProc = (worker: IWorker) => (worker.RemoteAddress+ ":" + worker.RemotePort.toString());
