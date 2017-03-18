@@ -23,7 +23,7 @@ interface Options {
 // factory function
 let factory: AutoScalerImplementationFactory = (getImpl: GetAutoScalerImplementationProc, options: Options, onChange: AutoScalerImplementationOnChangeHandler) => {
     let router = express.Router();
-    router.get('/info', getRequestHandlerForImplementation(getImpl, (impl: Implementation) => {
+    router.get('/info', getRequestHandlerForImplementation(getImpl, (req: express.Request, impl: Implementation) => {
         return impl.getInfo();
     }));
     let workerToKey: ConvertToWorkerKeyProc = (worker: IWorker) => (worker.RemoteAddress+ ":" + worker.RemotePort.toString());
