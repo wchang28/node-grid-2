@@ -15,34 +15,6 @@ class Implementation extends ImplementationBase implements IAutoScalerImplementa
         return Promise.resolve<WorkerInstance[]>(null);
     }
 }
-/*
-function getImplementation(req: express.Request, getImpl: GetAutoScalerImplementationProc) : Promise<Implementation> {
-    return new Promise<Implementation>((resolve: (value: Implementation) => void, reject: (err: any) => void) => {
-        getImpl(req)
-        .then((impl: IAutoScalerImplementation) => {
-            let o: any = impl;
-            resolve(o);
-        }).catch((err: any) => {
-            reject(err);
-        });
-    });
-}
-
-type Handler = (impl: Implementation) => Promise<any>;
-
-function getRequestHandler(getImpl: GetAutoScalerImplementationProc, handler: Handler) : express.RequestHandler {
-    return (req: express.Request, res: express.Response) => {
-        getImplementation(req, getImpl)
-        .then((impl: Implementation) => {
-            return handler(impl)
-        }).then((ret: any) => {
-            res.jsonp(ret);
-        }).catch((err: any) => {
-            res.status(400).json(err);
-        })
-    }
-}
-*/
 
 interface Options {
     Info: AutoScalerImplementationInfo
