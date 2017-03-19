@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IJobInfo} from 'grid-client-core';
 
 export interface IJobsContentProps {
-    msgClient: IMessageClient;
+    msgClient: IMessageClient<GridMessage>;
     session: ISession;
     currentUser: IGridUser;
 }
@@ -18,7 +18,7 @@ export class JobsContent extends React.Component<IJobsContentProps, IJobsContent
         super(props);
         this.state = {sub_id: null, jobs:null};
     }
-    protected get msgClient(): IMessageClient {return this.props.msgClient;}
+    protected get msgClient(): IMessageClient<GridMessage> {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
     protected handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'tracking-changed') {

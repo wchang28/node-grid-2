@@ -4,7 +4,7 @@ import {IMessageClient, GridMessage, Utils, ISession, IGridUser} from 'grid-clie
 import {ITopicConnectionJSON} from "rcf-message-router";
 
 export interface IConnectionsContentProps {
-    msgClient: IMessageClient;
+    msgClient: IMessageClient<GridMessage>;
     session: ISession;
     currConnId: string;
 }
@@ -19,7 +19,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
         super(props);
         this.state = {sub_id: null, connections:null};
     }
-    protected get msgClient(): IMessageClient {return this.props.msgClient;}
+    protected get msgClient(): IMessageClient<GridMessage> {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
     protected handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'connections-changed') {

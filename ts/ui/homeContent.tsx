@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 import {IMessageClient, GridMessage, Utils, ISession, IGridUser, IDispatcherJSON, INodeItem, IDispControl, IQueueJSON, Times, IGridAutoScalerJSON, AutoScalerImplementationInfo} from 'grid-client-core';
 
 export interface IHomeContentProps {
-    msgClient: IMessageClient;
+    msgClient: IMessageClient<GridMessage>;
     session: ISession;
     currentUser: IGridUser;
     autoScalerAvailable: boolean;
@@ -26,7 +26,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         super(props);
         this.state = {disp_sub_id: null, autoscaler_sub_id: null, timer: null, times: null, autoScalerJSON: null, autoScalerImplementationInfo: null};
     }
-    protected get msgClient(): IMessageClient {return this.props.msgClient;}
+    protected get msgClient(): IMessageClient<GridMessage> {return this.props.msgClient;}
     protected get session(): ISession {return this.props.session;}
     protected handleMessages(gMsg: GridMessage) : void {
         if (gMsg.type === 'ctrl-changed') {

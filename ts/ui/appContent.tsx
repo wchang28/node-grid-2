@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {IMessageClient, ISession, IGridUser} from 'grid-client-core';
+import {IMessageClient, ISession, IGridUser, GridMessage} from 'grid-client-core';
 import * as homeContent from "./homeContent";
 import * as jobsContent from "./jobsContent";
 import * as connectionsContent from "./connectionsContent";
@@ -12,7 +12,7 @@ export enum ContentType {
 };
 
 export interface IAppContentProps {
-    msgClient: IMessageClient;
+    msgClient: IMessageClient<GridMessage>;
     session: ISession;
     contentType: ContentType;
     currConnId: string;

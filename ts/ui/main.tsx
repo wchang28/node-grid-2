@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as $ from 'jquery';
-import {IMessageClient, GridClient, ISession, IGridJobSubmit, ITaskItem, IGridUser, IJobProgress} from 'grid-client-browser';
+import {IMessageClient, GridClient, ISession, IGridJobSubmit, ITaskItem, IGridUser, IJobProgress, GridMessage} from 'grid-client-browser';
 import * as appContent from './appContent';
 import {TestJobs} from '../test/testJobs';
 import {run as runSomeTestJob} from '../test/runSomeTestJob';
@@ -18,7 +18,7 @@ interface IGridAdminAppState {
 }
 
 class GridAdminApp extends React.Component<IGridAdminAppProps, IGridAdminAppState> {
-    private msgClient: IMessageClient = null;
+    private msgClient: IMessageClient<GridMessage> = null;
     constructor(props:IGridAdminAppProps) {
         super(props);
         this.state = {contentType: appContent.ContentType.Home, conn_id: null};
