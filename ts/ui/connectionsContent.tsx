@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {IMessageClient, GridMessage, Utils, ISession, IGridUser} from 'grid-client-core';
-import {ITopicConnectionJSON} from "rcf-message-router";
+import {ITopicConnectionJSON, Subscription} from "rcf-message-router";
 
 export interface IConnectionsContentProps {
     msgClient: IMessageClient<GridMessage>;
@@ -61,10 +61,21 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
             });
         }
     }
+    private getSubsText(subs: {[sub_id: string]:Subscription}): string {
+        let items:string[] = [];
+        for (let sub_id in subs) {
+            let sub = subs[sub_id];
+            let dest = sub.dest;
+            let item = [sub_id, dest].join("=>");
+            items.push(item);
+        }
+        return (items.length > 0 ? JSON.stringify(items, null, 2): "");
+    }
     private getConnectionRows() : any {
         if (this.state.connections && this.state.connections.length > 0) {
             return this.state.connections.map((connection: ITopicConnectionJSON, index:number) => {
-                let user:IGridUser= connection.cookie;
+                let user:IGridUser = connection.cookie;
+                let subs = connection.subs;
                 return (
                     <tr key={index}>
                         <td>{index+1}</td>
@@ -74,6 +85,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
                         <td>{user.userName}</td>
                         <td>{user.displayName}</td>
                         <td>{user.profile.name}</td>
+                        <td>{this.getSubsText(subs)}</td>
                     </tr>
                 );
             });
@@ -81,6 +93,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
             return (
                 <tr>
                     <td>(None)</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -111,6 +124,7 @@ export class ConnectionsContent extends React.Component<IConnectionsContentProps
                                             <th>Username</th>
                                             <th>Name</th>
                                             <th>Profile</th>
+                                            <th>Topics Sub.</th>
                                         </tr>
                                     </thead>
                                     <tbody>{this.getConnectionRows()}</tbody>
