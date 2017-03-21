@@ -143,7 +143,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
             return "";
     }
 
-    private getNumericFieldChangeButtonClickHandler(fieldLabel: string, currentValue: any, fieldIsFloat: boolean, setProc: (value: number) => Promise<number>) : (e: React.MouseEvent<HTMLButtonElement>) => void {
+    private getNumericFieldChangeButtonClickHandler(fieldLabel: string, currentValue: number, fieldIsFloat: boolean, setValueProc: (value: number) => Promise<number>) : (e: React.MouseEvent<HTMLButtonElement>) => void {
         let handler = (e: React.MouseEvent<HTMLButtonElement>) => {
             let s = prompt("New " + fieldLabel + ":", currentValue.toString());
             if (s !== null) {
@@ -153,8 +153,11 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                     if (isNaN(value))
                         alert("input is not a valid number");
                     else {
-                        let p: Promise<number> = setProc.apply(this.GridAutoScaler, value)
+                        console.log("I am here 1. value=" + value);
+                        let p: Promise<number> = setValueProc.apply(this.GridAutoScaler, value)
+                        console.log("I am here 2");
                         p.then((value: number) => {
+                            console.log("I am here 3");
                         }).catch((err: any) => {
                             console.error('!!! Unable set field auto-scaler: ' + JSON.stringify(err));
                         });
