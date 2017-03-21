@@ -51,8 +51,7 @@ router.get('/get_max_workers_cap', (req: express.Request, res: express.Response)
 });
 
 router.post('/set_max_workers_cap', (req: express.Request, res: express.Response) => {
-    console.log("I am here. req.body=" + req.body);
-    getAutoScaler(req).MaxWorkersCap = req.body;
+    getAutoScaler(req).MaxWorkersCap = req.body.value;
     res.jsonp(getAutoScaler(req).MaxWorkersCap);
 });
 
@@ -61,7 +60,7 @@ router.get('/get_min_workers_cap', (req: express.Request, res: express.Response)
 });
 
 router.post('/set_min_workers_cap', (req: express.Request, res: express.Response) => {
-    getAutoScaler(req).MinWorkersCap = req.body;
+    getAutoScaler(req).MinWorkersCap = req.body.value;
     res.jsonp(getAutoScaler(req).MinWorkersCap);
 });
 
@@ -70,7 +69,7 @@ router.get('/get_launching_timeout_minutes', (req: express.Request, res: express
 });
 
 router.post('/set_launching_timeout_minutes', (req: express.Request, res: express.Response) => {
-    getAutoScaler(req).LaunchingTimeoutMinutes = req.body;
+    getAutoScaler(req).LaunchingTimeoutMinutes = req.body.value;
     res.jsonp(getAutoScaler(req).LaunchingTimeoutMinutes);
 });
 
@@ -79,7 +78,7 @@ router.get('/get_terminate_worker_after_minutes_idle', (req: express.Request, re
 });
 
 router.post('/set_terminate_worker_after_minutes_idle', (req: express.Request, res: express.Response) => {
-    getAutoScaler(req).TerminateWorkerAfterMinutesIdle = req.body;
+    getAutoScaler(req).TerminateWorkerAfterMinutesIdle = req.body.value;
     res.jsonp(getAutoScaler(req).TerminateWorkerAfterMinutesIdle);
 });
 
@@ -88,7 +87,7 @@ router.get('/get_ramp_up_speed_ratio', (req: express.Request, res: express.Respo
 });
 
 router.post('/set_ramp_up_speed_ratio', (req: express.Request, res: express.Response) => {
-    getAutoScaler(req).RampUpSpeedRatio = req.body;
+    getAutoScaler(req).RampUpSpeedRatio = req.body.value;
     res.jsonp(getAutoScaler(req).RampUpSpeedRatio);
 });
 
