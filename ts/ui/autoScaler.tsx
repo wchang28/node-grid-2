@@ -165,7 +165,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                     <h6>Auto-Scaler ({this.AutoScalerAvailable ? "Available" : "N/A"})</h6>
                 </div>
                 <div className="w3-container w3-white">
-                    <table className="w3-table w3-bordered w3-small">
+                    <table className="w3-table w3-bordered w3-small w3-centered">
                         <thead>
                             <tr>
                                 <th>Item</th>
@@ -227,7 +227,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                             <h6>Launching Workers ({this.LaunchingInstanceCountText})</h6>
                         </div>
                         <div className="w3-container w3-white">
-                            <table className="w3-table w3-bordered w3-small">
+                            <table className="w3-table w3-bordered w3-small w3-centered">
                                 <thead>
                                     <tr>
                                         <th>#</th>

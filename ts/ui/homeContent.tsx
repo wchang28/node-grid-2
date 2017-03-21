@@ -192,7 +192,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                 <h6>Nodes {this.getGridUtilizationString()}</h6>
                             </div>
                             <div className="w3-container w3-white">
-                                <table className="w3-table w3-bordered w3-small">
+                                <table className="w3-table w3-bordered w3-small w3-centered">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -217,7 +217,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                 <h6>Queue</h6>
                             </div>
                             <div className="w3-container w3-white">
-                                <table className="w3-table w3-bordered w3-small">
+                                <table className="w3-table w3-bordered w3-small w3-centered">
                                     <thead>
                                         <tr>
                                             <th>Item</th>
