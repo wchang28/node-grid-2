@@ -127,11 +127,13 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         } else
             return "";
     }
-    private getNodeStateCellContent(nodeTerminating) : any {
-        if (nodeTerminating)
+    private getNodeStateCellContent(nodeItem: INodeItem) : any {
+        if (nodeItem.terminating)
             return <span>{"Terminating... "}<span className="w3-medium"><i className="fa fa-spinner fa-spin"></i></span></span>
-        else
+        else if (nodeItem.enabled)
             return <span className="w3-text-green w3-medium"><i className="fa fa-check-circle"></i></span>;
+        else
+            return <span className="w3-text-red w3-medium"><i className="fa fa-times"></i></span>;
     }
     private getNodeRows() : any {
         if (this.state.nodes && this.state.nodes.length > 0) {
@@ -146,7 +148,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                         <td>{this.booleanString(nodeItem.enabled)}</td>
                         <td>{this.geUtilizationString(nodeItem.cpusUsed, nodeItem.numCPUs, false)}</td>
                         <td>{this.getIdleMinutesString(nodeItem.lastIdleTime)}</td>
-                        <td>{this.getNodeStateCellContent(nodeItem.terminating)}</td>
+                        <td>{this.getNodeStateCellContent(nodeItem)}</td>
                         <td><button disabled={nodeItem.terminating || !this.props.currentUser.profile.canEnableDisableNode} onClick={this.getNodeEnableDisableClickHandler(index)}>{nodeItem.enabled ? "Disable" : "Enable"}</button></td>
                     </tr>
                 );
