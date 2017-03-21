@@ -127,13 +127,19 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         } else
             return "";
     }
+
+    private getEnableFlagCellContent(enabled: boolean) : any {
+        if (enabled)
+            return <span className="w3-text-green w3-medium"><i className="fa fa-check-circle"></i></span>;
+        else
+            return <span className="w3-text-red w3-medium"><i className="fa fa-times-circle"></i></span>;        
+    }
+
     private getNodeStateCellContent(nodeItem: INodeItem) : any {
         if (nodeItem.terminating)
             return <span>{"Terminating... "}<span className="w3-medium"><i className="fa fa-spinner fa-spin"></i></span></span>
-        else if (nodeItem.enabled)
-            return <span className="w3-text-green w3-medium"><i className="fa fa-check-circle"></i></span>;
         else
-            return <span className="w3-text-red w3-medium"><i className="fa fa-times-circle"></i></span>;
+            return this.getEnableFlagCellContent(nodeItem.enabled);
     }
     private getNodeRows() : any {
         if (this.state.nodes && this.state.nodes.length > 0) {
@@ -255,7 +261,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                         </tr>
                                         <tr>
                                             <td>Task dispatching enabled</td>
-                                            <td>{this.state.dispControl ? this.booleanString(this.state.dispControl.dispatchEnabled) : " "}</td>
+                                            <td>{this.getEnableFlagCellContent(this.state.dispControl ? this.state.dispControl.dispatchEnabled : false)}</td>
                                             <td>
                                                 <button disabled={!this.props.currentUser.profile.canStartStopDispatching} onClick={this.onDispatchingEnableClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.dispatchEnabled ? "Disable" : "Enable"}</button>
                                             </td>
