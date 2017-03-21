@@ -127,6 +127,12 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         } else
             return "";
     }
+    private getNodeStateCellContent(nodeTerminating) : any {
+        if (nodeTerminating)
+            return <span>{"Terminating... "}<span className="w3-text-white w3-medium"><i className="fa fa-spinner fa-spin"></i></span></span>
+        else
+            return <span className="w3-text-green w3-medium"><i className="fa fa-check-circle"></i></span>;
+    }
     private getNodeRows() : any {
         if (this.state.nodes && this.state.nodes.length > 0) {
             return this.state.nodes.map((nodeItem: INodeItem, index:number) => {
