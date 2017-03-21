@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Utils, IGridAutoScalerJSON, AutoScalerImplementationInfo, IMessageClient, GridMessage, IGridAutoScaler} from 'grid-client-core';
+import {Utils, IGridAutoScalerJSON, AutoScalerImplementationInfo, IMessageClient, GridMessage, IGridAutoScaler, LaunchingWorker} from 'grid-client-core';
 
 export interface IAutoScalerProps {
     autoScalerAvailable: boolean
@@ -97,6 +97,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
     private get HasAutoScalerImplSetupUI() : boolean {return (this.AutoScalerAvailable ? (this.AutoScalerImplInfo ? this.AutoScalerImplInfo.HasSetupUI : false) : false);}
     private get AutoScalerImplSetupUILinkEnabled() : boolean {return this.AllowToChangeAutoScalerConfig && this.HasAutoScalerImplSetupUI;}
     private get AutoScalerImplSetupUIUrl() : string {return (this.HasAutoScalerImplSetupUI ? "autoscaler/implementation" : "#");}
+    private get LaunchingInstanceCountText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ?  this.AutoScalerJSON.LaunchingWorkers.length.toString() : null) : "N/A");}
 
     private onAutoScalerEnableClick(e:any) {
         if (this.state.autoScalerJSON) {
@@ -106,6 +107,32 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
             }).catch((err: any) => {
                 console.error('!!! Unable to enable/disable auto-scaler: ' + JSON.stringify(err));
             });
+        }
+    }
+
+    private get LaunchingWorkersRows() : any {
+        if (this.AutoScalerJSON && this.AutoScalerJSON.LaunchingWorkers.length > 0) {
+            return this.AutoScalerJSON.LaunchingWorkers.map((worker: LaunchingWorker, index:number) => {
+                return (
+                    <tr key={index}>
+                        <td>{index+1}</td>
+                        <td>{worker.WorkerKey}</td>
+                        <td>{worker.InstanceId}</td>
+                        <td className="w3-medium"><i className="fa fa-spinner fa-spin"></i></td>
+                        <td></td>
+                    </tr>
+                );
+            });
+        } else {
+            return (
+                <tr>
+                    <td>(None)</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            );
         }
     }
     render() {
@@ -171,6 +198,29 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                             </tr>
                         </tbody>
                     </table>
+
+                    <div className="w3-card-4 w3-margin">
+                        <div className="w3-container w3-light-blue">
+                            <h5>Launching Instances ({this.LaunchingInstanceCountText})</h5>
+                        </div>
+                        <div className="w3-container w3-white">
+                            <table className="w3-table w3-bordered w3-small">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Worker</th>
+                                        <th>InstanceId</th>
+                                        <th>State</th>
+                                        <th>Launchnig Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {this.LaunchingWorkersRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         );
