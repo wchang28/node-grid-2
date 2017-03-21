@@ -51,6 +51,7 @@ router.get('/get_max_workers_cap', (req: express.Request, res: express.Response)
 });
 
 router.post('/set_max_workers_cap', (req: express.Request, res: express.Response) => {
+    console.log("I am here. req.body=" + req.body);
     getAutoScaler(req).MaxWorkersCap = req.body;
     res.jsonp(getAutoScaler(req).MaxWorkersCap);
 });
