@@ -246,7 +246,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                                         <th>Node</th>
                                         <th>InstanceId</th>
                                         <th>State</th>
-                                        <th>Launchnig Time</th>
+                                        <th>Launch Time</th>
                                     </tr>
                                 </thead>
                                 <tbody>
