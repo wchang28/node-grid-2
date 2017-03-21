@@ -130,8 +130,9 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
     private getNodeRows() : any {
         if (this.state.nodes && this.state.nodes.length > 0) {
             return this.state.nodes.map((nodeItem: INodeItem, index:number) => {
+                let rowClass = (nodeItem.terminating ? "w3-grey w3-text-dark-grey" : "w3-white w3-text-black");
                 return (
-                    <tr key={index}>
+                    <tr key={index} className={rowClass}>
                         <td>{index+1}</td>
                         <td>{nodeItem.id}</td>
                         <td>{nodeItem.name}</td>
@@ -140,7 +141,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                         <td>{this.geUtilizationString(nodeItem.cpusUsed, nodeItem.numCPUs, false)}</td>
                         <td>{this.getIdleMinutesString(nodeItem.lastIdleTime)}</td>
                         <td>{nodeItem.terminating ? "Terminating..." : "Good"}</td>
-                        <td><button disabled={!this.props.currentUser.profile.canEnableDisableNode} onClick={this.getNodeEnableDisableClickHandler(index)}>{nodeItem.enabled ? "Disable" : "Enable"}</button></td>
+                        <td><button disabled={nodeItem.terminating || !this.props.currentUser.profile.canEnableDisableNode} onClick={this.getNodeEnableDisableClickHandler(index)}>{nodeItem.enabled ? "Disable" : "Enable"}</button></td>
                     </tr>
                 );
             });
@@ -259,7 +260,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                             </div>
                         </div>
 
-                        <AutoScalerUI autoScalerAvailable={this.props.autoScalerAvailable} gridAutoScaler={this.session.GridAutoScaler} msgClient={this.msgClient}/>
+                        <AutoScalerUI userProfile={this.props.currentUser.profile} autoScalerAvailable={this.props.autoScalerAvailable} gridAutoScaler={this.session.GridAutoScaler} msgClient={this.msgClient} times={this.state.times}/>
                     </div>
                 </div>
             </div>

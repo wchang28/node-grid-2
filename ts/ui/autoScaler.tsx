@@ -1,16 +1,19 @@
 import * as React from 'react';
-import {Utils, IGridAutoScalerJSON, AutoScalerImplementationInfo, IMessageClient, GridMessage, IGridAutoScaler, LaunchingWorker} from 'grid-client-core';
+import {IGridUserProfile, Utils, IGridAutoScalerJSON, AutoScalerImplementationInfo, IMessageClient, GridMessage, IGridAutoScaler, LaunchingWorker, Times} from 'grid-client-core';
 
 export interface IAutoScalerProps {
+    msgClient: IMessageClient<GridMessage>;
+    userProfile: IGridUserProfile;
     autoScalerAvailable: boolean
     gridAutoScaler: IGridAutoScaler
-    msgClient: IMessageClient<GridMessage>;
+    times: Times
 }
 
 export interface IAutoScalerState {
     sub_id?: string;
     autoScalerJSON?: IGridAutoScalerJSON;
     autoScalerImplementationInfo?: AutoScalerImplementationInfo;
+    times?: Times;
 }
 
 export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerState> {
@@ -20,6 +23,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
             sub_id: null
             ,autoScalerJSON: null
             ,autoScalerImplementationInfo: null
+            ,times: props.times
         };
     }
     protected handleMessages(gMsg: GridMessage) : void {
@@ -28,7 +32,10 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         }
     }
     protected get MsgClient(): IMessageClient<GridMessage> {return this.props.msgClient;}
+    protected get UserProfile() : IGridUserProfile {return this.props.userProfile;}
     protected get GridAutoScaler(): IGridAutoScaler {return this.props.gridAutoScaler;}
+    protected get Times(): Times {return this.state.times;}
+
     private getAutoScalerJSON() {
         this.GridAutoScaler.getJSON()
         .then((autoScalerJSON: IGridAutoScalerJSON) => {
@@ -110,6 +117,14 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         }
     }
 
+    private getMinutesSinceStartString(startTime?: number) : string {
+        if (typeof startTime === "number" && this.Times && this.Times.serverTime) {
+            let t = Math.round(Math.max(this.state.times.serverTime - startTime, 0)/1000.0/60.0);
+            return t.toString() + " min.";
+        } else
+            return "";
+    }
+
     private get LaunchingWorkersRows() : any {
         if (this.AutoScalerJSON && this.AutoScalerJSON.LaunchingWorkers.length > 0) {
             return this.AutoScalerJSON.LaunchingWorkers.map((worker: LaunchingWorker, index:number) => {
@@ -119,7 +134,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                         <td>{worker.WorkerKey}</td>
                         <td>{worker.InstanceId}</td>
                         <td className="w3-medium"><i className="fa fa-spinner fa-spin"></i></td>
-                        <td></td>
+                        <td>{this.getMinutesSinceStartString(worker.LaunchingTime)}</td>
                     </tr>
                 );
             });
@@ -200,8 +215,8 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                     </table>
 
                     <div className="w3-card-4 w3-margin">
-                        <div className="w3-container w3-light-blue">
-                            <h5>Launching Instances ({this.LaunchingInstanceCountText})</h5>
+                        <div className="w3-container w3-pale-green">
+                            <h6>Launching Instances ({this.LaunchingInstanceCountText})</h6>
                         </div>
                         <div className="w3-container w3-white">
                             <table className="w3-table w3-bordered w3-small">
