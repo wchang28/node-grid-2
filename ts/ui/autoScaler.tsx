@@ -143,8 +143,6 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
             return "";
     }
 
-
-
     private get LaunchingWorkersRows() : any {
         if (this.AutoScalerJSON && this.AutoScalerJSON.LaunchingWorkers.length > 0) {
             return this.AutoScalerJSON.LaunchingWorkers.map((worker: LaunchingWorker, index:number) => {
