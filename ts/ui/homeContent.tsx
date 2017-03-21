@@ -129,7 +129,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
     }
     private getNodeStateCellContent(nodeTerminating) : any {
         if (nodeTerminating)
-            return <span>{"Terminating... "}<span className="w3-text-white w3-medium"><i className="fa fa-spinner fa-spin"></i></span></span>
+            return <span>{"Terminating... "}<span className="w3-medium"><i className="fa fa-spinner fa-spin"></i></span></span>
         else
             return <span className="w3-text-green w3-medium"><i className="fa fa-check-circle"></i></span>;
     }
