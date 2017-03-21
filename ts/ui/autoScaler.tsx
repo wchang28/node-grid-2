@@ -87,7 +87,16 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         }
     }
 
-    private booleanString(val: boolean) : string {return (val ? "Yes": "No");}
+    private get NACellContent() : any {return <span className="w3-medium"><i className="fa fa-minus"></i></span>;}
+    private getEnableFlagCellContent(enabled?: boolean) : any {
+        if (typeof enabled === 'boolean') {
+            if (enabled)
+                return <span className="w3-text-green w3-medium"><i className="fa fa-check-circle"></i></span>;
+            else
+                return <span className="w3-text-red w3-medium"><i className="fa fa-times-circle"></i></span>;
+        } else
+            return <span className="w3-medium"><i className="fa fa-question"></i></span>;
+    }
 
     private get AutoScalerAvailable(): boolean {return this.props.autoScalerAvailable};
     private get AutoScalerJSON(): IGridAutoScalerJSON {return this.state.autoScalerJSON;}
@@ -101,7 +110,8 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         else
             return true;
     }
-    private get AutoScalerEnabledText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.booleanString(this.AutoScalerJSON.Enabled) : null) : "N/A");}
+
+    private get AutoScalerEnabledCell() : any {return (this.AutoScalerAvailable ? this.getEnableFlagCellContent(this.AutoScalerJSON ? this.AutoScalerJSON.Enabled : null) : this.NACellContent);}
     private get AutoScalerScalingText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? (this.AutoScalerJSON.ScalingUp ? "Scaling up...": "Idle") : null) : "N/A");}
     private get AutoScalerMaxNodesText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.AutoScalerJSON.MaxWorkersCap.toString() : null) : "N/A");}
     private get AutoScalerMinNodesText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.AutoScalerJSON.MinWorkersCap.toString() : null) : "N/A");}
@@ -132,6 +142,8 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         } else
             return "";
     }
+
+
 
     private get LaunchingWorkersRows() : any {
         if (this.AutoScalerJSON && this.AutoScalerJSON.LaunchingWorkers.length > 0) {
@@ -176,7 +188,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                         <tbody>
                             <tr>
                                 <td>Enabled</td>
-                                <td>{this.AutoScalerEnabledText}</td>
+                                <td>{this.AutoScalerEnabledCell}</td>
                                 <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.onAutoScalerEnableClick.bind(this)}>{!this.state.autoScalerJSON || this.state.autoScalerJSON.Enabled ? "Disable" : "Enable"}</button></td>
                             </tr>
                             <tr>
