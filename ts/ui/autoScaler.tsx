@@ -240,7 +240,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                             <tr>
                                 <td>Ramp up speed ratio</td>
                                 <td>{this.AutoScalerRampUpSpeedRatioText}</td>
-                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Ramp up speed ratio", (this.AutoScalerJSON ? this.AutoScalerJSON.RampUpSpeedRatio : null), false, this.GridAutoScaler.setRampUpSpeedRatio.bind(this.GridAutoScaler))}>Change...</button></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Ramp up speed ratio", (this.AutoScalerJSON ? this.AutoScalerJSON.RampUpSpeedRatio : null), true, this.GridAutoScaler.setRampUpSpeedRatio.bind(this.GridAutoScaler))}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Implementation Name</td>
