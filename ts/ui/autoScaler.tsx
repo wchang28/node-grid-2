@@ -226,7 +226,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                             <tr>
                                 <td>Max. # of nodes</td>
                                 <td>{this.AutoScalerMaxNodesText}</td>
-                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Max. # of nodes", (this.AutoScalerJSON ? this.AutoScalerJSON.MaxWorkersCap : null), false, this.GridAutoScaler.setMaxWorkersCap.bind(this))}>Change...</button></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Max. # of nodes", (this.AutoScalerJSON ? this.AutoScalerJSON.MaxWorkersCap : null), false, this.GridAutoScaler.setMaxWorkersCap.bind(this.GridAutoScaler))}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Min. # of nodes</td>
