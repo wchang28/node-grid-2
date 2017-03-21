@@ -153,22 +153,11 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                     if (isNaN(value))
                         alert("input is not a valid number");
                     else {
-                        console.log("I am here 1. value=" + value);
-                        this.GridAutoScaler.setMaxWorkersCap(value)
-                        .then((value: number) => {
-                            console.log("I am here 2");
-                        }).catch((err: any) => {
-                            console.error('!!! Unable set field auto-scaler: ' + JSON.stringify(err));
-                        });
-                        /*
                         let p: Promise<number> = setValueProc(value)
-                        console.log("I am here 2");
                         p.then((value: number) => {
-                            console.log("I am here 3");
                         }).catch((err: any) => {
                             console.error('!!! Unable set field auto-scaler: ' + JSON.stringify(err));
                         });
-                        */
                     }
                 }
             }
@@ -203,9 +192,6 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         }
     }
     render() {
-        let x : (value: number) => Promise<number> = (value: number) => {
-            return this.GridAutoScaler.setMaxWorkersCap(value);
-        };
         return (
             <div className="w3-card-4 w3-margin">
                 <div className="w3-container w3-blue">
@@ -239,22 +225,22 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                             <tr>
                                 <td>Min. # of nodes</td>
                                 <td>{this.AutoScalerMinNodesText}</td>
-                                <td><button disabled={!this.AllowToChangeAutoScalerConfig}>Change...</button></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Min. # of nodes", (this.AutoScalerJSON ? this.AutoScalerJSON.MinWorkersCap : null), false, this.GridAutoScaler.setMinWorkersCap.bind(this.GridAutoScaler))}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Node launching timeout</td>
                                 <td>{this.AutoScalerNodeLaunchingTimeoutText}</td>
-                                <td><button disabled={!this.AllowToChangeAutoScalerConfig}>Change...</button></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Node launching timeout", (this.AutoScalerJSON ? this.AutoScalerJSON.LaunchingTimeoutMinutes : null), false, this.GridAutoScaler.setLaunchingTimeoutMinutes.bind(this.GridAutoScaler))}>Change...</button></td>
                             </tr>
                             <tr>
-                                <td>Terminate node after idle for </td>
+                                <td>Terminate node after idle for</td>
                                 <td>{this.AutoScalerTerminateWorkerAfterMinutesIdleText}</td>
-                                <td><button disabled={!this.AllowToChangeAutoScalerConfig}>Change...</button></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Terminate node after idle for", (this.AutoScalerJSON ? this.AutoScalerJSON.TerminateWorkerAfterMinutesIdle : null), false, this.GridAutoScaler.setTerminateWorkerAfterMinutesIdle.bind(this.GridAutoScaler))}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Ramp up speed ratio</td>
                                 <td>{this.AutoScalerRampUpSpeedRatioText}</td>
-                                <td><button disabled={!this.AllowToChangeAutoScalerConfig}>Change...</button></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Ramp up speed ratio", (this.AutoScalerJSON ? this.AutoScalerJSON.RampUpSpeedRatio : null), false, this.GridAutoScaler.setRampUpSpeedRatio.bind(this.GridAutoScaler))}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Implementation Name</td>
