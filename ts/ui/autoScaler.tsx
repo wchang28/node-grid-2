@@ -54,7 +54,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
     }
 
     componentDidMount() {
-        console.log('HomeContent.componentDidMount()');
+        console.log('AutoScalerUI.componentDidMount()');
         if (this.props.autoScalerAvailable) {
             this.getAutoScalerJSON();
             this.getAutoScalerImplementationInfo();
@@ -68,7 +68,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         }
     }
     componentWillUnmount() {
-        console.log('HomeContent.componentWillUnmount()');
+        console.log('AutoScalerUI.componentWillUnmount()');
         if (this.state.sub_id) {
             let sub_id = this.state.sub_id;
             this.MsgClient.unsubscribe(sub_id)
@@ -79,6 +79,14 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
             });
         }
     }
+
+    componentWillReceiveProps(nextProps: IAutoScalerProps) {
+        console.log('AutoScalerUI.componentWillReceiveProps()');
+        if (nextProps && nextProps.times) {
+            this.setState({times: nextProps.times});
+        }
+    }
+
     private booleanString(val: boolean) : string {return (val ? "Yes": "No");}
 
     private get AutoScalerAvailable(): boolean {return this.props.autoScalerAvailable};
