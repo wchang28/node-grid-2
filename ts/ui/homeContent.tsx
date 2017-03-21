@@ -133,7 +133,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
         else if (nodeItem.enabled)
             return <span className="w3-text-green w3-medium"><i className="fa fa-check-circle"></i></span>;
         else
-            return <span className="w3-text-red w3-medium"><i className="fa fa-times"></i></span>;
+            return <span className="w3-text-red w3-medium"><i className="fa fa-times-circle"></i></span>;
     }
     private getNodeRows() : any {
         if (this.state.nodes && this.state.nodes.length > 0) {
@@ -145,7 +145,6 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                         <td>{nodeItem.id}</td>
                         <td>{nodeItem.name}</td>
                         <td>{nodeItem.remoteAddress+":"+nodeItem.remotePort.toString()}</td>
-                        <td>{this.booleanString(nodeItem.enabled)}</td>
                         <td>{this.geUtilizationString(nodeItem.cpusUsed, nodeItem.numCPUs, false)}</td>
                         <td>{this.getIdleMinutesString(nodeItem.lastIdleTime)}</td>
                         <td>{this.getNodeStateCellContent(nodeItem)}</td>
@@ -157,7 +156,6 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             return (
                 <tr>
                     <td>(None)</td>
-                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -207,7 +205,6 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                             <th>Id</th>
                                             <th>Name</th>
                                             <th>Remote Addr.</th>
-                                            <th>Enabled</th>
                                             <th>Usage</th>
                                             <th>Idle Time</th>
                                             <th>State</th>
