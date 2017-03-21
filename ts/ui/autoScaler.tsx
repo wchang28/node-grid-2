@@ -223,7 +223,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                     </table>
 
                     <div className="w3-card-4 w3-margin">
-                        <div className="w3-container w3-purple">
+                        <div className="w3-container w3-sand">
                             <h6>Launching Workers ({this.LaunchingInstanceCountText})</h6>
                         </div>
                         <div className="w3-container w3-white">
