@@ -130,7 +130,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
     private getNodeRows() : any {
         if (this.state.nodes && this.state.nodes.length > 0) {
             return this.state.nodes.map((nodeItem: INodeItem, index:number) => {
-                let rowClass = (nodeItem.terminating ? "w3-grey w3-text-dark-grey" : "w3-white w3-text-black");
+                let rowClass = (nodeItem.terminating ? "w3-light-grey w3-text-grey" : "w3-white w3-text-black");
                 return (
                     <tr key={index} className={rowClass}>
                         <td>{index+1}</td>
