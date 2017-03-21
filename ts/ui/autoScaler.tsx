@@ -143,6 +143,29 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
             return "";
     }
 
+    private getNumericFieldChangeButtonClickHandler(fieldLabel: string, currentValue: any, fieldIsFloat: boolean, setProc: (value: number) => Promise<number>) : (e: React.MouseEvent<HTMLButtonElement>) => void {
+        let handler = (e: React.MouseEvent<HTMLButtonElement>) => {
+            let s = prompt("New " + fieldLabel + ":", currentValue.toString());
+            if (s !== null) {
+                s = s.trim();
+                if (s) {
+                    let value = (fieldIsFloat ? parseFloat(s) : parseInt(s));
+                    if (isNaN(value))
+                        alert("input is not a valid number");
+                    else {
+                        let p: Promise<number> = setProc.apply(this.GridAutoScaler, value)
+                        p.then((value: number) => {
+                        }).catch((err: any) => {
+                            console.error('!!! Unable set field auto-scaler: ' + JSON.stringify(err));
+                        });
+                    }
+                }
+            }
+            e.preventDefault();
+        };
+        return handler.bind(this);
+    }
+
     private get LaunchingWorkersRows() : any {
         if (this.AutoScalerJSON && this.AutoScalerJSON.LaunchingWorkers.length > 0) {
             return this.AutoScalerJSON.LaunchingWorkers.map((worker: LaunchingWorker, index:number) => {
@@ -197,27 +220,27 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                             <tr>
                                 <td>Max. # of nodes</td>
                                 <td>{this.AutoScalerMaxNodesText}</td>
-                                <td></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Max. # of nodes", this.AutoScalerJSON.HasMaxWorkersCap, false, this.GridAutoScaler.setMaxWorkersCap)}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Min. # of nodes</td>
                                 <td>{this.AutoScalerMinNodesText}</td>
-                                <td></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Node launching timeout</td>
                                 <td>{this.AutoScalerNodeLaunchingTimeoutText}</td>
-                                <td></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Terminate node after idle for </td>
                                 <td>{this.AutoScalerTerminateWorkerAfterMinutesIdleText}</td>
-                                <td></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Ramp up speed ratio</td>
                                 <td>{this.AutoScalerRampUpSpeedRatioText}</td>
-                                <td></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Implementation Name</td>
