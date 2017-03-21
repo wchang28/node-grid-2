@@ -154,7 +154,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                         alert("input is not a valid number");
                     else {
                         console.log("I am here 1. value=" + value);
-                        let p: Promise<number> = setValueProc.apply(this.GridAutoScaler, value)
+                        let p: Promise<number> = setValueProc(value)
                         console.log("I am here 2");
                         p.then((value: number) => {
                             console.log("I am here 3");
@@ -195,6 +195,9 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         }
     }
     render() {
+        let x : (value: number) => Promise<number> = (value: number) => {
+            return this.GridAutoScaler.setMaxWorkersCap(value);
+        };
         return (
             <div className="w3-card-4 w3-margin">
                 <div className="w3-container w3-blue">
@@ -223,7 +226,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                             <tr>
                                 <td>Max. # of nodes</td>
                                 <td>{this.AutoScalerMaxNodesText}</td>
-                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Max. # of nodes", (this.AutoScalerJSON ? this.AutoScalerJSON.MaxWorkersCap : null), false, this.GridAutoScaler.setMaxWorkersCap)}>Change...</button></td>
+                                <td><button disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getNumericFieldChangeButtonClickHandler("Max. # of nodes", (this.AutoScalerJSON ? this.AutoScalerJSON.MaxWorkersCap : null), false, this.GridAutoScaler.setMaxWorkersCap.bind(this))}>Change...</button></td>
                             </tr>
                             <tr>
                                 <td>Min. # of nodes</td>
