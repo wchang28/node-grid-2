@@ -154,6 +154,13 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                         alert("input is not a valid number");
                     else {
                         console.log("I am here 1. value=" + value);
+                        this.GridAutoScaler.setMaxWorkersCap(value)
+                        .then((value: number) => {
+                            console.log("I am here 2");
+                        }).catch((err: any) => {
+                            console.error('!!! Unable set field auto-scaler: ' + JSON.stringify(err));
+                        });
+                        /*
                         let p: Promise<number> = setValueProc(value)
                         console.log("I am here 2");
                         p.then((value: number) => {
@@ -161,6 +168,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                         }).catch((err: any) => {
                             console.error('!!! Unable set field auto-scaler: ' + JSON.stringify(err));
                         });
+                        */
                     }
                 }
             }
