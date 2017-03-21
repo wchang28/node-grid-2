@@ -128,11 +128,14 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
             return "";
     }
 
-    private getEnableFlagCellContent(enabled: boolean) : any {
-        if (enabled)
-            return <span className="w3-text-green w3-medium"><i className="fa fa-check-circle"></i></span>;
-        else
-            return <span className="w3-text-red w3-medium"><i className="fa fa-times-circle"></i></span>;        
+    private getEnableFlagCellContent(enabled?: boolean) : any {
+        if (typeof enabled === 'boolean') {
+            if (enabled)
+                return <span className="w3-text-green w3-medium"><i className="fa fa-check-circle"></i></span>;
+            else
+                return <span className="w3-text-red w3-medium"><i className="fa fa-times-circle"></i></span>;
+        } else
+            return <span className="w3-medium"><i className="fa fa-question"></i></span>;
     }
 
     private getNodeStateCellContent(nodeItem: INodeItem) : any {
@@ -261,7 +264,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
                                         </tr>
                                         <tr>
                                             <td>Task dispatching enabled</td>
-                                            <td>{this.getEnableFlagCellContent(this.state.dispControl ? this.state.dispControl.dispatchEnabled : false)}</td>
+                                            <td>{this.getEnableFlagCellContent(this.state.dispControl ? this.state.dispControl.dispatchEnabled : null)}</td>
                                             <td>
                                                 <button disabled={!this.props.currentUser.profile.canStartStopDispatching} onClick={this.onDispatchingEnableClick.bind(this)}>{!this.state.dispControl || this.state.dispControl.dispatchEnabled ? "Disable" : "Enable"}</button>
                                             </td>
