@@ -42,15 +42,16 @@ CREATE TABLE [dbo].[GridJobTasks](
 GO
 
 CREATE TABLE [dbo].[GridProfile](
-	[id] [varchar](100) NOT NULL,
+	[id] [varchar](100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[enabled] [bit] NOT NULL,
-	[name] [varchar](250) NOT NULL,
+	[name] [varchar](250) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[priority] [int] NOT NULL,
 	[canSubmitJob] [bit] NOT NULL,
 	[canKillOtherUsersJob] [bit] NOT NULL,
 	[canStartStopDispatching] [bit] NOT NULL,
 	[canOpenCloseQueue] [bit] NOT NULL,
 	[canEnableDisableNode] [bit] NOT NULL,
+	[canChangeAutoScalerSettings] [bit] NOT NULL,
  CONSTRAINT [PK_GridProfile] PRIMARY KEY CLUSTERED 
 (
 	[id] ASC
@@ -59,9 +60,14 @@ CREATE TABLE [dbo].[GridProfile](
 
 GO
 
-CREATE INDEX [IX_GridProfile] on [dbo].[GridProfile] ([enabled])
+/****** Object:  Index [IX_GridProfile]    Script Date: 3/22/2017 10:31:57 AM ******/
+CREATE NONCLUSTERED INDEX [IX_GridProfile] ON [dbo].[GridProfile]
+(
+	[enabled] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 
 GO
+
 
 CREATE TABLE [dbo].[GridUserProfile](
 	[userId] [varchar](100) NOT NULL,
@@ -135,6 +141,7 @@ select
 ,[canStartStopDispatching]
 ,[canOpenCloseQueue]
 ,[canEnableDisableNode]
+,[canChangeAutoScalerSettings]
 FROM [dbo].[GridProfile] (nolock)
 where [enabled]=1
 
