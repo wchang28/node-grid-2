@@ -214,6 +214,8 @@ gridDB.on('error', (err: any) => {
                 console.log('<disabling-workers>, workerIds=\n' + JSON.stringify(workerIds, null, 2));
             }).on('set-workers-termination', (workerIds: string[])=> {
                 console.log('<set-workers-termination>, workerIds=\n' + JSON.stringify(workerIds, null, 2));
+            }).on('error', (err: any) => {
+                console.error("!!! grid autoScaler error: err=" + JSON.stringify(err, null, 2));
             });
         } else
             console.log("grid auto-scaler is not available");
