@@ -165,6 +165,22 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         return handler.bind(this);
     }
 
+    getLaunchNewInstancesHandler() : (e: React.MouseEvent<HTMLButtonElement>) => void {
+        let handler = (e: React.MouseEvent<HTMLButtonElement>) => {
+            let s = prompt("Number of new instances to launch:", "1");
+            if (s !== null) {
+                let NumInstances = parseInt(s.trim());
+                if (!isNaN(NumInstances) && NumInstances > 0) {
+                    let p = this.GridAutoScaler.launchNewWorkers({NumInstances});
+                } else {
+                    alert('Bad instance number! Instance number must be a positive integer');
+                }
+            }
+            e.preventDefault();
+        };
+        return handler.bind(this);
+    }
+
     private get LaunchingWorkersRows() : any {
         if (this.AutoScalerJSON && this.AutoScalerJSON.LaunchingWorkers.length > 0) {
             return this.AutoScalerJSON.LaunchingWorkers.map((worker: LaunchingWorker, index:number) => {
@@ -194,7 +210,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         return (
             <div className="w3-card-4 w3-margin">
                 <div className="w3-container w3-blue">
-                    <h6>Auto-Scaler ({this.AutoScalerAvailable ? "Available" : "N/A"})</h6>
+                    <h6>Auto-Scaler ({this.AutoScalerAvailable ? "Available" : "N/A"}) <button className="w3-small" onClick={this.getLaunchNewInstancesHandler()}>Launch More Instances...</button></h6>
                 </div>
                 <div className="w3-container w3-white">
                     <table className="w3-table w3-bordered w3-small w3-centered">
