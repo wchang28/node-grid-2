@@ -19,6 +19,7 @@ import * as errors from './errors';
 import * as auth_client from 'polaris-auth-client';
 import * as prettyPrinter from 'express-pretty-print';
 import {IAppConfig} from './appConfig';
+import {IWorker} from 'autoscalable-grid';
 import {GridAutoScaler} from 'grid-autoscaler';
 import {AutoScalableGridBridge} from './autoScalableGridBridge';
 import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory, GetAutoScalerImplementationProc, AutoScalerImplementationOnChangeHandler} from 'grid-autoscaler-impl-pkg';
@@ -207,6 +208,12 @@ gridDB.on('error', (err: any) => {
             console.log("grid auto-scaler loaded successfully :-)");
             gridAutoScaler.on('change', () => {
                 clientMessaging.notifyClientsAutoScalerChanged();
+            }).on('down-scaling', (workers: IWorker[])=> {
+                console.log('<down-scaling>, workers=\n' + JSON.stringify(workers, null, 2));
+            }).on('disabling-workers', (workerIds: string[])=> {
+                console.log('<disabling-workers>, workerIds=\n' + JSON.stringify(workerIds, null, 2));
+            }).on('set-workers-termination', (workerIds: string[])=> {
+                console.log('<set-workers-termination>, workerIds=\n' + JSON.stringify(workerIds, null, 2));
             });
         } else
             console.log("grid auto-scaler is not available");
