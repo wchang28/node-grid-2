@@ -101,14 +101,13 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
     private get AutoScalerAvailable(): boolean {return this.props.autoScalerAvailable};
     private get AutoScalerJSON(): IGridAutoScalerJSON {return this.state.autoScalerJSON;}
     private get AutoScalerImplInfo(): AutoScalerImplementationInfo {return this.state.autoScalerImplementationInfo;}
-    // TODO: check profile
     private get AllowToChangeAutoScalerConfig() : boolean {
         if (!this.AutoScalerAvailable)
             return false;
         else if (!this.AutoScalerJSON)
             return false;
         else
-            return true;
+            return this.UserProfile.canChangeAutoScalerSettings;
     }
 
     private get AutoScalerEnabledCell() : any {return (this.AutoScalerAvailable ? this.getEnableFlagCellContent(this.AutoScalerJSON ? this.AutoScalerJSON.Enabled : null) : this.NACellContent);}

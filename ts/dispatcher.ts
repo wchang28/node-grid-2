@@ -92,7 +92,7 @@ class Nodes extends events.EventEmitter {
     enableNode(id: string) : void {
         let node = this.__nodes[id];
         if (node) {
-            if (!node.enabled) {
+            if (!node.terminating && !node.enabled) {
                 node.enabled = true;
                 this.emit('node-enabled', id);
                 if (this.nodeActive(node)) {
