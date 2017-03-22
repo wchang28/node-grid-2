@@ -210,7 +210,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         return (
             <div className="w3-card-4 w3-margin">
                 <div className="w3-container w3-blue">
-                    <h6>Auto-Scaler ({this.AutoScalerAvailable ? "Available" : "N/A"}) <button className="w3-small" onClick={this.getLaunchNewInstancesHandler()}>Launch More Instances...</button></h6>
+                    <h6>Auto-Scaler ({this.AutoScalerAvailable ? "Available" : "N/A"}) <button className="w3-small" disabled={!this.AllowToChangeAutoScalerConfig} onClick={this.getLaunchNewInstancesHandler()}>Launch More Instances...</button></h6>
                 </div>
                 <div className="w3-container w3-white">
                     <table className="w3-table w3-bordered w3-small w3-centered">
