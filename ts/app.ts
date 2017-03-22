@@ -207,8 +207,6 @@ gridDB.on('error', (err: any) => {
             console.log("grid auto-scaler loaded successfully :-)");
             gridAutoScaler.on('change', () => {
                 clientMessaging.notifyClientsAutoScalerChanged();
-            }).on('polling', () => {
-                console.log("<pooling>");
             });
         } else
             console.log("grid auto-scaler is not available");
