@@ -119,8 +119,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
     private get AutoScalerRampUpSpeedRatioText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ? this.AutoScalerJSON.RampUpSpeedRatio.toString() : null) : "N/A");}
     private get AutoScalerImplName() : string {return (this.AutoScalerAvailable ? (this.AutoScalerImplInfo ? this.AutoScalerImplInfo.Name : null) : "N/A");}
     private get HasAutoScalerImplSetupUI() : boolean {return (this.AutoScalerAvailable ? (this.AutoScalerImplInfo ? this.AutoScalerImplInfo.HasSetupUI : false) : false);}
-    private get AutoScalerImplSetupUILinkEnabled() : boolean {return this.AllowToChangeAutoScalerConfig && this.HasAutoScalerImplSetupUI;}
-    private get AutoScalerImplSetupUIUrl() : string {return (this.HasAutoScalerImplSetupUI ? "autoscaler/implementation" : "#");}
+    private get AutoScalerImplSetupUIUrl() : string {return (this.AllowToChangeAutoScalerConfig && this.HasAutoScalerImplSetupUI ? "autoscaler/implementation" : "#");}
     private get LaunchingInstanceCountText() : string {return (this.AutoScalerAvailable ? (this.AutoScalerJSON ?  this.AutoScalerJSON.LaunchingWorkers.length.toString() : null) : "N/A");}
 
     private onAutoScalerEnableClick(e:any) {
@@ -265,7 +264,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                             <tr>
                                 <td>Additional config.</td>
                                 <td></td>
-                                <td><a disabled={!this.AutoScalerImplSetupUILinkEnabled} href={this.AutoScalerImplSetupUIUrl}>Click Here</a></td>
+                                <td><a href={this.AutoScalerImplSetupUIUrl}>Click Here</a></td>
                             </tr>
                         </tbody>
                     </table>
