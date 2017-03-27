@@ -4,9 +4,8 @@ import {Dispatcher} from './dispatcher';
 export class AutoScalableGridBridge implements IAutoScalableGrid {
     constructor(private dispatcher: Dispatcher) {}
     getWorkers(workerIds: string[]): Promise<IWorker[]> {return this.dispatcher.getWorkers(workerIds);}
-    disableWorkers(workerIds: string[]): Promise<any> {
-        this.dispatcher.disableNodes(workerIds)
-        return Promise.resolve<any>({});
+    requestToTerminateWorkers(workerIds: string[]): Promise<string[]> {
+        return Promise.resolve<string[]>(this.dispatcher.requestToTerminateNodes(workerIds));
     }
     setWorkersTerminating(workerIds: string[]): Promise<any> {
         this.dispatcher.setNodesTerminating(workerIds);

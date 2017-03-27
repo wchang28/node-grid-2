@@ -23,9 +23,8 @@ router.get('/get_workers', (req: express.Request, res: express.Response) => {
     });
 });
 
-router.post('/disable_workers', (req: express.Request, res: express.Response) => {
-    getDispatcher(req).disableNodes(req.body);
-    res.jsonp({});
+router.post('/request_to_terminate_workers', (req: express.Request, res: express.Response) => {
+    res.jsonp(getDispatcher(req).requestToTerminateNodes(req.body));
 });
 
 router.post('/set_workers_terminating', (req: express.Request, res: express.Response) => {

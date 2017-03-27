@@ -117,6 +117,27 @@ class Nodes extends events.EventEmitter {
     }
     disableNode(id: string) : void { this.disableNodes([id]);}
 
+    requestToTerminateNodes(ids: string[]) : string[] {
+        if (ids && ids.length > 0) {
+            let ret: string[] = []
+            let disabledNodeIds: string[] = [];
+            for (let i in ids) {
+                let id = ids[i];
+                let node = this.__nodes[id];
+                if (node && !node.terminating && node.cpusUsed === 0) {
+                    ret.push(id);
+                    if (node.enabled) {
+                        node.enabled = false;
+                        disabledNodeIds.push(id);
+                    }
+                }
+            }
+            if (disabledNodeIds.length > 0) this.emit('nodes-disabled', disabledNodeIds);
+            return (ret.length > 0 ? ret : null);
+        } else
+            return null;
+    }
+
     setNodesTerminating(ids: string[]) : void {
         if (ids && ids.length > 0) {
             let disabledNodeIds: string[] = [];
@@ -893,7 +914,11 @@ export class Dispatcher extends events.EventEmitter {
             this.__nodes.disableNode(nodeId);
     }
 
-    disableNodes(nodeIds: string[]) : void {this.__nodes.disableNodes(nodeIds);}
+    requestToTerminateNodes(nodeIds: string[]) : string[] {
+        if (this.dispatching)
+            return null;
+        return this.__nodes.requestToTerminateNodes(nodeIds);
+    }
     setNodesTerminating(nodeIds: string[]) : void {this.__nodes.setNodesTerminating(nodeIds);}
 
     get dispControl(): IDispControl {
