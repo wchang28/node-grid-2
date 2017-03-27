@@ -210,8 +210,8 @@ gridDB.on('error', (err: any) => {
                 clientMessaging.notifyClientsAutoScalerChanged();
             }).on('down-scaling', (workers: IWorker[])=> {
                 console.log('<down-scaling>, workers=\n' + JSON.stringify(workers, null, 2));
-            }).on('disabling-workers', (workerIds: string[])=> {
-                console.log('<disabling-workers>, workerIds=\n' + JSON.stringify(workerIds, null, 2));
+            }).on('request-to-terminate-workers', (workerIds: string[])=> {
+                console.log('<request-to-terminate-workers>, workerIds=\n' + JSON.stringify(workerIds, null, 2));
             }).on('set-workers-termination', (workerIds: string[])=> {
                 console.log('<set-workers-termination>, workerIds=\n' + JSON.stringify(workerIds, null, 2));
             }).on('error', (err: any) => {
