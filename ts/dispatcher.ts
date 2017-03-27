@@ -917,7 +917,8 @@ export class Dispatcher extends events.EventEmitter {
     requestToTerminateNodes(nodeIds: string[]) : string[] {
         if (this.dispatching)
             return null;
-        return this.__nodes.requestToTerminateNodes(nodeIds);
+        else
+            return this.__nodes.requestToTerminateNodes(nodeIds);
     }
     setNodesTerminating(nodeIds: string[]) : void {this.__nodes.setNodesTerminating(nodeIds);}
 
