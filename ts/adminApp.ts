@@ -8,7 +8,8 @@ import noCache = require('no-cache-express');
 import * as oauth2 from 'oauth2';
 import {TokenGrant as OAuth2TokenGrant} from 'oauth2-token-grant';
 import * as errors from './errors';
-import * as httpProxy from 'rcf-http-proxy'
+import * as httpProxy from 'express-http-proxy'
+import * as events from 'events';
 
 interface ISessionOptions {
     sessionIdSignSecret: string;
@@ -92,19 +93,23 @@ adminApp.use('/bower_components', hasAccessMiddleware, express.static(path.join(
 // if auto-scaler implementation config UI is available
 if (config.autoScalerImplConfigUIPath) adminApp.use('/app/autoscaler/implementation', hasAccessMiddleware, express.static(config.autoScalerImplConfigUIPath));
 
-let targetAcquisition: httpProxy.TargetAcquisition = (req:express.Request, done: httpProxy.TargetAcquisitionCompletionHandler) => {
+let targetAcquisition: httpProxy.TargetAcquisition = (req:express.Request) => {
     let accessStore: AccessStore = req.session["access"];
     let access = accessStore.access;
     let targetSesstings: httpProxy.TargetSettings = {
         targetUrl: access.instance_url + '/services'
     }
     if (typeof access.rejectUnauthorized === 'boolean') targetSesstings.rejectUnauthorized = access.rejectUnauthorized;
-    done(null, targetSesstings);
+    return Promise.resolve<httpProxy.TargetSettings>(targetSesstings);
 };
-let proxyOptions: httpProxy.Options = {
-    targetAcquisition: targetAcquisition
-};
-adminApp.use('/services', hasAccessMiddleware, autoRefreshTokenMiddleware, makeAuthorizationHeaderMiddleware, httpProxy.get(proxyOptions));
+
+let eventEmitter = new events.EventEmitter();
+
+eventEmitter.on('error', (err: any) => {
+    console.error(new Date().toISOString() + ": !!! Proxy error: " + JSON.stringify(err));
+});
+
+adminApp.use('/services', hasAccessMiddleware, autoRefreshTokenMiddleware, makeAuthorizationHeaderMiddleware, httpProxy.get({targetAcquisition, eventEmitter}));
 
 // hitting the /authcode_callback via a browser redirect from the oauth2 server
 adminApp.get('/authcode_callback', (req: express.Request, res: express.Response) => {

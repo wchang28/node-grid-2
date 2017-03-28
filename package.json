@@ -52,7 +52,7 @@
     "oauth2-token-grant": "git+https://github.com/wchang28/oauth2-token-grant.git",
     "polaris-auth-client": "git+https://github.com/wchang28/polaris-auth-client.git",
     "rcf": "git+https://github.com/wchang28/rcf.git",
-    "rcf-http-proxy": "git+https://github.com/wchang28/rcf-http-proxy.git",
+    "express-http-proxy": "git+https://github.com/wchang28/express-http-proxy.git",
     "rcf-message-router": "git+https://github.com/wchang28/rcf-message-router.git",
     "react": "^15.2.0",
     "react-dom": "^15.2.0",
