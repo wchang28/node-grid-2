@@ -24,6 +24,10 @@ router.post('/terminate_workers', (req: express.Request, res: express.Response) 
     res.jsonp(getAutoScaler(req).terminateWorkers(req.body));
 });
 
+router.post('/terminate_launching_workers', (req: express.Request, res: express.Response) => {
+    res.jsonp(getAutoScaler(req).terminateLaunchingWorkers(req.body));
+});
+
 router.get('/is_enabled', (req: express.Request, res: express.Response) => {
     res.jsonp(getAutoScaler(req).Enabled);
 });
