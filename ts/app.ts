@@ -189,8 +189,8 @@ gridDB.on('error', (err: any) => {
     }).on('job-submitted', (jobId: string) => {
         console.log('job ' + jobId.toString() + ' was submitted');
     }).on('job-finished', (jobId: string) => {
-        console.log('job ' + jobId.toString() + ' is finished');
-        clientMessaging.notifyClientsJobFinished(jobId);
+        console.log('job ' + jobId.toString() + ' is done');
+        clientMessaging.notifyClientsJobDone(jobId);
     }).on('task-complete', (task: ITask) => {
         clientMessaging.notifyClientsTaskComplete(task);
     });
