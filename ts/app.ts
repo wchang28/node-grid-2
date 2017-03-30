@@ -150,7 +150,7 @@ gridDB.on('error', (err: any) => {
 
     let msgCoalesce = new ClientMessagingCoalescing(3000);
     msgCoalesce.on('trigger', () => {
-        console.log('<<triggered>>');
+        //console.log('<<triggered>>');
         clientMessaging.notifyClientsQueueChanged(dispatcher.queue);
         notifyClientsNodesChanges();
     });
@@ -179,17 +179,17 @@ gridDB.on('error', (err: any) => {
     }).on('job-status-changed', (jobProgress: IJobProgress) => {
         clientMessaging.notifyClientsJobStatusChanged(jobProgress);
     }).on('error',(err: any) => {
-        console.error('!!! Dispatcher error: ' + JSON.stringify(err));
+        console.error(new Date().toISOString() + ': !!! Dispatcher error: ' + JSON.stringify(err));
     }).on('kill-job-begin', (jobId: string) => {
-        console.log('killing job ' + jobId.toString() + '...');
+        console.log(new Date().toISOString() + ': killing job ' + jobId.toString() + '...');
     }).on('kill-job-end', (jobId: string, err: any) => {
-        console.log('job ' + jobId.toString() + ' kill process finished.' + (err ? ' error=' + JSON.stringify(err) : ' job was killed successfully :-)'));
+        console.log(new Date().toISOString() + ': job ' + jobId.toString() + ' kill process finished.' + (err ? ' error=' + JSON.stringify(err) : ' job was killed successfully :-)'));
     }).on('kill-job-poll', (jobId: string, pollNumber: number) => {
-        console.log('job ' + jobId.toString() + ' kill poll #' + pollNumber.toString() + '...');
+        console.log(new Date().toISOString() + ': job ' + jobId.toString() + ' kill poll #' + pollNumber.toString() + '...');
     }).on('job-submitted', (jobId: string) => {
-        console.log('job ' + jobId.toString() + ' was submitted');
+        console.log(new Date().toISOString() + ': job ' + jobId.toString() + ' was submitted');
     }).on('job-finished', (jobId: string) => {
-        console.log('job ' + jobId.toString() + ' is done');
+        console.log(new Date().toISOString() + ': job ' + jobId.toString() + ' is done');
         clientMessaging.notifyClientsJobDone(jobId);
     }).on('task-complete', (task: ITask) => {
         clientMessaging.notifyClientsTaskComplete(task);
