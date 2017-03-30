@@ -55,7 +55,7 @@ export class ClientMessaging {
             type: 'job-finished'
             ,content: jobId
         };
-        this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(jobId), {}, msg);
+        this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(jobId), {type: 'job-finished'}, msg);
     }
 
     notifyClientsTaskComplete(task:ITask) : void {
