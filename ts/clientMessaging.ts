@@ -50,6 +50,14 @@ export class ClientMessaging {
         this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(jobProgress.jobId), {}, msg);
     }
 
+    notifyClientsJobFinished(jobId: string) : void {
+        let msg: GridMessage = {
+            type: 'job-finished'
+            ,content: jobId
+        };
+        this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(jobId), {}, msg);
+    }
+
     notifyClientsTaskComplete(task:ITask) : void {
         let msg: GridMessage = {
             type: 'task-complete'

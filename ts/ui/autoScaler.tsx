@@ -180,6 +180,7 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         return handler.bind(this);
     }
 
+    /*
     getTerminateLaunchingWorkerHandler(workerKey: string) : (e: React.MouseEvent<HTMLButtonElement>) => void {
         let handler = (e: React.MouseEvent<HTMLButtonElement>) => {
             this.GridAutoScaler.terminateLaunchingWorkers([workerKey])
@@ -192,7 +193,8 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
         };
         return handler.bind(this);
     }
-
+    */
+    
     private get LaunchingWorkersRows() : any {
         if (this.AutoScalerJSON && this.AutoScalerJSON.LaunchingWorkers.length > 0) {
             return this.AutoScalerJSON.LaunchingWorkers.map((worker: LaunchingWorker, index:number) => {
@@ -203,7 +205,6 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                         <td>{worker.InstanceId}</td>
                         <td className="w3-medium"><i className="fa fa-spinner fa-spin"></i></td>
                         <td>{this.getMinutesSinceStartString(worker.LaunchingTime)}</td>
-                        <td><button onClick={this.getTerminateLaunchingWorkerHandler(worker.WorkerKey)}>Terminate</button></td>
                     </tr>
                 );
             });
@@ -211,7 +212,6 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
             return (
                 <tr>
                     <td>(None)</td>
-                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -297,7 +297,6 @@ export class AutoScalerUI extends React.Component<IAutoScalerProps, IAutoScalerS
                                         <th>InstanceId</th>
                                         <th>State</th>
                                         <th>Launch Time</th>
-                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
