@@ -15,7 +15,7 @@ export interface IHomeContentState {
     nodes?: INodeItem[];
     queue?:IQueueJSON;
     dispControl?: IDispControl;
-    timer?: any;
+    timer?: number;
     times?: Times;
 }
 
@@ -64,7 +64,7 @@ export class HomeContent extends React.Component<IHomeContentProps, IHomeContent
     componentDidMount() {
         console.log('HomeContent.componentDidMount()');
         this.getServerTimes();
-        this.state.timer = setInterval(this.getServerTimes.bind(this), 15000);
+        this.setState({timer: setInterval(this.getServerTimes.bind(this), 15000)});
         this.getDispatcherJSON();
         this.msgClient.subscribe(Utils.getDispatcherTopic(), this.handleMessages.bind(this), {})
         .then((disp_sub_id: string) => {
