@@ -26,4 +26,5 @@
         }
 		,"authorizationRedirectUrl": "http://127.0.0.1:33821/services/oauth2/authorize"
     }
+	,"autoScalerImplConfigUIPath": "C:/run/scripts/aws-ec2-autoscaler-impl-extension/public"
 }
