@@ -128,6 +128,13 @@ gridDB.on('error', (err: any) => {
     let clientApp = express();  // client facing app
     let nodeApp = express();   // node facing app
     
+    clientApp.options("/*", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH,HEAD');
+        res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Content-Length,X-Requested-With');
+        res.send(200);
+    });
+
     clientApp.use(noCache);
     nodeApp.use(noCache);
 
