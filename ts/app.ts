@@ -134,6 +134,11 @@ gridDB.on('error', (err: any) => {
         next();
     });
 
+    clientApp.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+        res.header('Access-Control-Allow-Origin', '*');
+        next();
+    });
+
     clientApp.options("/*", (req: express.Request, res: express.Response) => {
         console.log('I am here in OPTIONS, headers=\n' + JSON.stringify(req.headers, null, 2));
         res.header('Access-Control-Allow-Origin', '*');
