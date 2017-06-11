@@ -128,19 +128,19 @@ gridDB.on('error', (err: any) => {
     let clientApp = express();  // client facing app
     let nodeApp = express();   // node facing app
     
+    /*
     clientApp.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
         console.log('\nmethod=' +req.method + ', url=' + req.url);
         console.log('headers=\n' + JSON.stringify(req.headers, null, 2));
         next();
     });
-
+    */
     clientApp.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
         res.header('Access-Control-Allow-Origin', '*');
         next();
     });
 
     clientApp.options("/*", (req: express.Request, res: express.Response) => {
-        console.log('I am here in OPTIONS, headers=\n' + JSON.stringify(req.headers, null, 2));
         res.header('Access-Control-Allow-Origin', '*');
         res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH,HEAD');
         res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Content-Length,X-Requested-With');
