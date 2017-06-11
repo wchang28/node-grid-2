@@ -129,7 +129,7 @@ gridDB.on('error', (err: any) => {
     let nodeApp = express();   // node facing app
     
     clientApp.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-        console.log('method=' +req.method + 'url=' + req.url);
+        console.log('\nmethod=' +req.method + ', url=' + req.url);
         console.log('headers=\n' + JSON.stringify(req.headers, null, 2));
     });
 
