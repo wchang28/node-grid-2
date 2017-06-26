@@ -58,7 +58,7 @@ gridDB.on('error', (err:any) => {
 
     let client = api.$M(pathname, clientOptions);
 
-    function sendDispatcherNodeReady(done: (err: any) => void) {
+    function sendDispatcherNodeReady() : Promise<rcf.RESTReturn> {
         console.log('sending a node-ready message...');
         let nodeReady: INodeReady = {
             numCPUs: numCPUs
@@ -68,15 +68,15 @@ gridDB.on('error', (err:any) => {
             type: 'node-ready'
             ,content: nodeReady
         };
-        client.send('/topic/dispatcher', {}, msg, done);
+        return client.send('/topic/dispatcher', {}, msg);
     }
 
-    function sendDispatcherTaskComplete(task: ITask, done: (err: any) => void) {
+    function sendDispatcherTaskComplete(task: ITask) : Promise<rcf.RESTReturn> {
         let msg: GridMessage = {
             type: 'task-complete'
             ,content: task
         };
-        client.send('/topic/dispatcher', {}, msg, done);
+        return client.send('/topic/dispatcher', {}, msg);
     }
 
     function nodeRunTask(nodeId:string, task: ITask, done: (err: any) => void) {
@@ -112,7 +112,7 @@ gridDB.on('error', (err:any) => {
 
     client.on('connect', (nodeId:string) : void => {
         console.log('connected to the dispatcher: nodeId=' + nodeId);
-        let sub_id = client.subscribe('/topic/node/' + nodeId
+        client.subscribe('/topic/node/' + nodeId
         ,(msg: rcf.IMessage): void => {
             console.log('msg-rcvd: ' + JSON.stringify(msg));
             let gMsg: GridMessage = msg.body;
@@ -120,32 +120,28 @@ gridDB.on('error', (err:any) => {
                 let task: ITask = gMsg.content;
                 nodeRunTask(nodeId, task, (err:any) => {
                     if (err) console.error("!!! Error running task " + JSON.stringify(task) + ": " + JSON.stringify(err) + " :-(");
-                    sendDispatcherTaskComplete(task, (err: any): void => {
-                        if (err)
-                            console.error('!!! Error sending task-complete message :-(');
-                        else
-                            console.log('task-complete message sent successfully :-)');
+                    sendDispatcherTaskComplete(task)
+                    .then(() => {
+                        console.log('task-complete message sent successfully :-)');
+                    }).catch((err: any) => {
+                        console.error('!!! Error sending task-complete message :-(');
                     });
                 });
             } else if (gMsg.type === 'kill-processes-tree') {
                 let pids: number[] = gMsg.content;
                 killProcessesTree(pids);
             }
-        }
-        ,{}
-        ,(err: any): void => {
-            if (err) {
-                console.error('!!! Error: topic subscription failed');
-            } else {
-                console.log('topic subscribed sub_id=' + sub_id + " :-)");
-                sendDispatcherNodeReady((err: any): void => {
-                    if (err) {
-                        console.error('!!! Error: message send failed');
-                    } else {
-                        console.log('message sent successfully :-)');
-                    }
-                });
-            }
+        },{})
+        .then((sub_id: string) => {
+            console.log('topic subscribed sub_id=' + sub_id + " :-)");
+            sendDispatcherNodeReady()
+            .then(() => {
+                console.log('message sent successfully :-)');
+            }).catch((err: any) => {
+                console.error('!!! Error: message send failed');
+            });
+        }).catch((err: any) => {
+            console.error('!!! Error: topic subscription failed');
         });
     });
 

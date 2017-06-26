@@ -53,14 +53,13 @@ function autoRefreshTokenMiddleware(req: express.Request, res: express.Response,
     let tokenAutoRefreshIntervalHours = 4;
     let refreshIntervalMS = tokenAutoRefreshIntervalHours * 60 * 60 * 1000;
     if (access.refresh_token && now.getTime() - accessStore.grantTime > refreshIntervalMS) {
-        tokenGrant.refreshAccessToken(access.refresh_token, (err:any, access: oauth2.Access) => {
-            if (err)
-                next();
-            else {
-                accessStore.access = access;
-                accessStore.grantTime = new Date().getTime();
-                next();
-            }
+        tokenGrant.refreshAccessToken(access.refresh_token)
+        .then((access: oauth2.Access) => {
+            accessStore.access = access;
+            accessStore.grantTime = new Date().getTime();
+            next();
+        }).catch((err: any) => {
+            next();
         });
     } else {
         next();
@@ -117,25 +116,24 @@ adminApp.get('/authcode_callback', (req: express.Request, res: express.Response)
     if (JSON.stringify(query) != '{}') {
         console.log('auth_code='+query.code);
         console.log('aquiring access token from auth_code...');
-        tokenGrant.getAccessTokenFromAuthCode(query.code, (err, access: oauth2.Access)  => {
-            if (err) {
-                console.error('!!! Error: ' + JSON.stringify(err));
-                res.status(400).json(err);
-            } else {
-                console.log(':-) access token granted. access=' + JSON.stringify(access));
-                let redirectUrl = '/';	// redirect user's browser to the root
-                if (query.state) {
-                    try {
-                        let stateObj = JSON.parse(query.state);
-                        let ar = [];
-                        for (let fld in stateObj)
-                            ar.push(encodeURIComponent(fld) + '=' + encodeURIComponent(stateObj[fld]));
-                        if (ar.length > 0) redirectUrl += '?' + ar.join('&');
-                    } catch(e) {}
-                }
-                req.session["access"] = {access, grantTime: new Date().getTime()};	// store the access token in session
-                res.redirect(redirectUrl);
+        tokenGrant.getAccessTokenFromAuthCode(query.code)
+        .then((access: oauth2.Access) => {
+            console.log(':-) access token granted. access=' + JSON.stringify(access));
+            let redirectUrl = '/';	// redirect user's browser to the root
+            if (query.state) {
+                try {
+                    let stateObj = JSON.parse(query.state);
+                    let ar = [];
+                    for (let fld in stateObj)
+                        ar.push(encodeURIComponent(fld) + '=' + encodeURIComponent(stateObj[fld]));
+                    if (ar.length > 0) redirectUrl += '?' + ar.join('&');
+                } catch(e) {}
             }
+            req.session["access"] = {access, grantTime: new Date().getTime()};	// store the access token in session
+            res.redirect(redirectUrl);
+        }).catch((err: any) => {
+            console.error('!!! Error: ' + JSON.stringify(err));
+            res.status(400).json(err);
         });
     } else {
         res.end('path='+req.path);

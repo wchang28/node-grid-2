@@ -65,27 +65,26 @@ function authorizedClientMiddleware(req: express.Request, res: express.Response,
     if (!accessToken)
         res.status(401).json(oauth2.errors.bad_credential);
     else {
-        tokenVerifier.verifyAccessToken(accessToken, (err: any, user:auth_client.IAuthorizedUser) => {
-            if (err) {  // token verification error
-                res.status(401).json(oauth2.errors.bad_credential);
-            } else {   // access token is good
-                //console.log('user=' + JSON.stringify(user));
-                gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
-                    if (err)
-                        res.status(401).json(errors.not_authorized);
-                    else {
-                        let gridUser:IGridUser = {
-                            userId: user.userId
-                            ,userName: user.userName
-                            ,displayName: user.displayName
-                            ,email: user.email
-                            ,profile: profile
-                        }
-                        req["user"] = gridUser;
-                        next();                    
+        tokenVerifier.verifyAccessToken(accessToken)
+        .then((user:auth_client.IAuthorizedUser) => {
+            //console.log('user=' + JSON.stringify(user));
+            gridDB.getUserProfile(user.userId, (err: any, profile: IGridUserProfile) => {
+                if (err)
+                    res.status(401).json(errors.not_authorized);
+                else {
+                    let gridUser:IGridUser = {
+                        userId: user.userId
+                        ,userName: user.userName
+                        ,displayName: user.displayName
+                        ,email: user.email
+                        ,profile: profile
                     }
-                });
-            }
+                    req["user"] = gridUser;
+                    next();                    
+                }
+            });
+        }).catch((err: any) => {
+            res.status(401).json(oauth2.errors.bad_credential);
         });
     }
 }
