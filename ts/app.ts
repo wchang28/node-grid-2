@@ -68,7 +68,7 @@ function authorizedClientMiddleware(req: express.Request, res: express.Response,
         let user:auth_client.IAuthorizedUser = null;
         tokenVerifier.verifyAccessToken(accessToken)
         .then((value:auth_client.IAuthorizedUser) => {
-            let user = value;
+            user = value;
             //console.log('user=' + JSON.stringify(user));
             return gridDB.getUserProfile(user.userId)
         }).then((profile: IGridUserProfile) => {
