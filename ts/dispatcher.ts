@@ -753,28 +753,7 @@ export class Dispatcher extends events.EventEmitter {
             this.setOutstandingAcks(tasks.length);
             let cpusSelected = this.randomlySelectCPUs(availableCPUs, tasks.length);            //assert(cpusSelected.length == tasks.length);
             //console.log('availableCPUs.length=' + availableCPUs.length + ', tasks.length=' +  tasks.length + ', cpusSelected.length=' + cpusSelected.length);
-            let getDispatchDoneHandler = (i: number) : (err: any) => void => {
-                return (err: any): void => {
-                    let nodeId = cpusSelected[i].nodeId;
-                    let task = tasks[i];
-                    if (err) {
-                        this.decrementOutstandingAcks();
-                        this.emit('error', err);
-                        if (task.r < this.__config.tasksDispatchFailureMaxRertries) {
-                            let t: ITaskItem = {
-                                j: task.j
-                                ,t: task.t
-                                ,r: task.r
-                            }
-                            this.__queue.enqueueSingle(task.priority, t);
-                        }
-                    } else {    // task successful dispatched
-                        this.__nodes.incrementCPUUsageCount(nodeId);
-                        this.decrementOutstandingAcks();
-                    }
-                }
-            }
-            for (let i in tasks) {
+            for (let i in tasks) {  // for each task
                 let task = tasks[i];
                 let cpu = cpusSelected[i];
                 if (!task.r)
@@ -782,7 +761,8 @@ export class Dispatcher extends events.EventEmitter {
                 else
                     task.r++;
                 this.dispathTaskToNode(cpu.nodeId, task);
-                getDispatchDoneHandler(parseInt(i));
+                this.__nodes.incrementCPUUsageCount(cpu.nodeId);
+                this.decrementOutstandingAcks();
             }
         }
     }
