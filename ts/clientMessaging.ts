@@ -9,21 +9,21 @@ export class ClientMessaging {
             type: 'queue-changed'
             ,content: queue
         };
-        this.connectionsManager.dispatchMessage(Utils.getDispatcherTopic(), {}, msg);
+        this.connectionsManager.dispatchMessage(Utils.getDispatcherTopic(), {type: 'queue-changed'}, msg);
     }
     notifyClientsNodesChanged(nodes: INodeItem[]) : void {
         let msg: GridMessage = {
             type: 'nodes-changed'
             ,content: nodes
         };
-        this.connectionsManager.dispatchMessage(Utils.getDispatcherTopic(), {}, msg);
+        this.connectionsManager.dispatchMessage(Utils.getDispatcherTopic(), {type: 'nodes-changed'}, msg);
     }
     notifyClientsDispControlChanged(dispControl: IDispControl) : void {
         let msg: GridMessage = {
             type: 'ctrl-changed'
             ,content: dispControl
         };
-        this.connectionsManager.dispatchMessage(Utils.getDispatcherTopic(), {}, msg);
+        this.connectionsManager.dispatchMessage(Utils.getDispatcherTopic(), {type: 'ctrl-changed'}, msg);
     }
 
     notifyClientsJobsTrackingChanged() : void {
@@ -31,7 +31,7 @@ export class ClientMessaging {
             type: 'tracking-changed'
             ,content: {}
         };
-        this.connectionsManager.dispatchMessage(Utils.getJobsTrackingTopic(), {}, msg);
+        this.connectionsManager.dispatchMessage(Utils.getJobsTrackingTopic(), {type: 'tracking-changed'}, msg);
     }
 
     notifyClientsConnectionsChanged(connections:any) : void {
@@ -39,7 +39,7 @@ export class ClientMessaging {
             type: 'connections-changed'
             ,content: connections
         };
-        this.connectionsManager.dispatchMessage(Utils.getConnectionsTopic(), {}, msg);
+        this.connectionsManager.dispatchMessage(Utils.getConnectionsTopic(), {type: 'connections-changed'}, msg);
     }
 
     notifyClientsJobStatusChanged(jobProgress: IJobProgress) : void {
@@ -47,7 +47,7 @@ export class ClientMessaging {
             type: 'status-changed'
             ,content: jobProgress
         };
-        this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(jobProgress.jobId), {}, msg);
+        this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(jobProgress.jobId), {type: 'status-changed'}, msg);
     }
 
     notifyClientsJobDone(jobId: string) : void {
@@ -63,7 +63,7 @@ export class ClientMessaging {
             type: 'task-complete'
             ,content: task
         };
-        this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(task.j), {}, msg);
+        this.connectionsManager.dispatchMessage(Utils.getJobNotificationTopic(task.j), {type: 'task-complete'}, msg);
     }
 
     notifyClientsAutoScalerChanged() : void {
@@ -71,7 +71,7 @@ export class ClientMessaging {
             type: 'autoscaler-changed'
             ,content: {}
         };
-        this.connectionsManager.dispatchMessage(Utils.getAutoScalerTopic(), {}, msg);        
+        this.connectionsManager.dispatchMessage(Utils.getAutoScalerTopic(), {type: 'autoscaler-changed'}, msg);        
     }
 
     notifyClientsAutoScalerImplementationChanged() : void {
@@ -79,6 +79,6 @@ export class ClientMessaging {
             type: 'autoscaler-implementation-changed'
             ,content: {}
         };
-        this.connectionsManager.dispatchMessage(Utils.getAutoScalerImplementationTopic(), {}, msg);        
+        this.connectionsManager.dispatchMessage(Utils.getAutoScalerImplementationTopic(), {type: 'autoscaler-implementation-changed'}, msg);        
     }
 }

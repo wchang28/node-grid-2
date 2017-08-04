@@ -16,9 +16,9 @@ interface ITaskItemDispatch extends ITaskItem {
     priority: number;  // priority
 }
 
-export interface INodeMessaging {
-    dispatchTaskToNode: (nodeId: string, task: ITask, done:(err:any) => void) => void;
-    killProcessesTree: (nodeId: string, pids:number[], done:(err:any) => void) => void;
+export interface INodeMessenger {
+    dispatchTaskToNode(nodeId: string, task: ITask) : void;
+    killProcessesTree(nodeId: string, pids:number[]) : void;
 }
 
 export interface IGridDB {
@@ -610,7 +610,7 @@ export class Dispatcher extends events.EventEmitter {
         this.__config.jobsKillPollingIntervalMS = Math.max(1000, this.__config.jobsKillPollingIntervalMS);
         this.__config.jobsKillMaxRetries = Math.max(2, this.__config.jobsKillMaxRetries);
     }
-    constructor(private __nodeMessaging: INodeMessaging, private __gridDB: IGridDB, config: IDispatcherConfig = null) {
+    constructor(private __nodeMessaging: INodeMessenger, private __gridDB: IGridDB, config: IDispatcherConfig = null) {
         super();
 
         this.initConfig(config);
@@ -742,8 +742,8 @@ export class Dispatcher extends events.EventEmitter {
 		}
 		return cpusPicked;
     }
-    private dispathTaskToNode(nodeId: string, task: ITaskItem, done:(err: any) => void) {
-        this.__nodeMessaging.dispatchTaskToNode(nodeId, task, done);
+    private dispathTaskToNode(nodeId: string, task: ITaskItem) {
+        this.__nodeMessaging.dispatchTaskToNode(nodeId, task);
     }
     private dispatchTasksIfNecessary() : void {
         let availableCPUs: ICPUItem[] = null;
@@ -781,7 +781,8 @@ export class Dispatcher extends events.EventEmitter {
                     task.r = 1;
                 else
                     task.r++;
-                this.dispathTaskToNode(cpu.nodeId, task, getDispatchDoneHandler(parseInt(i)));
+                this.dispathTaskToNode(cpu.nodeId, task);
+                getDispatchDoneHandler(parseInt(i));
             }
         }
     }
@@ -855,7 +856,7 @@ export class Dispatcher extends events.EventEmitter {
                         else {  // there are tasks still running
                             for (let nodeId in runningProcess) {    // for each node
                                 let pids = runningProcess[nodeId];
-                                this.__nodeMessaging.killProcessesTree(nodeId, pids, (err:any) => {});
+                                this.__nodeMessaging.killProcessesTree(nodeId, pids);
                             }
                             if (tryIndex < maxTries-1)
                                 setTimeout(getKillJobCall(jobId, false, waitMS, maxTries, tryIndex+1, done), waitMS);

@@ -7,8 +7,8 @@ import * as bodyParser from 'body-parser';
 import noCache = require('no-cache-express');
 import {IGlobal} from "./global";
 import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobProgress, Utils} from "grid-client-core";
-import {Dispatcher, INodeMessaging} from './dispatcher';
-import {NodeMessaging} from './nodeMessaging';
+import {Dispatcher} from './dispatcher';
+import {get as getNodeMessenger} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
 import {GridDB} from './gridDB';
 import * as oauth2 from 'oauth2';
@@ -157,20 +157,14 @@ gridDB.on('error', (err: any) => {
 
     clientApp.set('jsonp callback name', 'cb');
 
-    let nodeMessaging: INodeMessaging = new NodeMessaging(nodeAppConnectionsManager);
     let clientMessaging = new ClientMessaging(clientConnectionsManager);
-
-    let dispatcher = new Dispatcher(nodeMessaging, gridDB, config.dispatcherConfig);
-
-    function notifyClientsNodesChanges() {
-        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes);        
-    }
+    let dispatcher = new Dispatcher(getNodeMessenger(nodeAppConnectionsManager), gridDB, config.dispatcherConfig);
 
     let msgCoalesce = new ClientMessagingCoalescing(3000);
     msgCoalesce.on('trigger', () => {
         //console.log('<<triggered>>');
         clientMessaging.notifyClientsQueueChanged(dispatcher.queue);
-        notifyClientsNodesChanges();
+        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes);
     });
     msgCoalesce.start();
 
@@ -179,17 +173,17 @@ gridDB.on('error', (err: any) => {
     }).on('nodes-usage-changed', () => {
         msgCoalesce.mark();
     }).on('node-added', (nodeId:string) => {
-        notifyClientsNodesChanges();
+        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes);
     }).on('node-ready', (nodeId:string) => {
-        notifyClientsNodesChanges();
+        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes);
     }).on('node-removed', (nodeId:string) => {
-        notifyClientsNodesChanges();
+        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes);
     }).on('node-enabled', (nodeId:string) => {
-        notifyClientsNodesChanges();
+        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes);
     }).on('nodes-disabled', (nodeIds: string[]) => {
-        notifyClientsNodesChanges();
+        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes);
     }).on('nodes-terminating', (nodeIds: string[]) => {
-        notifyClientsNodesChanges();
+        clientMessaging.notifyClientsNodesChanged(dispatcher.nodes);
     }).on('ctrl-changed', () => {
         clientMessaging.notifyClientsDispControlChanged(dispatcher.dispControl);
     }).on('jobs-tracking-changed', () => {
