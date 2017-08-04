@@ -218,21 +218,6 @@ export class GridDB extends SimpleMSSQL {
             done(err);
         });
     }
-    /*
-    markTaskEnd(task:ITask, result: ITaskExecResult, done:(err:any) => void) : void {
-        let params = {
-            'jobId': task.j
-            ,'taskIndex': task.t
-            ,'pid': result.pid
-            ,'retCode': result.retCode
-            ,'stdout': result.stdout
-            ,'stderr': result.stderr
-        };
-        this.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any) : void => {
-            done(err);
-        });
-    }
-    */
     markTaskEnd(task:ITask, result: ITaskExecResult, done:(err:any) => void) : void {
         let params = {
             'jobId': task.j
