@@ -10,7 +10,7 @@ import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobProgress, Utils} fr
 import {Dispatcher} from './dispatcher';
 import {get as getNodeMessenger} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
-import {GridDB} from './gridDB';
+import {getServerGridDB} from './gridDB';
 import * as oauth2 from 'oauth2';
 import {Router as nodeAppRouter, ConnectionsManager as nodeAppConnectionsManager} from './node-app';
 import {Router as clientApiRouter, ConnectionsManager as clientConnectionsManager} from './services';
@@ -28,7 +28,7 @@ import {IAutoScalerImplementation} from 'autoscalable-grid';
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
-let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
+let gridDB = getServerGridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 let tokenVerifier = new auth_client.TokenVerifier(config.authorizeEndpointOptions);
 
 function initGridAutoScaler(dispatcher: Dispatcher, clientMessaging: ClientMessaging) : Promise<[GridAutoScaler, express.Router]> {

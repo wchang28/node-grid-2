@@ -25,8 +25,7 @@ export interface JobKillStatus {
     runningProcess: IRunningProcessByNode;
     jobProgress: IJobProgress
 }
-
-export interface IServerGridDB {
+export interface IDsipatcherGridDB {
     registerNewJob(user: IGridUser, jobSubmit: IGridJobSubmit) : Promise<IJobProgress>;
     reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean) : Promise<IJobProgress>;
     getJobProgress(jobId: string) : Promise<IJobProgress>;
@@ -536,7 +535,7 @@ class JobsTracker extends events.EventEmitter {
 // 4. jobs-status (jobsProgress:IJobProgress[])
 class JobsStatusPolling extends events.EventEmitter {
     private __timer: NodeJS.Timer = null;
-    constructor(private __gridDB: IServerGridDB, private __pollingIntervalMS: number, private __jobsSrc: () => string[]) {
+    constructor(private __gridDB: IDsipatcherGridDB, private __pollingIntervalMS: number, private __jobsSrc: () => string[]) {
         super();
     }
     start() : void {
@@ -616,7 +615,7 @@ export class Dispatcher extends events.EventEmitter {
         this.__config.jobsKillPollingIntervalMS = Math.max(1000, this.__config.jobsKillPollingIntervalMS);
         this.__config.jobsKillMaxRetries = Math.max(2, this.__config.jobsKillMaxRetries);
     }
-    constructor(private __nodeMessaging: INodeMessenger, private __gridDB: IServerGridDB, config: IDispatcherConfig = null) {
+    constructor(private __nodeMessaging: INodeMessenger, private __gridDB: IDsipatcherGridDB, config: IDispatcherConfig = null) {
         super();
 
         this.initConfig(config);

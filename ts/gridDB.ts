@@ -4,17 +4,35 @@ import {SimpleMSSQL, Configuration, Options} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
 export {Configuration as SQLConfiguration, Options as DBOptions} from 'mssql-simple';
 import * as errors from './errors';
-import {IServerGridDB, JobKillStatus} from "./dispatcher";
+import {IDsipatcherGridDB, JobKillStatus} from "./dispatcher";
+import {ITaskLauncherGridDBImpl} from "./launcherApp";
+
+export interface ISimpleMSSQL {
+    connect() : void;
+    disconnect(): void;
+    on(event: "connected", listener: () => void) : this;
+    on(event: "error", listener: (err: any) => void) : this;
+    on(event: "disconnected", listener: () => void) : this;   
+}
+
+export interface IServerGridDBImpl extends IDsipatcherGridDB {
+    getUserProfile(userId: string) : Promise<IGridUserProfile>;
+    getTime() : Promise<number>;
+}
+
+export interface IServerGridDB extends IServerGridDBImpl, ISimpleMSSQL {}
+export interface ITaskLauncherGridDB extends ITaskLauncherGridDBImpl, ISimpleMSSQL {}
 
 // will emit the following events
-// 1. connectedJobKillStatus
+// 1. connected
 // 2. error
 // 3. disconnected
-export class GridDB extends SimpleMSSQL implements IServerGridDB {
+class GridDB extends SimpleMSSQL implements IServerGridDBImpl, ITaskLauncherGridDBImpl, ISimpleMSSQL {
     constructor(sqlConfig: Configuration, options?:Options) {
         super(sqlConfig, options);
     }
     private static sqlEscapeString(str:string) {return str.replace(new RegExp("'", "gi"), "''");}
+
     getUserProfile(userId: string) : Promise<IGridUserProfile> {
         return new Promise<IGridUserProfile>((resolve: (value: IGridUserProfile) => void, reject: (err: any) => void)=> {
             this.execute('[dbo].[stp_NodeJSGridGetUserProfile]', {userId}, (err:any, recordsets:any[][]) => {
@@ -30,7 +48,6 @@ export class GridDB extends SimpleMSSQL implements IServerGridDB {
             });
         });
     }
-
     // return DB time
     getTime() : Promise<number> {
         return new Promise<number>((resolve: (value: number) => void, reject: (err: any) => void) => {
@@ -232,45 +249,60 @@ export class GridDB extends SimpleMSSQL implements IServerGridDB {
         });
     }
 
-    getTaskExecParams(task:ITask, nodeId: string, nodeName: string, done:(err:any, taskExecParams: ITaskExecParams) => void) : void {
-         let params = {
-            'jobId': task.j
-            ,'taskIndex': task.t
-            ,'nodeId': nodeId
-            ,'nodeName': nodeName
-        };       
-        this.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any[][]) : void => {
-            if (err)
-                done(err, null);
-            else {
-                let ret = recordsets[0][0];
-                done(null, ret);
-            }
+    getTaskExecParams(task:ITask, nodeId: string, nodeName: string) : Promise<ITaskExecParams> {
+        return new Promise<ITaskExecParams>((resolve: (value: ITaskExecParams) => void, reject: (err: any) => void) => {
+            let params = {
+                'jobId': task.j
+                ,'taskIndex': task.t
+                ,'nodeId': nodeId
+                ,'nodeName': nodeName
+            };       
+            this.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let ret = recordsets[0][0];
+                    resolve(ret);
+                }
+            });
         });
     }
-    markTaskStart(task:ITask, pid:number, done:(err:any) => void) : void {
-        this.execute('[dbo].[stp_NodeJSGridJobTask]', {'jobId': task.j, 'taskIndex': task.t, 'pid': pid}, (err: any, recordsets: any[][]) : void => {
-            done(err);
+    markTaskStart(task:ITask, pid:number) : Promise<void> {
+        return new Promise<void>((resolve: () => void, reject: (err: any) => void) => {
+            this.execute('[dbo].[stp_NodeJSGridJobTask]', {'jobId': task.j, 'taskIndex': task.t, 'pid': pid}, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else
+                    resolve();
+            });
         });
     }
-    markTaskEnd(task:ITask, result: ITaskExecResult, done:(err:any) => void) : void {
-        let params = {
-            'jobId': task.j
-            ,'taskIndex': task.t
-            ,'pid': result.pid
-            ,'retCode': result.retCode
-            ,'stdout': result.stdout
-            ,'stderr': result.stderr
-        };
-        let sql = "exec [dbo].[stp_NodeJSGridJobTask]";
-        sql += " @jobId=" + GridDB.sqlEscapeString(task.j.toString());
-        sql += ",@taskIndex=" + GridDB.sqlEscapeString(task.t.toString());
-        sql += ",@pid=" + (typeof result.pid === 'number' ? GridDB.sqlEscapeString(result.pid.toString()) : 'null');
-        sql += ",@retCode=" + (typeof result.retCode === 'number' ? GridDB.sqlEscapeString(result.retCode.toString()) : 'null');
-        sql += ",@stdout=" + (result.stdout ? "'" + GridDB.sqlEscapeString(result.stdout) + "'" : 'null');
-        sql += ",@stderr=" + (result.stderr ? "'" + GridDB.sqlEscapeString(result.stderr) + "'" : 'null');
-        this.query(sql, {}, (err: any, recordsets: any[][]) : void => {
-            done(err);
+    markTaskEnd(task:ITask, result: ITaskExecResult) : Promise<void> {
+        return new Promise<void>((resolve: () => void, reject: (err: any) => void) => {
+            let params = {
+                'jobId': task.j
+                ,'taskIndex': task.t
+                ,'pid': result.pid
+                ,'retCode': result.retCode
+                ,'stdout': result.stdout
+                ,'stderr': result.stderr
+            };
+            let sql = "exec [dbo].[stp_NodeJSGridJobTask]";
+            sql += " @jobId=" + GridDB.sqlEscapeString(task.j.toString());
+            sql += ",@taskIndex=" + GridDB.sqlEscapeString(task.t.toString());
+            sql += ",@pid=" + (typeof result.pid === 'number' ? GridDB.sqlEscapeString(result.pid.toString()) : 'null');
+            sql += ",@retCode=" + (typeof result.retCode === 'number' ? GridDB.sqlEscapeString(result.retCode.toString()) : 'null');
+            sql += ",@stdout=" + (result.stdout ? "'" + GridDB.sqlEscapeString(result.stdout) + "'" : 'null');
+            sql += ",@stderr=" + (result.stderr ? "'" + GridDB.sqlEscapeString(result.stderr) + "'" : 'null');
+            this.query(sql, {}, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else
+                    resolve();
+            });
         });
     }
 }
+
+export function getServerGridDB(sqlConfig: Configuration, options?:Options) : IServerGridDB {return new GridDB(sqlConfig, options);}
+export function getTaskLauncherGridDB(sqlConfig: Configuration, options?:Options) : ITaskLauncherGridDB {return new GridDB(sqlConfig, options);}  

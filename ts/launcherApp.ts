@@ -4,10 +4,11 @@ import * as path from 'path';
 import * as rcf from 'rcf';
 import * as $node from 'rest-node';
 import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult} from 'grid-client-core';
-import {GridDB} from './gridDB';
+import {getTaskLauncherGridDB, ITaskLauncherGridDB} from './gridDB';
 import {TaskRunner} from './taskRunner';
 import treeKill = require('tree-kill');
 import {IGridDBConfiguration} from './gridDBConfig';
+import * as events from 'events';
 
 interface IConfiguration {
     numCPUs?: number;
@@ -15,6 +16,12 @@ interface IConfiguration {
     nodeName?:string;
     dispatcherConfig: rcf.ApiInstanceConnectOptions;
     dbConfig: IGridDBConfiguration;
+}
+
+export interface ITaskLauncherGridDBImpl {
+    getTaskExecParams(task:ITask, nodeId: string, nodeName: string) : Promise<ITaskExecParams>;
+    markTaskStart(task:ITask, pid:number) : Promise<void>;
+    markTaskEnd(task:ITask, result: ITaskExecResult) : Promise<void>;
 }
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../launcher_testing_config.json') : process.argv[2]);
@@ -48,18 +55,62 @@ let cpus = os.cpus();
 let numCPUs:number = (config.numCPUs ? config.numCPUs : cpus.length - (config.reservedCPUs ? config.reservedCPUs : 2));
 numCPUs = Math.max(numCPUs, 1);
 let nodeName:string = (config.nodeName ? config.nodeName : getDefaultNodeName());
-console.log('nodeName=' + nodeName + ', cpus=' + cpus.length + ', numCPUs=' + numCPUs);
+console.log(new Date().toISOString() + ': nodeName=' + nodeName + ', cpus=' + cpus.length + ', numCPUs=' + numCPUs);
 
-let gridDB = new GridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
+interface ITaskExec {
+    run(task: ITask) : Promise<void>;
+    on(event: "error", listener: (err: any) => void) : this;
+    on(event: "exec-params", listener: (taskExecParams: ITaskExecParams) => void) : this;
+    on(event: "started", listener: (pid: number) => void) : this;
+    on(event: "finished", listener: (retCode: number) => void) : this;
+}
+class TaskExec extends events.EventEmitter implements ITaskExec {
+    constructor(private nodeId: string, private db: ITaskLauncherGridDBImpl) {
+        super();
+    }
+    run(task: ITask) : Promise<void> {
+        return new Promise<void>((resolve: () => void) => {
+            this.db.getTaskExecParams(task, this.nodeId, nodeName)
+            .then((taskExecParams: ITaskExecParams) => {
+                this.emit("exec-params", taskExecParams);
+                let taskRunner = new TaskRunner(taskExecParams);
+                taskRunner.on('started', (pid: number) => {
+                    this.emit("started", pid);
+                    this.db.markTaskStart(task, pid)
+                    .then(() => {
+                    }).catch((err: any) => {
+                        this.emit("error", "error marking task <START> in DB. err=" + JSON.stringify(err));
+                    });
+                }).on('finished', (taskExecResult: ITaskExecResult) => {
+                    this.emit("finished", taskExecResult.retCode);
+                    this.db.markTaskEnd(task, taskExecResult)
+                    .then(() => {
+                        resolve();
+                    }).catch((err: any) => {
+                        this.emit("error", "error marking task <END> in DB. err=" + JSON.stringify(err));
+                        resolve();
+                    });
+                }).run();
+            }).catch((err: any) => {
+                this.emit("error", "error retrieving task execution params from DB. err=" + JSON.stringify(err));
+                resolve();
+            });
+        });
+    }
+}
+
+function getTaskExec(nodeId: string, db: ITaskLauncherGridDBImpl) : ITaskExec { return new TaskExec(nodeId, db);}
+
+let gridDB = getTaskLauncherGridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 gridDB.on('error', (err:any) => {
-    console.error('!!! Database connection error: ' + JSON.stringify(err));
+    console.error(new Date().toISOString() + ': !!! Database connection error: ' + JSON.stringify(err));
 }).on('connected', () => {
-    console.error('connected to the database :-)');
+    console.error(new Date().toISOString() + ': connected to the database :-)');
 
     let client = api.$M(pathname, clientOptions);
 
     function sendDispatcherNodeReady() : Promise<rcf.RESTReturn> {
-        console.log('sending a node-ready message...');
+        console.log(new Date().toISOString() + ': sending a node-ready message...');
         let nodeReady: INodeReady = {
             numCPUs: numCPUs
             ,name: nodeName
@@ -68,39 +119,15 @@ gridDB.on('error', (err:any) => {
             type: 'node-ready'
             ,content: nodeReady
         };
-        return client.send('/topic/dispatcher', {}, msg);
+        return client.send('/topic/dispatcher', {type: 'node-ready'}, msg);
     }
 
-    function sendDispatcherTaskComplete(task: ITask) : Promise<rcf.RESTReturn> {
+    function notifyDispatcherTaskComplete(task: ITask) : Promise<rcf.RESTReturn> {
         let msg: GridMessage = {
             type: 'task-complete'
             ,content: task
         };
-        return client.send('/topic/dispatcher', {}, msg);
-    }
-
-    function nodeRunTask(nodeId:string, task: ITask, done: (err: any) => void) {
-        gridDB.getTaskExecParams(task, nodeId, nodeName, (err:any, taskExecParams: ITaskExecParams) => {
-            if (err)
-                done(err);
-            else {
-                let taskRunner = new TaskRunner(taskExecParams);
-                taskRunner.on('started', (pid: number) => {
-                    gridDB.markTaskStart(task, pid, (err: any) => {
-                        if (err)
-                            console.error('!!! Error marking task <START> in DB: :-(');
-                    });
-                }).on('finished', (taskExecResult: ITaskExecResult) => {
-                    gridDB.markTaskEnd(task, taskExecResult, (err: any) => {
-                        if (err)
-                            done('error marking task <END> in DB: ' + JSON.stringify(err));
-                        else
-                            done(null);
-                    });
-                });
-                taskRunner.run();
-            }
-        });
+        return client.send('/topic/dispatcher', {type: 'task-complete'}, msg);
     }
 
     function killProcessesTree(pids:number[]) {
@@ -111,20 +138,30 @@ gridDB.on('error', (err:any) => {
     }
 
     client.on('connect', (nodeId:string) : void => {
-        console.log('connected to the dispatcher: nodeId=' + nodeId);
+        console.log(new Date().toISOString() + ': connected to the dispatcher: nodeId=' + nodeId);
         client.subscribe('/topic/node/' + nodeId
         ,(msg: rcf.IMessage): void => {
-            console.log('msg-rcvd: ' + JSON.stringify(msg));
+            console.log(new Date().toISOString() + ': msg-rcvd: ' + JSON.stringify(msg));
             let gMsg: GridMessage = msg.body;
             if (gMsg.type === 'launch-task') {
                 let task: ITask = gMsg.content;
-                nodeRunTask(nodeId, task, (err:any) => {
-                    if (err) console.error("!!! Error running task " + JSON.stringify(task) + ": " + JSON.stringify(err) + " :-(");
-                    sendDispatcherTaskComplete(task)
+                let taskExec = getTaskExec(nodeId, gridDB);
+                taskExec.on("error", (err: any) => {
+                    console.error(new Date().toISOString() + ": !!! Error running task " + JSON.stringify(task) + ": " + JSON.stringify(err) + " :-(");
+                    // TODO: sent error message to the server
+                }).on("exec-params", (taskExecParams: ITaskExecParams) => {
+                    console.log(new Date().toISOString() + ": running task " + JSON.stringify(task) + " with exec-params=\n" + JSON.stringify(taskExecParams, null, 2));
+                }).on("started", (pid: number) => {
+                    console.log(new Date().toISOString() + ": task " + JSON.stringify(task) + " started with pid=" + pid);
+                }).on("finished", (retCode: number) => {
+                    console.log(new Date().toISOString() + ": task " + JSON.stringify(task) + " finished with retCode=" + retCode);
+                }).run(task)
+                .then(() => {
+                    notifyDispatcherTaskComplete(task)
                     .then(() => {
-                        console.log('task-complete message sent successfully :-)');
+                        console.log(new Date().toISOString() + ': task-complete message sent successfully to the dispatcher :-)');
                     }).catch((err: any) => {
-                        console.error('!!! Error sending task-complete message :-(');
+                        console.error(new Date().toISOString() + ': !!! Error sending task-complete message to the dispatcher :-(');
                     });
                 });
             } else if (gMsg.type === 'kill-processes-tree') {
@@ -133,20 +170,20 @@ gridDB.on('error', (err:any) => {
             }
         },{})
         .then((sub_id: string) => {
-            console.log('topic subscribed sub_id=' + sub_id + " :-)");
+            console.log(new Date().toISOString() + ': topic subscribed sub_id=' + sub_id + " :-)");
             sendDispatcherNodeReady()
             .then(() => {
-                console.log('message sent successfully :-)');
+                console.log(new Date().toISOString() + ': message sent successfully :-)');
             }).catch((err: any) => {
-                console.error('!!! Error: message send failed');
+                console.error(new Date().toISOString() + ': !!! Error: message send failed');
             });
         }).catch((err: any) => {
-            console.error('!!! Error: topic subscription failed');
+            console.error(new Date().toISOString() + ': !!! Error: topic subscription failed');
         });
     });
 
     client.on('error', (err: any) : void => {
-        console.error('!!! Error:' + JSON.stringify(err));
+        console.error(new Date().toISOString() + ': !!! Msg client error:' + JSON.stringify(err));
     });
 });
 

@@ -9,7 +9,7 @@ import {Router as autoscalerRouter} from './autoscaler';
 import * as tr from 'rcf-message-router';
 import * as events from 'events';
 import {IGridUser, Utils, Times} from 'grid-client-core';
-import {GridDB} from '../gridDB';
+import {IServerGridDB} from '../gridDB';
 import {IGlobal} from '../global';
 
 let router = express.Router();
@@ -20,7 +20,7 @@ function getUser(req: express.Request): IGridUser {
 }
 function getGlobal(req:express.Request) : IGlobal {return req.app.get('global');}
 function autoScalerAvailable(req:express.Request) : boolean {return (getGlobal(req).gridAutoScaler ? true : false);}
-function getDB(req:express.Request) : GridDB {return getGlobal(req).gridDB;}
+function getDB(req:express.Request) : IServerGridDB {return getGlobal(req).gridDB;}
 
 router.use('/user', userRouter);
 router.use('/job', jobRouter);
