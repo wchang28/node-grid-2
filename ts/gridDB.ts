@@ -4,13 +4,13 @@ import {SimpleMSSQL, Configuration, Options} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
 export {Configuration as SQLConfiguration, Options as DBOptions} from 'mssql-simple';
 import * as errors from './errors';
-import {IGridDB, JobKillStatus} from "./dispatcher";
+import {IServerGridDB, JobKillStatus} from "./dispatcher";
 
 // will emit the following events
 // 1. connectedJobKillStatus
 // 2. error
 // 3. disconnected
-export class GridDB extends SimpleMSSQL implements IGridDB {
+export class GridDB extends SimpleMSSQL implements IServerGridDB {
     constructor(sqlConfig: Configuration, options?:Options) {
         super(sqlConfig, options);
     }
