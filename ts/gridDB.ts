@@ -65,105 +65,113 @@ export class GridDB extends SimpleMSSQL {
         let serializer = new XMLSerializer();
         return serializer.serializeToString(doc);
     }
-    registerNewJob(user: IGridUser, jobSubmit:IGridJobSubmit, done:(err:any, jobProgress: IJobProgress) => void) : void {
-        let sql = "exec [dbo].[stp_NodeJSGridSubmitJob]";
-        sql += " @userId='" + GridDB.sqlEscapeString(user.userId) + "'";
-        sql += ",@userName='" + GridDB.sqlEscapeString(user.displayName.toString()) + "'";
-        sql += ",@priority=" + GridDB.sqlEscapeString(user.profile.priority.toString());
-        let xml = GridDB.makeJobXML(jobSubmit);
-        sql += ",@jobXML='" + GridDB.sqlEscapeString(xml) + "'";
-        this.query(sql, {}, (err: any, recordsets: any) : void => {
-            if (err)
-                done(err, null);
-            else {
-                let ret = recordsets[0][0];
-                if (ret.err != 0) {
-                    done(ret.error, null);
-                } else {
-                    let ret = recordsets[1][0];
-                    done(null, ret);
+    registerNewJob(user: IGridUser, jobSubmit:IGridJobSubmit) : Promise<IJobProgress> {
+        return new Promise<IJobProgress>((resolve: (value: IJobProgress) => void, reject: (err: any) => void) => {
+            let sql = "exec [dbo].[stp_NodeJSGridSubmitJob]";
+            sql += " @userId='" + GridDB.sqlEscapeString(user.userId) + "'";
+            sql += ",@userName='" + GridDB.sqlEscapeString(user.displayName.toString()) + "'";
+            sql += ",@priority=" + GridDB.sqlEscapeString(user.profile.priority.toString());
+            let xml = GridDB.makeJobXML(jobSubmit);
+            sql += ",@jobXML='" + GridDB.sqlEscapeString(xml) + "'";
+            this.query(sql, {}, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let ret = recordsets[0][0];
+                    if (ret.err != 0)
+                        reject(ret.error);
+                    else
+                        resolve(recordsets[1][0]);
                 }
-            }
+            });
         });
     }
-    reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) : void {
-        let params = {
-            'userId': user.userId
-            ,'userName': user.displayName
-            ,'priority': user.profile.priority
-            ,'oldJobId': oldJobId
-            ,'failedTasksOnly': failedTasksOnly
-        };
-        this.execute('[dbo].[stp_NodeJSGridReSubmitJob]', params, (err: any, recordsets: any) : void => {
-            if (err)
-                done(err, null);
-            else {
-                let ret = recordsets[0][0];
-                if (ret.err != 0) {
-                    done(ret.error, null);
-                } else {
-                    let ret = recordsets[1][0];
-                    done(null, ret);
+    reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean) : Promise<IJobProgress> {
+        return new Promise<IJobProgress>((resolve: (value: IJobProgress) => void, reject: (err: any) => void) => {
+            let params = {
+                'userId': user.userId
+                ,'userName': user.displayName
+                ,'priority': user.profile.priority
+                ,'oldJobId': oldJobId
+                ,'failedTasksOnly': failedTasksOnly
+            };
+            this.execute('[dbo].[stp_NodeJSGridReSubmitJob]', params, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let ret = recordsets[0][0];
+                    if (ret.err != 0)
+                        reject(ret.error);
+                    else
+                        resolve(recordsets[1][0]);
                 }
-            }
+            });
         });
     }
-    getJobProgress(jobId:string, done:(err:any, jobProgress: IJobProgress) => void) : void {
-        this.query('select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
-            if (err)
-                done(err, null);
-            else {
-                let dt = recordsets[0];
-                if (dt.length === 0)
-                    done(errors.bad_job_id, null);
+    getJobProgress(jobId:string) : Promise<IJobProgress> {
+        return new Promise<IJobProgress>((resolve: (value: IJobProgress) => void, reject: (err: any) => void) => {
+            this.query('select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)', {'jobId': jobId}, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let dt = recordsets[0];
+                    if (dt.length === 0)
+                        reject(errors.bad_job_id);
+                    else
+                        resolve(dt[0]);
+                }
+            });
+        });
+    }
+    getMultiJobsProgress(jobIds:string[]) : Promise<IJobProgress[]> {
+        return new Promise<IJobProgress[]>((resolve: (value: IJobProgress[]) => void, reject: (err: any) => void) => {
+            let doc = new DOMParser().parseFromString('<?xml version="1.0"?>','text/xml');
+            let root = doc.createElement('jobs');
+            doc.appendChild(root);
+            for (let i in jobIds) {
+                let jobId = jobIds[i];
+                let el = doc.createElement('j');
+                el.setAttribute('i', jobId);
+                root.appendChild(el);
+            }
+            let serializer = new XMLSerializer();
+            let xml = serializer.serializeToString(doc);
+            this.query('select * from [dbo].[fnc_NodeJSGridMultiJobsProgress](@xml)', {'xml': xml}, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
                 else
-                    done(null, dt[0]);
-            }
+                    resolve(recordsets[0]);
+            });
         });
     }
-    getMultiJobsProgress(jobIds:string[], done:(err:any, jobsProgress: IJobProgress[]) => void) : void {
-        let doc = new DOMParser().parseFromString('<?xml version="1.0"?>','text/xml');
-        let root = doc.createElement('jobs');
-        doc.appendChild(root);
-        for (let i in jobIds) {
-            let jobId = jobIds[i];
-            let el = doc.createElement('j');
-            el.setAttribute('i', jobId);
-            root.appendChild(el);
-        }
-        let serializer = new XMLSerializer();
-        let xml = serializer.serializeToString(doc);
-        this.query('select * from [dbo].[fnc_NodeJSGridMultiJobsProgress](@xml)', {'xml': xml}, (err: any, recordsets: any) : void => {
-            if (err)
-                done(err, null);
-            else
-                done(null, recordsets[0]);
+    getJobInfo(jobId:string) : Promise<IJobInfo> {
+        return new Promise<IJobInfo>((resolve: (value: IJobInfo) => void, reject: (err: any) => void) => {
+            this.query('select * from [dbo].[fnc_NodeJSGridGetJobInfo](@jobId)', {'jobId': jobId}, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let dt = recordsets[0];
+                    if (dt.length === 0)
+                        reject(errors.bad_job_id);
+                    else
+                        resolve(dt[0]);
+                }
+            });
         });
     }
-    getJobInfo(jobId:string, done:(err:any, jobInfo: IJobInfo) => void) : void {
-        this.query('select * from [dbo].[fnc_NodeJSGridGetJobInfo](@jobId)', {'jobId': jobId}, (err: any, recordsets: any) : void => {
-            if (err)
-                done(err, null);
-            else {
-                let dt = recordsets[0];
-                if (dt.length === 0)
-                    done(errors.bad_job_id, null);
-                else
-                    done(null, dt[0]);
-            }
-        });
-    }
-    getJobResult(jobId:string, done:(err:any, jobResult: IJobResult) => void) : void {
-        this.execute('[dbo].[stp_NodeJSGetJobResult]', {'jobId': jobId}, (err: any, recordsets: any) : void => {
-            if (err)
-                done(err, null);
-            else {
-                let dt = recordsets[0];
-                if (dt.length === 0)
-                    done(errors.bad_job_id, null);
-                else
-                    done(null, dt);
-            }
+    getJobResult(jobId:string) : Promise<IJobResult> {
+        return new Promise<IJobResult>((resolve: (value: IJobResult) => void, reject: (err: any) => void) => {
+            this.execute('[dbo].[stp_NodeJSGetJobResult]', {'jobId': jobId}, (err: any, recordsets: any) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let dt = recordsets[0];
+                    if (dt.length === 0)
+                        reject(errors.bad_job_id);
+                    else
+                        resolve(dt);
+                }
+            });
         });
     }
     killJob(jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) : void {
@@ -171,7 +179,7 @@ export class GridDB extends SimpleMSSQL {
             'jobId': jobId
             ,'markJobAborted': markJobAborted
         };
-        this.execute('[dbo].[stp_NodeJSKillJob]', params, (err: any, recordsets: any) : void => {
+        this.execute('[dbo].[stp_NodeJSKillJob]', params, (err: any, recordsets: any[][]) : void => {
             if (err)
                 done(err, null, null);
             else {
@@ -191,12 +199,14 @@ export class GridDB extends SimpleMSSQL {
             }
         });
     }
-    getMostRecentJobs(done:(err:any, jobInfos: IJobInfo[]) => void) : void {
-        this.execute('[dbo].[stp_NodeJSGetMostRecentJobs]', {}, (err: any, recordsets: any) : void => {
-            if (err)
-                done(err, null);
-            else
-                done(null, recordsets[0]);
+    getMostRecentJobs() : Promise<IJobInfo[]> {
+        return new Promise<IJobInfo[]>((resolve: (value: IJobInfo[]) => void, reject: (err: any) => void) => {
+            this.execute('[dbo].[stp_NodeJSGetMostRecentJobs]', {}, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else
+                    reject(recordsets[0]);
+            });
         });
     }
     getTaskExecParams(task:ITask, nodeId: string, nodeName: string, done:(err:any, taskExecParams: ITaskExecParams) => void) : void {
@@ -206,7 +216,7 @@ export class GridDB extends SimpleMSSQL {
             ,'nodeId': nodeId
             ,'nodeName': nodeName
         };       
-        this.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any) : void => {
+        this.execute('[dbo].[stp_NodeJSGridJobTask]', params, (err: any, recordsets: any[][]) : void => {
             if (err)
                 done(err, null);
             else {
@@ -216,7 +226,7 @@ export class GridDB extends SimpleMSSQL {
         });
     }
     markTaskStart(task:ITask, pid:number, done:(err:any) => void) : void {
-        this.execute('[dbo].[stp_NodeJSGridJobTask]', {'jobId': task.j, 'taskIndex': task.t, 'pid': pid}, (err: any, recordsets: any) : void => {
+        this.execute('[dbo].[stp_NodeJSGridJobTask]', {'jobId': task.j, 'taskIndex': task.t, 'pid': pid}, (err: any, recordsets: any[][]) : void => {
             done(err);
         });
     }
@@ -236,25 +246,27 @@ export class GridDB extends SimpleMSSQL {
         sql += ",@retCode=" + (typeof result.retCode === 'number' ? GridDB.sqlEscapeString(result.retCode.toString()) : 'null');
         sql += ",@stdout=" + (result.stdout ? "'" + GridDB.sqlEscapeString(result.stdout) + "'" : 'null');
         sql += ",@stderr=" + (result.stderr ? "'" + GridDB.sqlEscapeString(result.stderr) + "'" : 'null');
-        this.query(sql, {}, (err: any, recordsets: any) : void => {
+        this.query(sql, {}, (err: any, recordsets: any[][]) : void => {
             done(err);
         });
     }
-    getTaskResult(task: ITask, done: (err:any, taskResult:ITaskResult) => void) {
-        let params = {
-            'jobId': task.j
-            ,'taskIndex': task.t
-        };
-        this.execute('[dbo].[stp_NodeJSGridGetTaskResult]', params, (err: any, recordsets: any) : void => {
-            if (err)
-                done(err, null);
-            else {
-                let ret = recordsets[0][0];
-                if (!ret)
-                    done(errors.bad_task_index, null);
-                else
-                    done(null, ret);
-            }
-        });  
+    getTaskResult(task: ITask) : Promise<ITaskResult> {
+        return new Promise<ITaskResult>((resolve: (value: ITaskResult) => void, reject: (err: any) => void) => {
+            let params = {
+                'jobId': task.j
+                ,'taskIndex': task.t
+            };
+            this.execute('[dbo].[stp_NodeJSGridGetTaskResult]', params, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let ret = recordsets[0][0];
+                    if (!ret)
+                        reject(errors.bad_task_index);
+                    else
+                        resolve(ret);
+                }
+            });
+        });
     }
 }

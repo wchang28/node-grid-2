@@ -32,21 +32,21 @@ function canSubmitJob(req: express.Request, res: express.Response, next: express
 router.post('/submit', canSubmitJob, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let user = getUser(req);
-    dispatcher.submitJob(user, req.body, (error: any, jobProgress:IJobProgress) => {
-        if (error)
-            res.status(400).json({error});
-        else
-            res.json(jobProgress);
+    dispatcher.submitJob(user, req.body)
+    .then((jobProgress: IJobProgress) => {
+        res.json(jobProgress);
+    }).catch((err: any) => {
+        res.status(403).json(err);
     });
 });
 
 router.get('/most_recent', (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
-    dispatcher.getMostRecentJobs((error:any, jobInfos:IJobInfo[]) => {
-        if (error)
-            res.status(400).json({error});
-        else
-            res.json(jobInfos);
+    dispatcher.getMostRecentJobs()
+    .then((jobInfos:IJobInfo[]) => {
+        res.json(jobInfos);
+    }).catch((err: any) => {
+        res.status(400).json(err);
     });
 });
 
@@ -70,11 +70,11 @@ function canKillJobMiddleware(req: express.Request, res: express.Response, next:
 jobOperationRouter.get('/kill', canKillJobMiddleware, (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let jobInfo = getJobInfo(req);
-    dispatcher.killJob(jobInfo.jobId, (error: any) => {
-        if (error)
-            res.status(400).json({error});
-        else
-            res.json({});
+    dispatcher.killJob(jobInfo.jobId)
+    .then(() => {
+        res.json({});
+    }).catch((err: any) => {
+        res.status(400).json(err);
     });
 });
 
@@ -82,11 +82,11 @@ jobOperationRouter.get('/kill', canKillJobMiddleware, (req: express.Request, res
 jobOperationRouter.get('/progress', (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let jobInfo = getJobInfo(req);
-    dispatcher.getJobProgress(jobInfo.jobId, (error:any, jobProgress:IJobProgress) => {
-         if (error)
-            res.status(400).json({error});
-        else
-            res.json(jobProgress);       
+    dispatcher.getJobProgress(jobInfo.jobId)
+    .then((jobProgress:IJobProgress) => {
+        res.json(jobProgress);
+    }).catch((err: any) => {
+        res.status(400).json(err);
     });
 });
 
@@ -99,11 +99,11 @@ jobOperationRouter.get('/info', (req: express.Request, res: express.Response) =>
 jobOperationRouter.get('/result', (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let jobInfo = getJobInfo(req);
-    dispatcher.getJobResult(jobInfo.jobId, (error:any, jobResult:IJobResult) => {
-         if (error)
-            res.status(400).json({error});
-        else
-            res.json(jobResult);       
+    dispatcher.getJobResult(jobInfo.jobId)
+    .then((jobResult:IJobResult) => {
+        res.json(jobResult);
+    }).catch((err: any) => {
+        res.status(400).json(err);
     });
 });
 
@@ -117,11 +117,11 @@ jobOperationRouter.get('/re_submit', canSubmitJob, (req: express.Request, res: e
     let query = req.query;
     let fto = query['failedTasksOnly'];
     let failedTasksOnly = (fto ? (isNaN(parseInt(fto)) ? false : parseInt(fto) !== 0) : false);
-    dispatcher.reSubmitJob(user, jobInfo.jobId, failedTasksOnly, (error:any, jobProgress:IJobProgress) => {
-        if (error)
-            res.status(400).json({error});
-        else
-            res.json(jobProgress);
+    dispatcher.reSubmitJob(user, jobInfo.jobId, failedTasksOnly)
+    .then((jobProgress:IJobProgress) => {
+        res.json(jobProgress);
+    }).catch((err: any) => {
+        res.status(403).json(err);
     });
 });
 
@@ -134,13 +134,12 @@ function getJobInfoMiddleware(req: express.Request, res: express.Response, next:
         res.status(400).json(errors.bad_job_id);
     else {
         let dispatcher = getDispatcher(req);
-        dispatcher.getJobInfo(jobId, (error:any, jobInfo: IJobInfo) => {
-            if (error)
-                res.status(400).json({error});
-            else {
-                req['jobInfo'] = jobInfo;
-                next();
-            }
+        dispatcher.getJobInfo(jobId)
+        .then((jobInfo: IJobInfo) => {
+            req['jobInfo'] = jobInfo;
+            next();
+        }).catch((err: any) => {
+            res.status(404).json(err);
         });
     }
 }

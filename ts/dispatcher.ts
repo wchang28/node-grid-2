@@ -22,15 +22,15 @@ export interface INodeMessenger {
 }
 
 export interface IGridDB {
-    registerNewJob: (user: IGridUser, jobSubmit: IGridJobSubmit, done:(err:any, jobProgress: IJobProgress) => void) => void;
-    reSubmitJob: (user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) => void;
-    getJobProgress: (jobId: string, done:(err:any, jobProgress: IJobProgress) => void) => void;
-    getMultiJobsProgress: (jobIds:string[], done:(err:any, jobsProgress: IJobProgress[]) => void) => void;
-    getJobInfo: (jobId: string, done:(err:any, jobInfo: IJobInfo) => void) => void;
-    getJobResult: (jobId: string, done:(err:any, jobResult: IJobResult) => void) => void;
+    registerNewJob(user: IGridUser, jobSubmit: IGridJobSubmit) : Promise<IJobProgress>;
+    reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean) : Promise<IJobProgress>;
+    getJobProgress(jobId: string) : Promise<IJobProgress>;
+    getMultiJobsProgress(jobIds:string[]) : Promise<IJobProgress[]>;
+    getJobInfo(jobId: string) : Promise<IJobInfo>;
+    getJobResult(jobId:string) : Promise<IJobResult>;
     killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
-    getMostRecentJobs: (done:(err:any, jobInfos: IJobInfo[]) => void) => void;
-    getTaskResult: (task: ITask, done: (err:any, taskResult:ITaskResult) => void) => void;
+    getMostRecentJobs() : Promise<IJobInfo[]>;
+    getTaskResult(task: ITask) : Promise<ITaskResult>;
 }
 
 interface IInterval {
@@ -539,11 +539,12 @@ class JobsStatusPolling extends events.EventEmitter {
             let jobIds = this.__jobsSrc();
             if (jobIds && jobIds.length > 0) {
                 this.emit('polling', jobIds);
-                this.__gridDB.getMultiJobsProgress(jobIds, (err:any, jobsProgress:IJobProgress[]) => {
-                    if (err)
-                        this.emit('error', err);
-                    else
-                        this.emit('jobs-status', jobsProgress);
+                this.__gridDB.getMultiJobsProgress(jobIds)
+                .then((jobsProgress:IJobProgress[]) => {
+                    this.emit('jobs-status', jobsProgress);
+                    this.__timer = setTimeout(timerProc, this.__pollingIntervalMS);
+                }).catch((err: any) => {
+                    this.emit('error', err);
                     this.__timer = setTimeout(timerProc, this.__pollingIntervalMS);
                 });
             } else
@@ -763,41 +764,27 @@ export class Dispatcher extends events.EventEmitter {
             }
         }
     }
-    submitJob(user: IGridUser, jobSubmit: IGridJobSubmit, done:(err:any, jobProgress: IJobProgress) => void): void {
-        if (this.queueClosed) {
-            done('queue is currently closed', null);
-        } else {
-            this.__gridDB.registerNewJob(user, jobSubmit, (err:any, jobProgress: IJobProgress) => {
-                if (!err) {
-                    this.__jobsTacker.addJob(jobProgress);
-                    let tasks: ITaskItem[] = [];
-                    for (let i:number = 0; i < jobProgress.numTasks; i++)
-                        tasks.push({j: jobProgress.jobId, t: i});
-                    this.__queue.enqueue(user.profile.priority, tasks);
-                    done(null, jobProgress);
-                } else {
-                    done(err, null);
-                }
-            });
-        }
+
+    private enqueueJobImpl(priority: number, jobProgress: IJobProgress) : IJobProgress {
+        this.__jobsTacker.addJob(jobProgress);
+        let tasks: ITaskItem[] = [];
+        for (let i:number = 0; i < jobProgress.numTasks; i++)
+            tasks.push({j: jobProgress.jobId, t: i});
+        this.__queue.enqueue(priority, tasks);
+        return jobProgress;
     }
-    reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean, done:(err:any, jobProgress: IJobProgress) => void) : void {
-        if (this.queueClosed) {
-            done('queue is currently closed', null);
-        } else {
-            this.__gridDB.reSubmitJob(user, oldJobId, failedTasksOnly, (err:any, jobProgress: IJobProgress) => {
-                if (!err) {
-                    this.__jobsTacker.addJob(jobProgress);
-                    let tasks: ITaskItem[] = [];
-                    for (let i:number = 0; i < jobProgress.numTasks; i++)
-                        tasks.push({j: jobProgress.jobId, t: i});
-                    this.__queue.enqueue(user.profile.priority, tasks);
-                    done(null, jobProgress);
-                } else {
-                    done(err, null);
-                }
-            });
-        }        
+
+    submitJob(user: IGridUser, jobSubmit: IGridJobSubmit) : Promise<IJobProgress> {
+        if (this.queueClosed)
+            return Promise.reject({error: "forbidden", error_description: 'queue is currently closed'});
+        else
+            return this.__gridDB.registerNewJob(user, jobSubmit).then((jobProgress: IJobProgress) => this.enqueueJobImpl(user.profile.priority, jobProgress));
+    }
+    reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean) : Promise<IJobProgress> {
+        if (this.queueClosed)
+            return Promise.reject({error: "forbidden", error_description: 'queue is currently closed'});
+        else
+            return this.__gridDB.reSubmitJob(user, oldJobId, failedTasksOnly).then((jobProgress: IJobProgress) => this.enqueueJobImpl(user.profile.priority, jobProgress));
     }
     addNewNode(newNode: INode) : void {this.__nodes.addNewNode(newNode);}
     removeNode(nodeId: string) : void {this.__nodes.removeNode(nodeId);}
@@ -807,19 +794,11 @@ export class Dispatcher extends events.EventEmitter {
         let tk:ITask = {j:task.j, t: task.t};
         this.emit('task-complete', tk);
     }
-    getJobProgress(jobId: string, done:(err:any, jobProgress: IJobProgress) => void): void {
-        this.__gridDB.getJobProgress(jobId, done);
-    }
-    getJobInfo(jobId: string, done:(err:any, jobInfo: IJobInfo) => void): void {
-        this.__gridDB.getJobInfo(jobId, done);
-    }
-    getJobResult(jobId: string, done: (err:any, jobResult:IJobResult) => void) {
-        this.__gridDB.getJobResult(jobId, done);
-    }
-    getTaskResult(task: ITask, done: (err:any, taskResult:ITaskResult) => void) {
-        this.__gridDB.getTaskResult(task, done);
-    }
-    killJob(jobId: string, done: (err: any) => void): void {
+    getJobProgress(jobId: string) : Promise<IJobProgress> {return this.__gridDB.getJobProgress(jobId);}
+    getJobInfo(jobId: string): Promise<IJobInfo> {return this.__gridDB.getJobInfo(jobId);}
+    getJobResult(jobId: string) : Promise<IJobResult> {return this.__gridDB.getJobResult(jobId);}
+    getTaskResult(task: ITask) : Promise<ITaskResult> {return this.__gridDB.getTaskResult(task);}
+    killJob(jobId: string): Promise<void> {
         let getKillJobCall : IKillJobCallFactory = (jobId:string, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
             return () : void => {
                 this.emit('kill-job-poll', jobId, tryIndex+1);
@@ -838,33 +817,34 @@ export class Dispatcher extends events.EventEmitter {
                             if (tryIndex < maxTries-1)
                                 setTimeout(getKillJobCall(jobId, false, waitMS, maxTries, tryIndex+1, done), waitMS);
                             else
-                                done('kill poll max-out');
+                                done({error: "request-timeout", error_description: "kill poll max-out"});
                         }
                     }
                 });
             }
         }
         // check the job status first
-        this.getJobProgress(jobId, (err: any, jobProgress: IJobProgress) => {
-            if (err)
-                done(err);
+        return this.getJobProgress(jobId)
+        .then((jobProgress: IJobProgress) => {
+            if (jobProgress.status === 'FINISHED' || jobProgress.status === 'ABORTED')
+                return Promise.reject({error: "not-found", error_description: 'job already finished'});
             else {
-                if (jobProgress.status === 'FINISHED' || jobProgress.status === 'ABORTED')
-                    done('job already finished');
-                else {
-                    this.emit('kill-job-begin', jobId);
-                    this.__queue.clearJobTasks(jobId);
-                    getKillJobCall(jobId, true, this.__config.jobsKillPollingIntervalMS, this.__config.jobsKillMaxRetries, 0, (err: any) => {
+                this.emit('kill-job-begin', jobId);
+                this.__queue.clearJobTasks(jobId);
+                return new Promise<void>((resolve: () => void, reject: (err: any) => void) => {
+                    let killJob = getKillJobCall(jobId, true, this.__config.jobsKillPollingIntervalMS, this.__config.jobsKillMaxRetries, 0, (err: any) => {
                         this.emit('kill-job-end', jobId, err);
-                        done(err);
-                    })();
-                }
+                        if (err)
+                            reject(err);
+                        else
+                            resolve();
+                    });
+                    killJob();
+                });
             }
         });
     }
-    getMostRecentJobs(done:(err:any, jobInfos: IJobInfo[]) => void) : void {
-        this.__gridDB.getMostRecentJobs(done);
-    }
+    getMostRecentJobs() : Promise<IJobInfo[]> {return this.__gridDB.getMostRecentJobs();}
     getNode(nodeId:string): INodeItem {return this.__nodes.getNode(nodeId);}
     setNodeEnabled(nodeId: string, enabled: boolean) : void {
         if (enabled)

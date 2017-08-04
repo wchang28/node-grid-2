@@ -37,13 +37,12 @@ function getTaskResultMiddleware(req: express.Request, res: express.Response, ne
         res.status(400).json(errors.bad_task_index);
     else {
         let dispatcher = getDispatcher(req);
-        dispatcher.getTaskResult({j: jobInfo.jobId, t}, (error:any, taskResult: ITaskResult) => {
-            if (error)
-                res.status(400).json({error});
-            else {
-                req['taskResult'] = taskResult;
-                next();
-            }
+        dispatcher.getTaskResult({j: jobInfo.jobId, t})
+        .then((taskResult: ITaskResult) => {
+            req['taskResult'] = taskResult;
+            next();
+        }).catch((err: any) => {
+            res.status(400).json(err);
         });
     }
 }
