@@ -4,12 +4,13 @@ import {SimpleMSSQL, Configuration, Options} from 'mssql-simple';
 import {DOMParser, XMLSerializer} from 'xmldom';
 export {Configuration as SQLConfiguration, Options as DBOptions} from 'mssql-simple';
 import * as errors from './errors';
+import {IGridDB, JobKillStatus} from "./dispatcher";
 
 // will emit the following events
-// 1. connected
+// 1. connectedJobKillStatus
 // 2. error
 // 3. disconnected
-export class GridDB extends SimpleMSSQL {
+export class GridDB extends SimpleMSSQL implements IGridDB {
     constructor(sqlConfig: Configuration, options?:Options) {
         super(sqlConfig, options);
     }
@@ -174,29 +175,31 @@ export class GridDB extends SimpleMSSQL {
             });
         });
     }
-    killJob(jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) : void {
-        let params = {
-            'jobId': jobId
-            ,'markJobAborted': markJobAborted
-        };
-        this.execute('[dbo].[stp_NodeJSKillJob]', params, (err: any, recordsets: any[][]) : void => {
-            if (err)
-                done(err, null, null);
-            else {
-                let dt = recordsets[0];
-                let runningProcess: IRunningProcessByNode = {};
-                for (let i in dt) {    // for each row
-                    let rp:INodeRunningProcess = dt[i];
-                    let nodeId = rp.nodeId;
-                    if (!runningProcess[nodeId]) runningProcess[nodeId] = [];
-                    runningProcess[nodeId].push(rp.pid);
+    killJob(jobId:string, markJobAborted: boolean) :  Promise<JobKillStatus> {
+        return new Promise<JobKillStatus>((resolve: (value: JobKillStatus) => void, reject: (err: any) => void) => {
+            let params = {
+                'jobId': jobId
+                ,'markJobAborted': markJobAborted
+            };
+            this.execute('[dbo].[stp_NodeJSKillJob]', params, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let dt = recordsets[0];
+                    let runningProcess: IRunningProcessByNode = {};
+                    for (let i in dt) {    // for each row
+                        let rp:INodeRunningProcess = dt[i];
+                        let nodeId = rp.nodeId;
+                        if (!runningProcess[nodeId]) runningProcess[nodeId] = [];
+                        runningProcess[nodeId].push(rp.pid);
+                    }
+                    dt = recordsets[1];
+                    if (dt.length === 0)
+                        reject(errors.bad_job_id);
+                    else
+                        resolve({runningProcess, jobProgress: dt[0]});
                 }
-                dt = recordsets[1];
-                if (dt.length === 0)
-                    done(errors.bad_job_id, {}, null);
-                else
-                    done(null, runningProcess, dt[0]);
-            }
+            });
         });
     }
     getMostRecentJobs() : Promise<IJobInfo[]> {
@@ -209,6 +212,26 @@ export class GridDB extends SimpleMSSQL {
             });
         });
     }
+    getTaskResult(task: ITask) : Promise<ITaskResult> {
+        return new Promise<ITaskResult>((resolve: (value: ITaskResult) => void, reject: (err: any) => void) => {
+            let params = {
+                'jobId': task.j
+                ,'taskIndex': task.t
+            };
+            this.execute('[dbo].[stp_NodeJSGridGetTaskResult]', params, (err: any, recordsets: any[][]) : void => {
+                if (err)
+                    reject(err);
+                else {
+                    let ret = recordsets[0][0];
+                    if (!ret)
+                        reject(errors.bad_task_index);
+                    else
+                        resolve(ret);
+                }
+            });
+        });
+    }
+
     getTaskExecParams(task:ITask, nodeId: string, nodeName: string, done:(err:any, taskExecParams: ITaskExecParams) => void) : void {
          let params = {
             'jobId': task.j
@@ -248,25 +271,6 @@ export class GridDB extends SimpleMSSQL {
         sql += ",@stderr=" + (result.stderr ? "'" + GridDB.sqlEscapeString(result.stderr) + "'" : 'null');
         this.query(sql, {}, (err: any, recordsets: any[][]) : void => {
             done(err);
-        });
-    }
-    getTaskResult(task: ITask) : Promise<ITaskResult> {
-        return new Promise<ITaskResult>((resolve: (value: ITaskResult) => void, reject: (err: any) => void) => {
-            let params = {
-                'jobId': task.j
-                ,'taskIndex': task.t
-            };
-            this.execute('[dbo].[stp_NodeJSGridGetTaskResult]', params, (err: any, recordsets: any[][]) : void => {
-                if (err)
-                    reject(err);
-                else {
-                    let ret = recordsets[0][0];
-                    if (!ret)
-                        reject(errors.bad_task_index);
-                    else
-                        resolve(ret);
-                }
-            });
         });
     }
 }

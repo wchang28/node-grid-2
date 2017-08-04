@@ -21,6 +21,11 @@ export interface INodeMessenger {
     killProcessesTree(nodeId: string, pids:number[]) : void;
 }
 
+export interface JobKillStatus {
+    runningProcess: IRunningProcessByNode;
+    jobProgress: IJobProgress
+}
+
 export interface IGridDB {
     registerNewJob(user: IGridUser, jobSubmit: IGridJobSubmit) : Promise<IJobProgress>;
     reSubmitJob(user: IGridUser, oldJobId: string, failedTasksOnly: boolean) : Promise<IJobProgress>;
@@ -28,7 +33,7 @@ export interface IGridDB {
     getMultiJobsProgress(jobIds:string[]) : Promise<IJobProgress[]>;
     getJobInfo(jobId: string) : Promise<IJobInfo>;
     getJobResult(jobId:string) : Promise<IJobResult>;
-    killJob: (jobId:string, markJobAborted: boolean, done:(err:any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => void) => void;
+    killJob(jobId:string, markJobAborted: boolean) : Promise<JobKillStatus>;
     getMostRecentJobs() : Promise<IJobInfo[]>;
     getTaskResult(task: ITask) : Promise<ITaskResult>;
 }
@@ -802,26 +807,25 @@ export class Dispatcher extends events.EventEmitter {
         let getKillJobCall : IKillJobCallFactory = (jobId:string, markJobAborted: boolean, waitMS:number, maxTries:number, tryIndex: number, done: (err: any) => void) : IKillJobCall => {
             return () : void => {
                 this.emit('kill-job-poll', jobId, tryIndex+1);
-                this.__gridDB.killJob(jobId, markJobAborted, (err: any, runningProcess: IRunningProcessByNode, jobProgress: IJobProgress) => {
-                    if (err)
-                        done(err);
-                    else {
-                        this.__jobsTacker.feedJobProgress(jobProgress);
-                        if (JSON.stringify(runningProcess) === '{}')    // no more process running
-                            done(null);
-                        else {  // there are tasks still running
-                            for (let nodeId in runningProcess) {    // for each node
-                                let pids = runningProcess[nodeId];
-                                this.__nodeMessaging.killProcessesTree(nodeId, pids);
-                            }
-                            if (tryIndex < maxTries-1)
-                                setTimeout(getKillJobCall(jobId, false, waitMS, maxTries, tryIndex+1, done), waitMS);
-                            else
-                                done({error: "request-timeout", error_description: "kill poll max-out"});
+                this.__gridDB.killJob(jobId, markJobAborted)
+                .then((killStatus: JobKillStatus)=> {
+                    let runningProcess = killStatus.runningProcess;
+                    let jobProgress = killStatus.jobProgress;
+                    this.__jobsTacker.feedJobProgress(jobProgress);
+                    if (JSON.stringify(runningProcess) === '{}')    // no more process running
+                        done(null);
+                    else {  // there are tasks still running
+                        for (let nodeId in runningProcess) {    // for each node
+                            let pids = runningProcess[nodeId];
+                            this.__nodeMessaging.killProcessesTree(nodeId, pids);
                         }
+                        if (tryIndex < maxTries-1)
+                            setTimeout(getKillJobCall(jobId, false, waitMS, maxTries, tryIndex+1, done), waitMS);
+                        else
+                            done({error: "request-timeout", error_description: "kill poll max-out"});
                     }
-                });
-            }
+                }).catch(done);
+            };
         }
         // check the job status first
         return this.getJobProgress(jobId)
