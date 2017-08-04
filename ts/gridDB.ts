@@ -14,17 +14,19 @@ export class GridDB extends SimpleMSSQL {
         super(sqlConfig, options);
     }
     private static sqlEscapeString(str:string) {return str.replace(new RegExp("'", "gi"), "''");}
-    getUserProfile(userId: string, done:(err:any, profile: IGridUserProfile) => void) : void {
-        this.execute('[dbo].[stp_NodeJSGridGetUserProfile]', {userId}, (err:any, recordsets:any[]) => {
-            if (err)
-                done(err, null);
-            else {
-                let dt = recordsets[0];
-                if (dt.length === 0) {
-                    done(errors.bad_user_profile, null);
-                } else
-                    done(null, dt[0]);
-           }
+    getUserProfile(userId: string) : Promise<IGridUserProfile> {
+        return new Promise<IGridUserProfile>((resolve: (value: IGridUserProfile) => void, reject: (err: any) => void)=> {
+            this.execute('[dbo].[stp_NodeJSGridGetUserProfile]', {userId}, (err:any, recordsets:any[][]) => {
+                if (err)
+                    reject(err);
+                else {
+                    let dt = recordsets[0];
+                    if (dt.length === 0)
+                        reject(errors.bad_user_profile);
+                    else
+                        resolve(dt[0]);
+                }
+            });
         });
     }
 
