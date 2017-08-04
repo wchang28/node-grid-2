@@ -225,7 +225,7 @@ class GridDB extends SimpleMSSQL implements IServerGridDBImpl, ITaskLauncherGrid
                 if (err)
                     reject(err);
                 else
-                    reject(recordsets[0]);
+                    resolve(recordsets[0]);
             });
         });
     }
