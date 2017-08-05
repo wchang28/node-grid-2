@@ -1,6 +1,6 @@
-import {SQLConfiguration, DBOptions} from './gridDB';
+import {config, Options} from './gridDB';
 
 export interface IGridDBConfiguration {
-    sqlConfig: SQLConfiguration
-    dbOptions?: DBOptions
+    sqlConfig: config;
+    dbOptions?: Options;
 }

@@ -104,7 +104,7 @@ function getTaskExec(nodeId: string, db: ITaskLauncherGridDBImpl) : ITaskExec { 
 let gridDB = getTaskLauncherGridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);
 gridDB.on('error', (err:any) => {
     console.error(new Date().toISOString() + ': !!! Database connection error: ' + JSON.stringify(err));
-}).on('connected', () => {
+}).on('connect', () => {
     console.error(new Date().toISOString() + ': connected to the database :-)');
 
     let client = api.$M(pathname, clientOptions);
