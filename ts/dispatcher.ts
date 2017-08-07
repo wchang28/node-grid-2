@@ -747,6 +747,10 @@ export class Dispatcher extends events.EventEmitter {
 		}
 		return cpusPicked;
     }
+    private dispatchTaskToNode(nodeId: string, tk: ITaskItemDispatch) : void {
+        let task: ITask = {j: tk.j, t: tk.t};
+        this.__nodeMessaging.dispatchTaskToNode(nodeId, task);
+    }
     private dispatchTasksIfNecessary() : void {
         let availableCPUs: ICPUItem[] = null;
         let tasks: ITaskItemDispatch[] = null;
@@ -762,6 +766,7 @@ export class Dispatcher extends events.EventEmitter {
                     task.r = 1;
                 else
                     task.r++;
+                this.dispatchTaskToNode(cpu.nodeId, task);
                 this.__nodeMessaging.dispatchTaskToNode(cpu.nodeId, task);
                 this.__nodes.incrementCPUUsageCount(cpu.nodeId);
                 this.decrementOutstandingAcks();
