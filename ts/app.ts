@@ -254,13 +254,13 @@ gridDB.on('error', (err: any) => {
         }
 
         // evenstream located at:
-        // node: /node-app/events/event_stream
-        // client: /services/events/event_stream
+        // node server: /node-app/events/event_stream
+        // grid api server: /services/events/event_stream
 
         startServer(config.nodeWebServerConfig, nodeApp, (secure:boolean, host:string, port:number) => {
             console.log('node app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
             startServer(config.clientWebServerConfig, clientApp, (secure:boolean, host:string, port:number) => {
-                console.log('client app server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
+                console.log('grid api server listening at %s://%s:%s', (secure ? 'https' : 'http'), host, port);
             });
         });
     }).catch((err: any) => {
