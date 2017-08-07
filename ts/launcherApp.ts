@@ -159,9 +159,9 @@ gridDB.on('error', (err:any) => {
                 .then(() => {
                     notifyDispatcherTaskComplete(task)
                     .then(() => {
-                        console.log(new Date().toISOString() + ': task-complete message sent successfully to the dispatcher :-)');
+                        console.log(new Date().toISOString() + ': <task-complete> notification for task ' + JSON.stringify(task) + ' successfully sent to the dispatcher :-)');
                     }).catch((err: any) => {
-                        console.error(new Date().toISOString() + ': !!! Error sending task-complete message to the dispatcher :-(');
+                        console.error(new Date().toISOString() + ': !!! Error sending <task-complete> notification for task '+ JSON.stringify(task) + ' to the dispatcher :-(');
                     });
                 });
             } else if (gMsg.type === 'kill-processes-tree') {
