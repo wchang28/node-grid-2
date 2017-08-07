@@ -2,7 +2,7 @@ import * as events from 'events';
 import {IGridUserProfile, IGridUser, IGridJobSubmit, IJobProgress, IJobInfo, IJobResult, ITask, INodeRunningProcess, IRunningProcessByNode, ITaskExecParams, ITaskExecResult, ITaskResult} from 'grid-client-core';
 import * as sql from 'simple-mssql';
 import {DOMParser, XMLSerializer} from 'xmldom';
-export * from 'simple-mssql';
+export {config, Options} from 'simple-mssql';
 import * as errors from './errors';
 import {IDsipatcherGridDB, JobKillStatus} from "./dispatcher";
 import {ITaskLauncherGridDBImpl} from "./launcherApp";
@@ -15,10 +15,6 @@ export interface IServerGridDBImpl extends IDsipatcherGridDB {
 export interface IServerGridDB extends IServerGridDBImpl, sql.ISimpleMSSQL {}
 export interface ITaskLauncherGridDB extends ITaskLauncherGridDBImpl, sql.ISimpleMSSQL {}
 
-// will emit the following events
-// 1. connected
-// 2. error
-// 3. disconnected
 class GridDB extends sql.SimpleMSSQL implements IServerGridDBImpl, ITaskLauncherGridDBImpl, sql.ISimpleMSSQL {
     constructor(sqlConfig: sql.config, options?:sql.Options) {
         super(sqlConfig, options);
