@@ -767,7 +767,6 @@ export class Dispatcher extends events.EventEmitter {
                 else
                     task.r++;
                 this.dispatchTaskToNode(cpu.nodeId, task);
-                this.__nodeMessaging.dispatchTaskToNode(cpu.nodeId, task);
                 this.__nodes.incrementCPUUsageCount(cpu.nodeId);
                 this.decrementOutstandingAcks();
             }
