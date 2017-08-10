@@ -23,7 +23,7 @@ interface IAppConfig {
     autoScalerImplConfigUIPath?: string;
 }
 
-let configFile = (process.argv.length < 3 ? path.join(__dirname, '../admin_testing_config.json') : process.argv[2]);
+let configFile = (process.argv.length < 3 ? path.join(__dirname, '../config/admin_testing_config.json') : process.argv[2]);
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let tokenGrant = new OAuth2TokenGrant(config.oauth2Options.tokenGrantOptions, config.oauth2Options.clientAppSettings);

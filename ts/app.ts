@@ -25,7 +25,7 @@ import {AutoScalableGridBridge} from './autoScalableGridBridge';
 import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory, GetAutoScalerImplementationProc, AutoScalerImplementationOnChangeHandler} from 'grid-autoscaler-impl-pkg';
 import {IAutoScalerImplementation} from 'autoscalable-grid';
 
-let configFile = (process.argv.length < 3 ? path.join(__dirname, '../local_testing_config.json') : process.argv[2]);
+let configFile = (process.argv.length < 3 ? path.join(__dirname, '../config/local_testing_config.json') : process.argv[2]);
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let gridDB = getServerGridDB(config.dbConfig.sqlConfig, config.dbConfig.dbOptions);

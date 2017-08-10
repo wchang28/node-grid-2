@@ -24,7 +24,7 @@ export interface ITaskLauncherGridDBImpl {
     markTaskEnd(task:ITask, result: ITaskExecResult) : Promise<void>;
 }
 
-let configFile = (process.argv.length < 3 ? path.join(__dirname, '../launcher_testing_config.json') : process.argv[2]);
+let configFile = (process.argv.length < 3 ? path.join(__dirname, '../config/launcher_testing_config.json') : process.argv[2]);
 let config: IConfiguration = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 function getDefaultNodeName() : string {
