@@ -14,7 +14,7 @@ if (!password) {
     process.exit(1);
 }
 
-let configFile = (process.argv.length < 5 ? path.join(__dirname, '../../client_testing_config.json') : process.argv[4]);
+let configFile = (process.argv.length < 5 ? path.join(__dirname, '../../config/client_testing_config.json') : process.argv[4]);
 let config: IGridClientConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 
 let client = new GridClient(config);
