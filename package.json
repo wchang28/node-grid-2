@@ -1,6 +1,6 @@
 {
   "name": "node-grid-2",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Node.js-based Grid v2",
   "scripts": {
     "start": "node ./js/app.js",
@@ -57,7 +57,7 @@
     "rest-node": "https://github.com/wchang28/rest-node.git",
     "simple-mssql": "https://github.com/wchang28/simple-mssql.git",
     "tree-kill": "^1.1.0",
-    "typescript": "~2.3.2",
+    "typescript": "^2.5.2",
     "xmldom": "^0.1.27"
   },
   "devDependencies": {
