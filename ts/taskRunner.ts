@@ -19,7 +19,7 @@ export class TaskRunner extends events.EventEmitter {
             if (stdin.length >= 1 && stdin.substr(0,1) === '@') {
                 let stdinFile = stdin.substr(1);
                 try {
-                    instream = fs.createReadStream(stdinFile, 'utf8');
+                    instream = fs.createReadStream(stdinFile, {encoding: 'utf8'});
                     if (!instream) throw '';
                 } catch(e) {
                     let result: ITaskExecResult = {
