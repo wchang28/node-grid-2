@@ -1,4 +1,4 @@
-import {runner} from "../taskRunner";
+import {runner} from "../../taskRunner";
 
 let cmd = process.argv[2];
 if (!cmd) {

@@ -18,7 +18,7 @@
     "./ts/adminApp.ts",
     "./ts/launcherApp.ts",
     "./ts/test/clientTest.ts",
-    "./ts/test/testTaskRunner.ts",
+    "./ts/test/task-runner/app.ts",
     "./ts/test/autoScalerImpl/index.ts",
     "./ts/ui/main.tsx"
   ]
