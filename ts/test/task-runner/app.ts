@@ -1,3 +1,4 @@
+// command line: node ./app.js cmd {stdin} 
 import {runner} from "../../taskRunner";
 
 let cmd = process.argv[2];

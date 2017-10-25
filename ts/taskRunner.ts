@@ -24,11 +24,12 @@ class TaskRunner extends events.EventEmitter implements ITaskRunner {
         let stderr = '';
         let raisedError = "";
         if (stdin && stdin.length > 0) {
-            if (stdin.length >= 1 && stdin.substr(0,1) === '@') {   // stdin begins with @ => a file reference
+            if (stdin.length >= 1 && stdin.substr(0,1) === '@') {   // stdin string begins with '@' => a file path
                 let stdinFile = stdin.substr(1);
                 instream = fs.createReadStream(stdinFile, {encoding: 'utf8'});
             } else {
                 instream = new stream.Readable();
+                instream.setEncoding("utf8");
                 instream.push(stdin);
                 instream.push(null);
             }
