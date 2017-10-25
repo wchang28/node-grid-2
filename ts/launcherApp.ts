@@ -5,7 +5,7 @@ import * as rcf from 'rcf';
 import * as $node from 'rest-node';
 import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult} from 'grid-client-core';
 import {getTaskLauncherGridDB, ITaskLauncherGridDB} from './gridDB';
-import {TaskRunner} from './taskRunner';
+import {runner} from './taskRunner';
 import treeKill = require('tree-kill');
 import {IGridDBConfiguration} from './gridDBConfig';
 import * as events from 'events';
@@ -73,7 +73,7 @@ class TaskExec extends events.EventEmitter implements ITaskExec {
             this.db.getTaskExecParams(task, this.nodeId, nodeName)
             .then((taskExecParams: ITaskExecParams) => {
                 this.emit("exec-params", taskExecParams);
-                let taskRunner = new TaskRunner(taskExecParams);
+                let taskRunner = runner(taskExecParams);
                 taskRunner.on('started', (pid: number) => {
                     this.emit("started", pid);
                     this.db.markTaskStart(task, pid)

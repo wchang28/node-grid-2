@@ -1,6 +1,6 @@
 {
   "name": "node-grid-2",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Node.js-based Grid v2",
   "scripts": {
     "start": "node ./js/app.js",
