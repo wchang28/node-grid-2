@@ -12,7 +12,7 @@ if (!stdin) stdin = void 0;
 let taskRunner = runner({cmd, stdin});
 
 taskRunner.on("started", (pid: number) => {
-    console.log(`<<started>>, pid={$pid}`);
+    console.log("<<started>>, pid=" + pid);
 }).on("finished", (result: any) => {
     console.log("<<finished>>, result=\n" + JSON.stringify(result, null, 2));
 }).run();
