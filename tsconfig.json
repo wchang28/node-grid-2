@@ -19,6 +19,7 @@
     "./ts/launcherApp.ts",
     "./ts/test/clientTest.ts",
     "./ts/test/task-runner/app.ts",
+    "./ts/test/task-runner/stdin-test.ts",
     "./ts/test/autoScalerImpl/index.ts",
     "./ts/ui/main.tsx"
   ]

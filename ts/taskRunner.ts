@@ -2,6 +2,7 @@ import * as events from 'events';
 import * as fs from 'fs';
 import * as stream from 'stream';
 import {exec} from 'child_process';
+import treeKill = require('tree-kill');
 import {ITaskExecParams, ITaskExecResult} from 'grid-client-core';
 
 export interface ITaskRunner {
@@ -21,6 +22,7 @@ class TaskRunner extends events.EventEmitter implements ITaskRunner {
         let pid:number = null;
         let stdout = '';
         let stderr = '';
+        let raisedError = "";
         if (stdin && stdin.length > 0) {
             if (stdin.length >= 1 && stdin.substr(0,1) === '@') {   // stdin begins with @ => a file reference
                 let stdinFile = stdin.substr(1);
@@ -30,6 +32,15 @@ class TaskRunner extends events.EventEmitter implements ITaskRunner {
                 instream.push(stdin);
                 instream.push(null);
             }
+        }
+        if (instream) {
+            instream.on("error", (err: any) => {    // stdin stream has some kind of error (maybe input file does not exist)
+                if (err.syscall && err.path)
+                    raisedError = "error " + err.syscall + " " + err.path;
+                else
+                    raisedError = JSON.stringify(err);
+                treeKill(pid, 'SIGKILL');   // kill the child process tree
+            });
         }
         let child = exec(cmd, {maxBuffer: 20000 * 1024});
         if (instream && child.stdin) instream.pipe(child.stdin);
@@ -48,7 +59,7 @@ class TaskRunner extends events.EventEmitter implements ITaskRunner {
                 pid
                 ,retCode: code
                 ,stdout: (stdout.length > 0 ? stdout : null)
-                ,stderr: (stderr.length > 0 ? stderr : null)
+                ,stderr: (stderr.length > 0 ? stderr : (raisedError ? raisedError : null))
             };
             this.emit('finished', result);
         });
