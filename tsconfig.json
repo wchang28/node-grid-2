@@ -3,7 +3,7 @@
       "target": "es5",
       "module": "commonjs",
       "jsx": "react",
-      "sourceMap": false,
+      "sourceMap": true,
       "declaration": true,
       "outDir": "./js",
       "watch": true,
@@ -18,6 +18,7 @@
     "./ts/adminApp.ts",
     "./ts/launcherApp.ts",
     "./ts/test/clientTest.ts",
+    "./ts/test/testTaskRunner.ts",
     "./ts/test/autoScalerImpl/index.ts",
     "./ts/ui/main.tsx"
   ]
