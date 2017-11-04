@@ -4,6 +4,7 @@ import * as tr from 'rcf-message-router';
 import {IGlobal} from '../global';
 import {Dispatcher} from '../dispatcher'; 
 import {GridMessage, INode, INodeReady, ITask} from 'grid-client-core';
+import {NodeMsgTransactionReceiver} from "../node-msg-trans-rcvr";
 
 let router = express.Router();
 
@@ -46,6 +47,12 @@ let getDispatcher = (req:any) : Dispatcher => {
     return g.dispatcher;
 }
 
+let getNodeMsgTransReceiver = (req: any): NodeMsgTransactionReceiver => {
+    let request: express.Request = req;
+    let g:IGlobal = request.app.get('global');
+    return g.nodeMsgTransReceiver;
+}
+
 connectionsManager.on('client_connect', (req:express.Request, connection: tr.ITopicConnection) : void => {
     console.log('node ' + connection.id + ' @ ' + connection.remoteAddress + ' connected to the SSE topic endpoint');
     let dispatcher = getDispatcher(req);
@@ -57,6 +64,7 @@ connectionsManager.on('client_connect', (req:express.Request, connection: tr.ITo
     dispatcher.removeNode(connection.id);
 }).on('on_client_send_msg', (req:express.Request, connection: tr.ITopicConnection, params: tr.SendMsgParams) => {
     let dispatcher = getDispatcher(req);
+    let nodeMsgTransReceiver = getNodeMsgTransReceiver(req);
     let nodeId = connection.id;
     if (params.destination === '/topic/dispatcher') {
         let msg:GridMessage = params.body;

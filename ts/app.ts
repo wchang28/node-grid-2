@@ -24,6 +24,8 @@ import {GridAutoScaler} from 'grid-autoscaler';
 import {AutoScalableGridBridge} from './autoScalableGridBridge';
 import {AutoScalerImplementationPackageExport, AutoScalerImplementationFactory, GetAutoScalerImplementationProc, AutoScalerImplementationOnChangeHandler} from 'grid-autoscaler-impl-pkg';
 import {IAutoScalerImplementation} from 'autoscalable-grid';
+import {get as processor} from "msg-transaction-processor";
+import {receiver} from "./node-msg-trans-rcvr";
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../config/local_testing_config.json') : process.argv[2]);
 let config: IAppConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
@@ -155,6 +157,9 @@ gridDB.on('error', (err: any) => {
 
     clientApp.set('jsonp callback name', 'cb');
 
+    let nodeMsgTransReceiver = receiver();
+    let nodeMsgTransProcessor = processor(nodeMsgTransReceiver, {timeoutMS: 15000});
+
     let clientMessaging = new ClientMessaging(clientConnectionsManager);
     let dispatcher = new Dispatcher(getNodeMessenger(nodeAppConnectionsManager), gridDB, config.dispatcherConfig);
 
@@ -234,6 +239,8 @@ gridDB.on('error', (err: any) => {
         let g: IGlobal = {
             dispatcher
             ,gridDB
+            ,nodeMsgTransReceiver
+            ,nodeMsgTransProcessor
             ,gridAutoScaler
         };
 
