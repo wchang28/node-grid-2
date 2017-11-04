@@ -860,6 +860,7 @@ export class Dispatcher extends events.EventEmitter {
         else
             this.__nodes.disableNode(nodeId);
     }
+    queryNodeStatus(nodeId: string, QueryId: string) {this.__nodeMessaging.queryNodeStatus(nodeId, QueryId);}
 
     requestToTerminateNodes(nodeIds: string[]) : string[] {
         if (this.dispatching)

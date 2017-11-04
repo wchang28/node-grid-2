@@ -8,7 +8,6 @@ import {IMsgTransactionProcessor} from "msg-transaction-processor";
 export interface IGlobal {
     dispatcher: Dispatcher;
     gridDB: IServerGridDB;
-    nodeMessenger: INodeMessenger;
     nodeMsgTransReceiver: NodeMsgTransactionReceiver;
     nodeMsgTransProcessor: IMsgTransactionProcessor;
     gridAutoScaler?: GridAutoScaler;

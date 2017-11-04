@@ -4,7 +4,6 @@ import * as core from 'express-serve-static-core';
 import {Router as dispatcherRouter} from './dispatcher';
 import {Router as jobRouter} from './job';
 import {Router as userRouter} from './user';
-import {Router as nodeRouter} from './node';
 import {Router as scalableRouter} from './scalable';
 import {Router as autoscalerRouter} from './autoscaler';
 import * as tr from 'rcf-message-router';
@@ -26,7 +25,6 @@ function getDB(req:express.Request) : IServerGridDB {return getGlobal(req).gridD
 router.use('/user', userRouter);
 router.use('/job', jobRouter);
 router.use('/dispatcher', dispatcherRouter);
-router.use('/node', nodeRouter);
 router.use('/scalable', scalableRouter);
 router.use('/autoscaler', (req:express.Request, res: express.Response, next: express.NextFunction) => {
     if (autoScalerAvailable(req))

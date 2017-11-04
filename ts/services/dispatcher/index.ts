@@ -2,8 +2,9 @@ import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import {IGlobal} from '../../global';
 import {Dispatcher} from '../../dispatcher';
-import {IGridUser, INodeItem} from 'grid-client-core';
+import {IGridUser, INodeItem, NodeQueryStatus} from 'grid-client-core';
 import * as errors from '../../errors';
+import {TransactionId, ITransaction, IMsgTransactionProcessor} from "msg-transaction-processor";
 
 let router = express.Router();
 
@@ -15,6 +16,12 @@ function getUser(req: express.Request): IGridUser {
 function getDispatcher(req:express.Request) : Dispatcher {
     let g:IGlobal = req.app.get('global');
     return g.dispatcher;
+}
+
+let getNodeTransactionProcessor = (req: any): IMsgTransactionProcessor => {
+    let request: express.Request = req;
+    let g:IGlobal = request.app.get('global');
+    return g.nodeMsgTransProcessor;
 }
 
 router.get('/', (req:express.Request, res:express.Response) => {
@@ -95,6 +102,32 @@ nodeOperationRouter.get('/disable', canEnableDisableNode, (req: express.Request,
     let node:INodeItem = req['node'];
     dispatcher.setNodeEnabled(node.id, false);
     res.json(node);
+});
+
+class NodeQueryStatusTransaction implements ITransaction {
+    constructor(private dispatcher: Dispatcher, private nodeId: string) {}
+    sendRequest(TransactionId: TransactionId): Promise<any> {
+        this.dispatcher.queryNodeStatus(this.nodeId, TransactionId);
+        return Promise.resolve<any>({});
+    }
+    toJSON() : any {
+        return {
+            nodeId: this.nodeId
+        };
+    }
+}
+
+nodeOperationRouter.get("query-status", (req: express.Request, res: express.Response) => {
+    let dispatcher = getDispatcher(req);
+    let node:INodeItem = req['node'];
+    let transProcessor = getNodeTransactionProcessor(req);
+    let nodeId = <string>req.params["nodeId"];
+    transProcessor.execute<NodeQueryStatus>(new NodeQueryStatusTransaction(dispatcher, nodeId))
+    .then((value: NodeQueryStatus) => {
+        res.jsonp(value);
+    }).catch((err: any) => {
+        res.status(400).json(err);
+    });
 });
 
 function getNode(req: express.Request, res: express.Response, next: express.NextFunction) {

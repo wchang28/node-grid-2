@@ -240,7 +240,6 @@ gridDB.on('error', (err: any) => {
         let g: IGlobal = {
             dispatcher
             ,gridDB
-            ,nodeMessenger
             ,nodeMsgTransReceiver
             ,nodeMsgTransProcessor
             ,gridAutoScaler
