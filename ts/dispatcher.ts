@@ -19,6 +19,7 @@ interface ITaskItemDispatch extends ITaskItem {
 export interface INodeMessenger {
     dispatchTaskToNode(nodeId: string, task: ITask) : void;
     killProcessesTree(nodeId: string, pids:number[]) : void;
+    queryNodeStatus(nodeId: string, QueryId: string) : void;
 }
 
 export interface JobKillStatus {

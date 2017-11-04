@@ -1,5 +1,5 @@
 import {IConnectionsManager} from 'rcf-message-router';
-import {GridMessage, ITask} from 'grid-client-core';
+import {GridMessage, ITask, NodeQueryStatusRequest} from 'grid-client-core';
 import {INodeMessenger} from './dispatcher';
 
 class NodeMessenger implements INodeMessenger {
@@ -17,6 +17,14 @@ class NodeMessenger implements INodeMessenger {
             ,content: pids
         };
         this.nodeAppConnectionsManager.dispatchMessage('/topic/node/' + nodeId, {type: 'kill-processes-tree'}, msg);
+    }
+    queryNodeStatus(nodeId: string, QueryId: string) : void {
+        let content: NodeQueryStatusRequest = {QueryId};
+        let msg: GridMessage = {
+            type: 'node-query-status'
+            ,content
+        };
+        this.nodeAppConnectionsManager.dispatchMessage('/topic/node/' + nodeId, {type: 'node-query-status'}, msg);        
     }
 }
 

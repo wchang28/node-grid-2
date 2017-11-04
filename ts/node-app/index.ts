@@ -3,7 +3,7 @@ import * as core from 'express-serve-static-core';
 import * as tr from 'rcf-message-router';
 import {IGlobal} from '../global';
 import {Dispatcher} from '../dispatcher'; 
-import {GridMessage, INode, INodeReady, ITask} from 'grid-client-core';
+import {GridMessage, INode, INodeReady, ITask, NodeQueryStatusResponse} from 'grid-client-core';
 import {NodeMsgTransactionReceiver} from "../node-msg-trans-rcvr";
 
 let router = express.Router();
@@ -74,6 +74,9 @@ connectionsManager.on('client_connect', (req:express.Request, connection: tr.ITo
         } else if (msg.type === 'task-complete') {
             let task: ITask = msg.content;
             dispatcher.onNodeCompleteTask(nodeId, task);
+        } else if (msg.type === 'node-query-status') {
+            let response: NodeQueryStatusResponse = msg.content;
+            nodeMsgTransReceiver.onReceivedNodeQueryStatusResponse(response);
         }
     }
 });

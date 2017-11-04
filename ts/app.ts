@@ -157,11 +157,12 @@ gridDB.on('error', (err: any) => {
 
     clientApp.set('jsonp callback name', 'cb');
 
+    let nodeMessenger = getNodeMessenger(nodeAppConnectionsManager);
     let nodeMsgTransReceiver = receiver();
     let nodeMsgTransProcessor = processor(nodeMsgTransReceiver, {timeoutMS: 15000});
 
     let clientMessaging = new ClientMessaging(clientConnectionsManager);
-    let dispatcher = new Dispatcher(getNodeMessenger(nodeAppConnectionsManager), gridDB, config.dispatcherConfig);
+    let dispatcher = new Dispatcher(nodeMessenger, gridDB, config.dispatcherConfig);
 
     let msgCoalesce = new ClientMessagingCoalescing(3000);
     msgCoalesce.on('trigger', () => {
@@ -239,6 +240,7 @@ gridDB.on('error', (err: any) => {
         let g: IGlobal = {
             dispatcher
             ,gridDB
+            ,nodeMessenger
             ,nodeMsgTransReceiver
             ,nodeMsgTransProcessor
             ,gridAutoScaler

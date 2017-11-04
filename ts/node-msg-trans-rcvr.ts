@@ -1,17 +1,18 @@
 import {ITransactionReceiver} from "msg-transaction-processor";
 import * as events from 'events';
+import {NodeQueryStatusResponse} from 'grid-client-core';
 
 export interface NodeMsgTransactionReceiver extends ITransactionReceiver {
-    onReceivedQueryStatusMsg(msg: any): void;
+    onReceivedNodeQueryStatusResponse(response: NodeQueryStatusResponse): void;
 }
 
 class Receiver extends events.EventEmitter implements NodeMsgTransactionReceiver {
     constructor() {
         super();
     }
-    onReceivedQueryStatusMsg(msg: any) {
-        let TransactionId = null;
-        let result = null;
+    onReceivedNodeQueryStatusResponse(response: NodeQueryStatusResponse) {
+        let TransactionId = response.QueryId;
+        let result = response.Status;
         this.emit("transaction-res-rcvd", TransactionId, result);
     }
 }
