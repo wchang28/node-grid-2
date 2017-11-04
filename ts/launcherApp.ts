@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as rcf from 'rcf';
 import * as $node from 'rest-node';
-import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult} from 'grid-client-core';
+import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult, NodeQueryStatusRequest, NodeQueryStatusResponse} from 'grid-client-core';
 import {getTaskLauncherGridDB, ITaskLauncherGridDB} from './gridDB';
 import {runner} from './taskRunner';
 import treeKill = require('tree-kill');
@@ -137,6 +137,14 @@ gridDB.on('error', (err:any) => {
         }
     }
 
+    function sendNodeQueryStatusResponse(response: NodeQueryStatusResponse) : Promise<rcf.RESTReturn> {
+        let msg: GridMessage = {
+            type: 'node-query-status'
+            ,content: response
+        };
+        return client.send('/topic/dispatcher', {type: 'node-query-status'}, msg);        
+    }
+
     client.on('connect', (nodeId:string) : void => {
         console.log(new Date().toISOString() + ': connected to the dispatcher: nodeId=' + nodeId);
         client.subscribe('/topic/node/' + nodeId
@@ -168,7 +176,17 @@ gridDB.on('error', (err:any) => {
                 let pids: number[] = gMsg.content;
                 killProcessesTree(pids);
             } else if (gMsg.type === 'node-query-status') {
-
+                let queryRequest: NodeQueryStatusRequest = gMsg.content;
+                let queryResponse: NodeQueryStatusResponse = {
+                    QueryId: queryRequest.QueryId
+                    ,Status: {
+                        FreeMem: os.freemem()
+                        ,TotalMem: os.totalmem()
+                        ,UptimeSec: os.uptime()
+                        ,RunningTasks: []   // TODO:                      
+                    }
+                };
+                sendNodeQueryStatusResponse(queryResponse)
             }
         },{})
         .then((sub_id: string) => {

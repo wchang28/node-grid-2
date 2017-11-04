@@ -121,7 +121,7 @@ nodeOperationRouter.get("query-status", (req: express.Request, res: express.Resp
     let dispatcher = getDispatcher(req);
     let node:INodeItem = req['node'];
     let transProcessor = getNodeTransactionProcessor(req);
-    let nodeId = <string>req.params["nodeId"];
+    let nodeId = node.id;
     transProcessor.execute<NodeQueryStatus>(new NodeQueryStatusTransaction(dispatcher, nodeId))
     .then((value: NodeQueryStatus) => {
         res.jsonp(value);
