@@ -8,7 +8,7 @@ import noCache = require('no-cache-express');
 import {IGlobal} from "./global";
 import {IGridUserProfile, GridMessage, ITask, IGridUser, IJobProgress, Utils} from "grid-client-core";
 import {Dispatcher} from './dispatcher';
-import {get as getNodeMessenger} from './nodeMessaging';
+import {get as messenger} from './nodeMessaging';
 import {ClientMessaging} from './clientMessaging';
 import {getServerGridDB} from './gridDB';
 import * as oauth2 from 'oauth2';
@@ -157,12 +157,12 @@ gridDB.on('error', (err: any) => {
 
     clientApp.set('jsonp callback name', 'cb');
 
-    let nodeMessenger = getNodeMessenger(nodeAppConnectionsManager);
+    let nodeMessenger = messenger(nodeAppConnectionsManager);
     let nodeMsgTransReceiver = receiver();
     let nodeMsgTransProcessor = processor(nodeMsgTransReceiver, {timeoutMS: 15000});
 
     let clientMessaging = new ClientMessaging(clientConnectionsManager);
-    let dispatcher = new Dispatcher(nodeMessenger, gridDB, config.dispatcherConfig);
+    let dispatcher = new Dispatcher(nodeMessenger, nodeMsgTransProcessor, gridDB, config.dispatcherConfig);
 
     let msgCoalesce = new ClientMessagingCoalescing(3000);
     msgCoalesce.on('trigger', () => {
@@ -241,7 +241,6 @@ gridDB.on('error', (err: any) => {
             dispatcher
             ,gridDB
             ,nodeMsgTransReceiver
-            ,nodeMsgTransProcessor
             ,gridAutoScaler
         };
 

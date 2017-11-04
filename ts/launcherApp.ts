@@ -176,9 +176,9 @@ gridDB.on('error', (err:any) => {
                 let pids: number[] = gMsg.content;
                 killProcessesTree(pids);
             } else if (gMsg.type === 'node-query-status') {
-                let queryRequest: NodeQueryStatusRequest = gMsg.content;
-                let queryResponse: NodeQueryStatusResponse = {
-                    QueryId: queryRequest.QueryId
+                let request: NodeQueryStatusRequest = gMsg.content;
+                let response: NodeQueryStatusResponse = {
+                    QueryId: request.QueryId
                     ,Status: {
                         FreeMem: os.freemem()
                         ,TotalMem: os.totalmem()
@@ -186,7 +186,11 @@ gridDB.on('error', (err:any) => {
                         ,RunningTasks: []   // TODO:                      
                     }
                 };
-                sendNodeQueryStatusResponse(queryResponse)
+                sendNodeQueryStatusResponse(response)
+                .then(() => {
+                }).catch((err: any) => {
+                    console.error(new Date().toISOString() + ': !!! Error sending back <node-query-status> message: ' + JSON.stringify(err));
+                });
             }
         },{})
         .then((sub_id: string) => {

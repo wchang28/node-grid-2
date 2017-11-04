@@ -1,8 +1,9 @@
 
 import * as events from 'events';
 import * as _ from 'lodash';
-import {Utils, INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON, ITaskResult} from 'grid-client-core';
+import {Utils, INode, INodeReady, ITask, IGridUser, IJobProgress, IJobInfo, IJobResult, IRunningProcessByNode, IGridJobSubmit, INodeItem, IQueueJSON, IDispControl, IJobsStatusPollingJSON, IDispStates, IDispatcherJSON, ITaskResult, NodeQueryStatus} from 'grid-client-core';
 import {IAutoScalableState, IWorker, IWorkerState, IAutoScalableGrid} from 'autoscalable-grid';
+import {IMsgTransactionProcessor, ITransaction, TransactionId} from "msg-transaction-processor";
 
 interface ITaskItem extends ITask {
     r?: number; // number of retries
@@ -56,6 +57,19 @@ export interface IDispatcherConfig {
     jobsPollingIntervalMS?: number;
     jobsKillPollingIntervalMS?: number;
     jobsKillMaxRetries?: number;
+}
+
+class NodeQueryStatusTransaction implements ITransaction {
+    constructor(private nodeMessenger: INodeMessenger, private nodeId: string) {}
+    sendRequest(TransactionId: TransactionId): Promise<any> {
+        this.nodeMessenger.queryNodeStatus(this.nodeId, TransactionId);
+        return Promise.resolve<any>({});
+    }
+    toJSON() : any {
+        return {
+            nodeId: this.nodeId
+        };
+    }
 }
 
 // will emit the following events
@@ -616,7 +630,7 @@ export class Dispatcher extends events.EventEmitter {
         this.__config.jobsKillPollingIntervalMS = Math.max(1000, this.__config.jobsKillPollingIntervalMS);
         this.__config.jobsKillMaxRetries = Math.max(2, this.__config.jobsKillMaxRetries);
     }
-    constructor(private __nodeMessaging: INodeMessenger, private __gridDB: IDsipatcherGridDB, config: IDispatcherConfig = null) {
+    constructor(private __nodeMessenger: INodeMessenger, private __nodeMsgTransProcessor: IMsgTransactionProcessor, private __gridDB: IDsipatcherGridDB, config: IDispatcherConfig = null) {
         super();
 
         this.initConfig(config);
@@ -750,7 +764,7 @@ export class Dispatcher extends events.EventEmitter {
     }
     private dispatchTaskToNode(nodeId: string, tk: ITaskItemDispatch) : void {
         let task: ITask = {j: tk.j, t: tk.t};
-        this.__nodeMessaging.dispatchTaskToNode(nodeId, task);
+        this.__nodeMessenger.dispatchTaskToNode(nodeId, task);
     }
     private dispatchTasksIfNecessary() : void {
         let availableCPUs: ICPUItem[] = null;
@@ -821,7 +835,7 @@ export class Dispatcher extends events.EventEmitter {
                     else {  // there are tasks still running
                         for (let nodeId in runningProcess) {    // for each node
                             let pids = runningProcess[nodeId];
-                            this.__nodeMessaging.killProcessesTree(nodeId, pids);
+                            this.__nodeMessenger.killProcessesTree(nodeId, pids);
                         }
                         if (tryIndex < maxTries-1)
                             setTimeout(getKillJobCall(jobId, false, waitMS, maxTries, tryIndex+1, done), waitMS);
@@ -860,7 +874,9 @@ export class Dispatcher extends events.EventEmitter {
         else
             this.__nodes.disableNode(nodeId);
     }
-    queryNodeStatus(nodeId: string, QueryId: string) {this.__nodeMessaging.queryNodeStatus(nodeId, QueryId);}
+    queryNodeStatus(nodeId: string) : Promise<NodeQueryStatus> {
+        return this.__nodeMsgTransProcessor.execute<NodeQueryStatus>(new NodeQueryStatusTransaction(this.__nodeMessenger, nodeId));
+    }
 
     requestToTerminateNodes(nodeIds: string[]) : string[] {
         if (this.dispatching)
