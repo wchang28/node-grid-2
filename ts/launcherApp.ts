@@ -167,6 +167,8 @@ gridDB.on('error', (err:any) => {
             } else if (gMsg.type === 'kill-processes-tree') {
                 let pids: number[] = gMsg.content;
                 killProcessesTree(pids);
+            } else if (gMsg.type === 'node-query-status') {
+
             }
         },{})
         .then((sub_id: string) => {
