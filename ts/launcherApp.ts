@@ -3,12 +3,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as rcf from 'rcf';
 import * as $node from 'rest-node';
-import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult, NodeQueryStatusRequest, NodeQueryStatusResponse} from 'grid-client-core';
+import {GridMessage, INodeReady, ITask, ITaskExecParams, ITaskExecResult, NodeQueryStatusRequest, NodeQueryStatusResponse, ITaskRunningStatus} from 'grid-client-core';
 import {getTaskLauncherGridDB, ITaskLauncherGridDB} from './gridDB';
 import {runner} from './taskRunner';
 import treeKill = require('tree-kill');
 import {IGridDBConfiguration} from './gridDBConfig';
 import * as events from 'events';
+import * as shortid from "shortid";
 
 interface IConfiguration {
     numCPUs?: number;
@@ -22,6 +23,37 @@ export interface ITaskLauncherGridDBImpl {
     getTaskExecParams(task:ITask, nodeId: string, nodeName: string) : Promise<ITaskExecParams>;
     markTaskStart(task:ITask, pid:number) : Promise<void>;
     markTaskEnd(task:ITask, result: ITaskExecResult) : Promise<void>;
+}
+
+class TasksTracker {
+    private _map: {[TrackingId: string]: ITaskRunningStatus};
+    constructor() {
+        this._map = {};
+    }
+    beginTracking(task: ITask): string {
+        let TrackingId = shortid.generate();
+        this._map[TrackingId] = {
+            j: task.j
+            ,t: task.t
+        };
+        return TrackingId;
+    }
+    updateTracking(TrackingId: string, info: any) {
+        if (this._map[TrackingId]) {
+            if (info.cmd) this._map[TrackingId].cmd = info.cmd;
+            if (info.pid) this._map[TrackingId].pid = info.pid;
+        }
+    }
+    endTracking(TrackingId: string) {
+        if (this._map[TrackingId])
+            delete this._map[TrackingId];
+    }
+    toJSON() : ITaskRunningStatus[] {
+        let ret: ITaskRunningStatus[] = [];
+        for (let TrackingId in this._map)
+            ret.push(this._map[TrackingId]);
+        return ret;
+    }
 }
 
 let configFile = (process.argv.length < 3 ? path.join(__dirname, '../config/launcher_testing_config.json') : process.argv[2]);
@@ -56,6 +88,8 @@ let numCPUs:number = (config.numCPUs ? config.numCPUs : cpus.length - (config.re
 numCPUs = Math.max(numCPUs, 1);
 let nodeName:string = (config.nodeName ? config.nodeName : getDefaultNodeName());
 console.log(new Date().toISOString() + ': nodeName=' + nodeName + ', cpus=' + cpus.length + ', numCPUs=' + numCPUs);
+
+let tasksTracker = new TasksTracker();
 
 interface ITaskExec {
     run(task: ITask) : Promise<void>;
@@ -153,18 +187,22 @@ gridDB.on('error', (err:any) => {
             let gMsg: GridMessage = msg.body;
             if (gMsg.type === 'launch-task') {
                 let task: ITask = gMsg.content;
+                let TrackingId = tasksTracker.beginTracking(task);
                 let taskExec = getTaskExec(nodeId, gridDB);
                 taskExec.on("error", (err: any) => {
                     console.error(new Date().toISOString() + ": !!! Error running task " + JSON.stringify(task) + ": " + JSON.stringify(err) + " :-(");
                     // TODO: sent error message to the server
                 }).on("exec-params", (taskExecParams: ITaskExecParams) => {
+                    tasksTracker.updateTracking(TrackingId, {cmd: taskExecParams.cmd});
                     console.log(new Date().toISOString() + ": running task " + JSON.stringify(task) + " with exec-params=\n" + JSON.stringify(taskExecParams, null, 2));
                 }).on("started", (pid: number) => {
+                    tasksTracker.updateTracking(TrackingId, {pid});
                     console.log(new Date().toISOString() + ": task " + JSON.stringify(task) + " started with pid=" + pid);
                 }).on("finished", (retCode: number) => {
                     console.log(new Date().toISOString() + ": task " + JSON.stringify(task) + " finished with retCode=" + retCode);
                 }).run(task)
                 .then(() => {
+                    tasksTracker.endTracking(TrackingId);
                     notifyDispatcherTaskComplete(task)
                     .then(() => {
                         console.log(new Date().toISOString() + ': <task-complete> notification for task ' + JSON.stringify(task) + ' successfully sent to the dispatcher :-)');
@@ -183,7 +221,7 @@ gridDB.on('error', (err:any) => {
                         FreeMem: os.freemem()
                         ,TotalMem: os.totalmem()
                         ,UptimeSec: os.uptime()
-                        ,RunningTasks: []   // TODO:                      
+                        ,RunningTasks: tasksTracker.toJSON()                     
                     }
                 };
                 sendNodeQueryStatusResponse(response)
