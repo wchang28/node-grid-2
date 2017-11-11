@@ -875,7 +875,10 @@ export class Dispatcher extends events.EventEmitter {
             this.__nodes.disableNode(nodeId);
     }
     queryNodeStatus(nodeId: string) : Promise<NodeQueryStatus> {
-        return this.__nodeMsgTransProcessor.execute<NodeQueryStatus>(new NodeQueryStatusTransaction(this.__nodeMessenger, nodeId));
+        if (!this.__nodes.getNode(nodeId))
+            Promise.reject({error: "not-found", error_description: "node is not found or no longer available"});
+        else
+            return this.__nodeMsgTransProcessor.execute<NodeQueryStatus>(new NodeQueryStatusTransaction(this.__nodeMessenger, nodeId));
     }
 
     requestToTerminateNodes(nodeIds: string[]) : string[] {
