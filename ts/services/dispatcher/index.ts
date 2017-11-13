@@ -97,7 +97,7 @@ nodeOperationRouter.get('/disable', canEnableDisableNode, (req: express.Request,
     res.json(node);
 });
 
-nodeOperationRouter.get("query-status", (req: express.Request, res: express.Response) => {
+nodeOperationRouter.get("/query-status", (req: express.Request, res: express.Response) => {
     let dispatcher = getDispatcher(req);
     let node:INodeItem = req['node'];
     dispatcher.queryNodeStatus(node.id)
