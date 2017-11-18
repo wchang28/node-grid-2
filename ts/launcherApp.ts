@@ -42,6 +42,7 @@ class TasksTracker {
         if (this._map[TrackingId]) {
             if (info.cmd) this._map[TrackingId].cmd = info.cmd;
             if (info.pid) this._map[TrackingId].pid = info.pid;
+            if (info.envJSON) this._map[TrackingId].envJSON = info.envJSON;
         }
     }
     endTracking(TrackingId: string) {
@@ -193,7 +194,7 @@ gridDB.on('error', (err:any) => {
                     console.error(new Date().toISOString() + ": !!! Error running task " + JSON.stringify(task) + ": " + JSON.stringify(err) + " :-(");
                     // TODO: sent error message to the server
                 }).on("exec-params", (taskExecParams: ITaskExecParams) => {
-                    tasksTracker.updateTracking(TrackingId, {cmd: taskExecParams.cmd});
+                    tasksTracker.updateTracking(TrackingId, {cmd: taskExecParams.cmd, envJSON: taskExecParams.envJSON});
                     console.log(new Date().toISOString() + ": running task " + JSON.stringify(task) + " with exec-params=\n" + JSON.stringify(taskExecParams, null, 2));
                 }).on("started", (pid: number) => {
                     tasksTracker.updateTracking(TrackingId, {pid});

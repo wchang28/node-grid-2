@@ -9,8 +9,9 @@ export class TestJobs {
         };
         for (let i = 0; i < numTasks; i++) {
             let task: ITaskItem  = {
-                cmd: "echo Hi everybody from 'John Doe'"
+                cmd: "echo Hi everybody from '%PERSON%'"
                 ,cookie: (i+1).toString()
+                ,envJSON: JSON.stringify({"PERSON": "Jane Roe"})
             }
             js.tasks.push(task);
         }

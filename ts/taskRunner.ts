@@ -43,7 +43,11 @@ class TaskRunner extends events.EventEmitter implements ITaskRunner {
                 treeKill(pid, 'SIGKILL');   // kill the child process tree
             });
         }
-        let child = exec(cmd, {maxBuffer: 20000 * 1024});
+        let env: any;
+        if (this.taskExecParams.envJSON) {
+            try {env = JSON.parse(this.taskExecParams.envJSON);}catch(e) {}
+        }
+        let child = exec(cmd, {maxBuffer: 20000 * 1024, env});
         if (instream && child.stdin) instream.pipe(child.stdin);
         pid = child.pid;
         this.emit('started', pid);

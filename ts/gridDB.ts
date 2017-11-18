@@ -58,6 +58,7 @@ class GridDB extends sql.SimpleMSSQL implements IServerGridDBImpl, ITaskLauncher
             el.setAttribute('c', task.cmd);
             if (task.cookie) el.setAttribute('k', task.cookie);
             if (task.stdin) el.setAttribute('i', task.stdin);
+            if (task.envJSON) el.setAttribute('e', task.envJSON);
             root.appendChild(el);
         }
         let serializer = new XMLSerializer();

@@ -21,6 +21,7 @@ CREATE TABLE [dbo].[GridJobTasks](
 	[cmd] [varchar](max) NOT NULL,
 	[cookie] [varchar](250) NULL,
 	[stdin] [varchar](max) NULL,
+	[envJSON] [varchar](max) NULL,
 	[status] [varchar](50) NOT NULL,
 	[nodeId] [varchar](50) NULL,
 	[nodeName] [varchar](250) NULL,
@@ -191,9 +192,11 @@ BEGIN
 		and [index]=@taskIndex
 		and [status]='IDLE'
 
+		-- returns ITaskExecParams
 		select
 		[cmd]
 		,[stdin]
+		,[envJSON]
 		from [dbo].[GridJobTasks] (nolock)
 		where
 		[jobId]=@jobId
@@ -264,14 +267,16 @@ BEGIN
 		,[cmd] varchar(max)
 		,[cookie] varchar(256)
 		,[stdin] varchar(max)
+		,[envJSON] varchar(max)
 	)
 
 	insert into @tmp
-	([cmd],[cookie],[stdin])
+	([cmd],[cookie],[stdin],[envJSON])
 	select
 	[cmd]=a.b.value('@c', 'varchar(max)')
 	,[cookie]=a.b.value('@k', 'varchar(250)')
-	,[stdin]=a.b.value('@i', 'varchar(max)') 
+	,[stdin]=a.b.value('@i', 'varchar(max)')
+	,[envJSON]=a.b.value('@e', 'varchar(max)')
 	FROM @jobXML.nodes('/job/t') a(b)
 
 	declare @numTasks int
@@ -310,13 +315,14 @@ BEGIN
 	delete from [dbo].[GridJobTasks] where [jobId]=@jobId
 
 	insert into [dbo].[GridJobTasks]
-	([jobId],[index],[cmd],[cookie],[stdin],[status])
+	([jobId],[index],[cmd],[cookie],[stdin],[envJSON],[status])
 	select
 	[jobId]=@jobId
 	,[index]=[id]
 	,[cmd]
 	,[cookie]=iif([cookie]='', null, [cookie])
 	,[stdin]=iif([stdin]='', null, [stdin])
+	,[envJSON]=iif([envJSON]='', null, [envJSON])
 	,[status]='IDLE'
 	from @tmp
 	order by [id] asc
@@ -351,14 +357,16 @@ BEGIN
 		,[cmd] varchar(max)
 		,[cookie] varchar(256)
 		,[stdin] varchar(max)
+		,[envJSON] varchar(max)
 	)
 
 	insert into @tmp
-	([cmd],[cookie],[stdin])
+	([cmd],[cookie],[stdin],[envJSON])
 	select
 	[cmd]
 	,[cookie]
 	,[stdin]
+	,[envJSON]
 	FROM [dbo].[GridJobTasks] (nolock)
 	where
 	[jobId]=@oldJobId
@@ -399,13 +407,14 @@ BEGIN
 	delete from [dbo].[GridJobTasks] where [jobId]=@jobId
 
 	insert into [dbo].[GridJobTasks]
-	([jobId],[index],[cmd],[cookie],[stdin],[status])
+	([jobId],[index],[cmd],[cookie],[stdin],[envJSON],[status])
 	select
 	[jobId]=@jobId
 	,[index]=[id]
 	,[cmd]
 	,[cookie]
 	,[stdin]
+	,[envJSON]
 	,[status]='IDLE'
 	from @tmp
 	order by [id] asc

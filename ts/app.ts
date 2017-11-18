@@ -63,7 +63,7 @@ function initGridAutoScaler(dispatcher: Dispatcher, clientMessaging: ClientMessa
 }
 
 function authorizedClientMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) : void {
-    let accessToken:oauth2.AccessToken = oauth2.Utils.getAccessTokenFromAuthorizationHeader(req.headers['authorization']);
+    let accessToken:oauth2.AccessToken = oauth2.Utils.getAccessTokenFromAuthorizationHeader(<string>(req.headers['authorization']));
     if (!accessToken)
         res.status(401).json(oauth2.errors.bad_credential);
     else {
