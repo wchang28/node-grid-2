@@ -86,7 +86,7 @@ CREATE TABLE [dbo].[GridJobTasks](
 	[finishTime] [datetime] NULL,
 	[durationSeconds] [bigint] NULL,
 	[success] [bit] NULL,
-	[retCode] [int] NULL,
+	[retCode] [bigint] NULL,
 	[stdout] [text] COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	[stderr] [text] COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
  CONSTRAINT [PK_GridJobTasks] PRIMARY KEY CLUSTERED 
@@ -247,7 +247,7 @@ CREATE PROCEDURE [dbo].[stp_NodeJSGridJobTask]
 	,@nodeId varchar(50) = null
 	,@nodeName varchar(250) = null
 	,@pid int = null
-	,@retCode int = null
+	,@retCode bigint = null
 	,@stdout text = null
 	,@stderr text = null
 AS
