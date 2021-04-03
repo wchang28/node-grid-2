@@ -57,7 +57,7 @@
     "rest-browser": "https://github.com/wchang28/rest-browser.git",
     "rest-node": "https://github.com/wchang28/rest-node.git",
     "simple-mssql": "https://github.com/wchang28/simple-mssql.git",
-    "tree-kill": "^1.1.0",
+    "tree-kill": "^1.2.2",
     "typescript": "^2.5.2",
     "xmldom": "^0.1.27"
   },
