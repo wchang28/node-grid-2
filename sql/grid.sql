@@ -386,7 +386,7 @@ BEGIN
 	([description],[cookie],[userId],[userName],[priority],[submitTime],[aborted])
 	values (@description, @cookie, @userId, @userName, @priority, getdate(), 0)
 
-	set @jobId = @@IDENTITY
+	set @jobId = SCOPE_IDENTITY()
 
 	delete from [dbo].[GridJobTasks] where [jobId]=@jobId
 
@@ -478,7 +478,7 @@ BEGIN
 	([description],[cookie],[userId],[userName],[priority],[submitTime],[aborted])
 	values (@description, @cookie, @userId, @userName, @priority, getdate(), 0)
 
-	set @jobId = @@IDENTITY
+	set @jobId = SCOPE_IDENTITY()
 
 	delete from [dbo].[GridJobTasks] where [jobId]=@jobId
 
