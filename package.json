@@ -43,7 +43,7 @@
     "grid-client-browser": "https://github.com/wchang28/grid-client-browser.git",
     "grid-client-core": "https://github.com/wchang28/grid-client-core.git",
     "grid-client-node": "https://github.com/wchang28/grid-client-node.git",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.19",
     "msg-transaction-processor": "https://github.com/wchang28/msg-transaction-processor.git",
     "no-cache-express": "https://github.com/wchang28/no-cache-express.git",
     "oauth2": "https://github.com/wchang28/oauth2.git",
