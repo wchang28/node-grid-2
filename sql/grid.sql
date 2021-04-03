@@ -540,10 +540,10 @@ RETURNS TABLE
 AS
 RETURN 
 (
-	select
+	SELECT
 	*
-	from [dbo].[GridJobsView]
-	where [jobId]=@jobId
+	FROM [dbo].[GridJobsView] (NOLOCK)
+	WHERE [jobId]=@jobId
 )
 
 GO
@@ -556,14 +556,14 @@ RETURNS TABLE
 AS
 RETURN 
 (
-	select
+	SELECT
 	[jobId]
 	,[status]
 	,[numTasks]
 	,[numTasksFinished]
 	,[success]
-	from [dbo].[GridJobsView]
-	where [jobId]=@jobId
+	FROM [dbo].[GridJobsView] (NOLOCK)
+	WHERE [jobId]=@jobId
 )
 
 GO
@@ -633,10 +633,12 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	select top 100
+	SELECT
+	TOP 100
 	*
-	from [dbo].[GridJobsView]
-	order by [jobId] desc
+	FROM [dbo].[GridJobsView] (NOLOCK)
+	ORDER BY
+	[jobId] DESC
 
 END
 
