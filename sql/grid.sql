@@ -337,13 +337,13 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 	
-	declare @tmp table
+	DECLARE @tmp TABLE
 	(
-		[id] bigint identity(0,1)
-		,[cmd] varchar(max)
-		,[cookie] varchar(256)
-		,[stdin] varchar(max)
-		,[envJSON] varchar(max)
+		[id] BIGINT IDENTITY(0, 1) NOT NULL PRIMARY KEY CLUSTERED ([id] ASC)
+		,[cmd] VARCHAR(MAX)
+		,[cookie] VARCHAR(256)
+		,[stdin] VARCHAR(MAX)
+		,[envJSON] VARCHAR(MAX)
 	)
 
 	insert into @tmp
@@ -427,13 +427,13 @@ BEGIN
 		return
 	end
 
-	declare @tmp table
+	DECLARE @tmp TABLE
 	(
-		[id] bigint identity(0,1)
-		,[cmd] varchar(max)
-		,[cookie] varchar(256)
-		,[stdin] varchar(max)
-		,[envJSON] varchar(max)
+		[id] BIGINT IDENTITY(0, 1) NOT NULL PRIMARY KEY CLUSTERED ([id] ASC)
+		,[cmd] VARCHAR(MAX)
+		,[cookie] VARCHAR(256)
+		,[stdin] VARCHAR(MAX)
+		,[envJSON] VARCHAR(MAX)
 	)
 
 	insert into @tmp
