@@ -388,8 +388,6 @@ BEGIN
 
 	set @jobId = SCOPE_IDENTITY()
 
-	delete from [dbo].[GridJobTasks] where [jobId]=@jobId
-
 	insert into [dbo].[GridJobTasks]
 	([jobId],[index],[cmd],[cookie],[stdin],[envJSON],[status])
 	select
@@ -479,8 +477,6 @@ BEGIN
 	values (@description, @cookie, @userId, @userName, @priority, getdate(), 0)
 
 	set @jobId = SCOPE_IDENTITY()
-
-	delete from [dbo].[GridJobTasks] where [jobId]=@jobId
 
 	insert into [dbo].[GridJobTasks]
 	([jobId],[index],[cmd],[cookie],[stdin],[envJSON],[status])
