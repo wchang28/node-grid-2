@@ -158,6 +158,25 @@ CREATE TABLE [dbo].[GridUserProfile](
 
 GO
 
+
+CREATE TABLE [dbo].[GridSettings](
+	[id] [bigint] IDENTITY(1,1) NOT NULL,
+	[jobDaysToKeep] [bigint] NOT NULL,
+ CONSTRAINT [PK_GridSettings] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+SET IDENTITY_INSERT [dbo].[GridSettings] ON 
+
+INSERT [dbo].[GridSettings] ([id], [jobDaysToKeep]) VALUES (1, 7)
+SET IDENTITY_INSERT [dbo].[GridSettings] OFF
+GO
+ALTER TABLE [dbo].[GridSettings] ADD  CONSTRAINT [DF_GridSettings_jobDaysToKeep]  DEFAULT ((7)) FOR [jobDaysToKeep]
+GO
+
+
 CREATE view [dbo].[GridJobsView]
 as
 with stat as
@@ -237,6 +256,36 @@ BEGIN
 	else
 		set @ret=0
 	return @ret
+END
+
+GO
+
+CREATE PROCEDURE [dbo].[stp_NodeJSGridCleanupOldJobs]
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	;WITH lowerBound AS
+	(
+		SELECT
+		TOP 1
+		DATEADD(day, -[jobDaysToKeep], GETDATE()) AS [submitTimeLowerBond]
+		FROM [dbo].[GridSettings] (NOLOCK)
+	)
+	,jobList AS
+	(
+		SELECT
+		a.[jobId]
+		FROM [dbo].[GridJobs] a (NOLOCK)
+		CROSS JOIN lowerBound b
+		WHERE
+		a.[submitTime] < b.[submitTimeLowerBond]
+	)
+	DELETE dest
+	FROM [dbo].[GridJobs] dest
+	INNER JOIN jobList src
+	ON dest.[jobId]=src.[jobId]
+
 END
 
 GO
@@ -401,6 +450,8 @@ BEGIN
 	from @tmp
 	order by [id] asc
 
+	EXEC [dbo].[stp_NodeJSGridCleanupOldJobs]
+
 	select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)
 
 END
@@ -490,6 +541,8 @@ BEGIN
 	,[status]='IDLE'
 	from @tmp
 	order by [id] asc
+
+	EXEC [dbo].[stp_NodeJSGridCleanupOldJobs]
 
 	select * from [dbo].[fnc_NodeJSGridGetJobProgress](@jobId)
 
