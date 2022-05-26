@@ -30,7 +30,7 @@
     "autoscalable-grid": "https://github.com/wchang28/autoscalable-grid.git",
     "body-parser": "^1.17.1",
     "event-source-polyfill": "0.0.7",
-    "eventsource": "^0.2.1",
+    "eventsource": "^2.0.2",
     "eventsource-typings": "https://github.com/wchang28/eventsource-typings.git",
     "express": "^4.15.2",
     "express-http-proxy": "https://github.com/wchang28/express-http-proxy.git",
