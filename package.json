@@ -32,7 +32,7 @@
     "event-source-polyfill": "0.0.7",
     "eventsource": "^0.2.1",
     "eventsource-typings": "https://github.com/wchang28/eventsource-typings.git",
-    "express": "^4.15.2",
+    "express": "^4.17.3",
     "express-http-proxy": "https://github.com/wchang28/express-http-proxy.git",
     "express-pretty-print": "https://github.com/wchang28/express-pretty-print.git",
     "express-session": "^1.15.2",
